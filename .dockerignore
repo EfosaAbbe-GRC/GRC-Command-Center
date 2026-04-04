@@ -1,0 +1,39 @@
+# ─── GRC Command Center — .dockerignore ─────────────────────────────────────
+# Keeps build context small and prevents secrets from leaking into images.
+
+# Secrets — never in image
+.env
+*.env
+secrets/
+
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Node (frontend build uses npm ci inside container)
+node_modules/
+
+# Runtime data — mounted as volumes, not baked into image
+backend/data/grc_audit.db
+backend/faiss_index/
+GRC_Analyst/
+
+# Test files — not needed in production image
+backend/tests/
+
+# Dev tooling
+.pytest_cache/
+*.log

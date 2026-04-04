@@ -382,10 +382,24 @@ def run_smoke_tests():
         if os.path.exists(db_path):
             conn = sqlite3.connect(db_path)
             try:
-                conn.execute("DELETE FROM audit_logs WHERE 1=0")
-                PASS += 1 # If it didn't throw an error yet, we check for trigger rejection
-                # To really test, we try to delete a record
-                print("  ℹ️  Testing trigger on empty table (validation only)")
+                # Insert a real row so the BEFORE DELETE trigger has a row to fire on.
+                # SQLite per-row triggers only execute for matched rows — WHERE id = -1
+                # matches nothing and silently skips the trigger body.
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO audit_logs (request_id, timestamp, query, response, context, sources) "
+                    "VALUES ('smoke-test-immutability', 'now', 'test', 'test', '', '')"
+                )
+                test_id = cursor.lastrowid
+                conn.commit()
+
+                # Now attempt to delete the row — trigger must block this
+                conn.execute(f"DELETE FROM audit_logs WHERE id = {test_id}")
+                # If we reach here, the trigger did NOT fire — genuine failure
+                FAIL += 1
+                msg = "FAIL Audit immutability — DELETE was NOT blocked by trigger"
+                print(f"  ❌ {msg}")
+                ERRORS.append(msg)
             except (sqlite3.IntegrityError, sqlite3.OperationalError) as e:
                 PASS += 1
                 print(f"  ✅ Audit immutability — DELETE blocked: {str(e)[:60]}")

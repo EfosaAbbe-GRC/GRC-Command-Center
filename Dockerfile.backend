@@ -1,0 +1,39 @@
+# ─── GRC Command Center — Backend ───────────────────────────────────────────
+# Python 3.11 slim — small footprint, matches dev environment
+FROM python:3.11-slim
+
+LABEL maintainer="GRC Command Center"
+LABEL description="FastAPI backend — Gemini 2.0 Flash RAG + RBAC + SQLite"
+
+# System deps: faiss-cpu needs libgomp1, bcrypt needs build-essential
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Non-root user for security
+RUN useradd -m -u 1001 grcuser
+
+WORKDIR /app
+
+# Install Python deps first — this layer caches until requirements.txt changes
+COPY backend/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend source
+COPY backend/ .
+
+# Runtime directories — overridden by volume mounts in docker-compose
+RUN mkdir -p data faiss_index GRC_Analyst && \
+    chown -R grcuser:grcuser /app
+
+USER grcuser
+
+EXPOSE 8001
+
+# Hits the public /health endpoint — no token required
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')" || exit 1
+
+# Single worker — SQLite is single-writer. Scale via PostgreSQL migration when ready.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]

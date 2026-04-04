@@ -39,7 +39,7 @@ class DataService:
     def get_ops_jobs(self):
         return self.cached_jobs
 
-    def get_executive_kpis(self):
+    def get_executive_stats(self):
         return self.cached_kpis
 
     def get_dashboard_stats(self):

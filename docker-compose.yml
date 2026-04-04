@@ -1,0 +1,69 @@
+# ─── GRC Command Center — Docker Compose ────────────────────────────────────
+# Two services: backend (FastAPI) + frontend (React/nginx)
+# Run: docker compose up --build
+# Stop: docker compose down
+
+services:
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: grc-backend
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      # Required — set in .env file (never commit real values)
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      # Optional overrides — defaults from config.py are used if not set
+      - AUTH_ENABLED=${AUTH_ENABLED:-true}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-grc-admin-2026}
+      - ANALYST_USERNAME=${ANALYST_USERNAME:-analyst}
+      - ANALYST_PASSWORD=${ANALYST_PASSWORD:-grc-analyst-2026}
+      - VIEWER_USERNAME=${VIEWER_USERNAME:-viewer}
+      - VIEWER_PASSWORD=${VIEWER_PASSWORD:-grc-viewer-2026}
+    volumes:
+      # Persist DB and FAISS index across container restarts
+      - grc-db:/app/data
+      - grc-faiss:/app/faiss_index
+      # Mount your GRC documents folder (read-only inside container)
+      - ${DOCUMENTS_PATH:-./GRC_Analyst}:/app/GRC_Analyst:ro
+    networks:
+      - grc-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: grc-frontend
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - grc-net
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  grc-db:
+    driver: local
+  grc-faiss:
+    driver: local
+
+# ── Network ───────────────────────────────────────────────────────────────────
+networks:
+  grc-net:
+    driver: bridge
