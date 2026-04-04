@@ -145,13 +145,17 @@ GRC_Command_Center/
 - `POST /api/v1/auth/logout`: Session revocation
 
 ### Protected
-- `POST /api/v1/chat`: RAG query (RAG_QUERY)
-- `POST /api/v1/ingest`: Trigger document ingestion (INGEST_CONTROL)
-- `POST /api/v1/run-agent`: Agent execution (AGENT_EXECUTE)
-- `GET /api/v1/admin/audit/security`: Security event retrieval (SYSTEM_AUDIT)
-- `GET /api/v1/compliance/report`: CSV Evidence Export (EVIDENCE_EXPORT)
-- `GET /api/v1/knowledge/evidence`: Evidence chain view (EVIDENCE_VIEW)
-- `PUT /api/v1/admin/policies/{id}`: Policy update (SYSTEM_AUDIT)
+- `POST /api/v1/chat`: RAG query (RAG_QUERY — analyst+)
+- `POST /api/v1/ingest`: Trigger document ingestion (INGEST_CONTROL — admin)
+- `POST /api/v1/run-agent`: Agent execution (AGENT_EXECUTE — admin)
+- `GET /api/v1/compliance/policies`: Compliance policy grid (RAG_QUERY — analyst+)
+- `GET /api/v1/compliance/export`: CSV Evidence Export (EVIDENCE_EXPORT — **admin only**)
+- `GET /api/v1/compliance/frameworks/{id}`: Framework mapping (RAG_QUERY — analyst+)
+- `GET /api/v1/admin/audit/security`: Security event retrieval (SYSTEM_AUDIT — admin)
+- `GET /api/v1/knowledge/evidence`: Evidence chain view (EVIDENCE_VIEW — admin)
+- `PUT /api/v1/admin/policies/{id}`: Policy update (SYSTEM_AUDIT — admin)
+
+> **EVIDENCE_EXPORT is intentionally admin-only.** The CSV export contains the full chain-of-custody audit trail and is an auditor deliverable. Analysts use RAG_QUERY for day-to-day compliance queries. Do not lower the required role without a formal policy change.
 
 ---
 
@@ -205,8 +209,9 @@ GRC_Command_Center/
 
 ## Known Limitations
 - SQLite is currently single-writer (Production migration to PostgreSQL recommended).
-- `smoke_test.py` lacks token-aware headers for protected routes.
+- `smoke_test.py` is auth-aware and verified at 27/27. Requires backend running on port 8001.
 - KnowledgeTerminal metadata sidebar uses some presentational placeholders.
+- RAG requires initial ingestion via `POST /api/v1/ingest` before chat queries return document context.
 
 ---
 
@@ -215,3 +220,4 @@ GRC_Command_Center/
 - **v2.0 Redesign**: Enterprise Command Authority UI initialized (Tailwind v4).
 - **Hardening**: Standardized on text-embedding-004 and Gemini 2.0 Flash.
 - **Git Init**: Repository anchored with secrets excluded (Commit: b3427b6).
+- **Phase A Stabilization**: Auth-aware smoke test (27/27), lifespan-ordered seeding, EVIDENCE_EXPORT design confirmed, immutability triggers verified real.

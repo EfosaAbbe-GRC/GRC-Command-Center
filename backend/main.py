@@ -35,7 +35,7 @@ from schemas import (
 async def lifespan(app):
     logger.info("System startup", version=settings.VERSION, mode="PRODUCTION_READY")
     
-    # In-memory user registry transition (Phase 2 Hardening)
+    # Seed user registry (Phase 2 Hardening)
     if not audit_logger.get_user_by_username(settings.ADMIN_USERNAME):
         logger.info("Security: Seeding initial user registry from secrets/.env", user=settings.ADMIN_USERNAME)
         audit_logger.create_user(
@@ -54,31 +54,31 @@ async def lifespan(app):
             "viewer"
         )
 
+    # Seed Strategic Policy Engine (IAM-09) — runs after DB is guaranteed initialized
+    _seed_initial_policies()
+
     yield
     logger.info("System shutdown")
 
-# 2. Policy Seeding (IAM-09)
-def seed_initial_policies():
-    """Establish the baseline Strategic Policy Engine configuration."""
+# Strategic Policy Engine seed — called from inside lifespan() only
+def _seed_initial_policies():
+    """Establish the baseline Strategic Policy Engine configuration (IAM-09)."""
     policies = [
-        ("AUDIT_VIEW", "Review the security identity audit trail", "admin"),
-        ("INGEST_CONTROL", "Trigger global database and document ingestion", "admin"),
-        ("AGENT_EXECUTE", "Trigger autonomous AI agent execution", "admin"),
-        ("RAG_QUERY", "Interact with the RAG Co-Pilot system", "analyst"),
-        ("EVIDENCE_VIEW", "View the chain-of-custody evidence records", "admin"),
-        ("EVIDENCE_EXPORT", "Export and download compliance audit evidence", "admin"),
-        ("NOTEBOOK_SYNC", "Synchronize analyst notebooks with the RAG core", "admin"),
-        ("SYSTEM_REPORTS", "Generate and export compliance reports", "analyst"),
-        ("USER_MANAGEMENT", "Administratively manage system users", "admin"),
-        ("SYSTEM_AUDIT", "Access high-level security audit logs", "admin")
+        ("AUDIT_VIEW",      "Review the security identity audit trail",          "admin"),
+        ("INGEST_CONTROL",  "Trigger global database and document ingestion",     "admin"),
+        ("AGENT_EXECUTE",   "Trigger autonomous AI agent execution",              "admin"),
+        ("RAG_QUERY",       "Interact with the RAG Co-Pilot system",             "analyst"),
+        ("EVIDENCE_VIEW",   "View the chain-of-custody evidence records",        "admin"),
+        ("EVIDENCE_EXPORT", "Export and download compliance audit evidence",      "admin"),
+        ("NOTEBOOK_SYNC",   "Synchronize analyst notebooks with the RAG core",   "admin"),
+        ("SYSTEM_REPORTS",  "Generate and export compliance reports",            "analyst"),
+        ("USER_MANAGEMENT", "Administratively manage system users",              "admin"),
+        ("SYSTEM_AUDIT",    "Access high-level security audit logs",             "admin"),
     ]
-    
     for name, desc, role in policies:
         if not audit_logger.get_policy(name):
             logger.info("Policy Engine: Seeding baseline policy", name=name, role=role)
             audit_logger.create_policy(name, desc, role, "system")
-
-seed_initial_policies()
 
 # Rate Limiter Setup
 limiter = Limiter(key_func=get_remote_address)
@@ -237,9 +237,9 @@ async def get_security_audit(
     """Exposes the security identity audit trail for administrative review."""
     return audit_logger.get_security_events(limit=limit, offset=offset, event_type=event_type, user=user)
 
-@app.get("/api/v1/admin/policies", response_model=List[Dict[str, Any]], dependencies=[Depends(authorize("USER_MANAGEMENT"))])
+@app.get("/api/v1/admin/policies", response_model=List[PolicyModel], dependencies=[Depends(authorize("SYSTEM_AUDIT"))])
 async def list_policies(request: Request):
-    """Retrieve all defined access policies for management."""
+    """Retrieve the full dynamic access policy registry for management."""
     return audit_logger.list_policies()
 
 class PolicyUpdateRequest(BaseModel):
@@ -247,18 +247,18 @@ class PolicyUpdateRequest(BaseModel):
     is_active: bool
     source_doc: Optional[str] = None
 
-@app.put("/api/v1/admin/policies/{policy_id}", response_model=StatusResponse, dependencies=[Depends(authorize("USER_MANAGEMENT"))])
+@app.put("/api/v1/admin/policies/{policy_id}", response_model=StatusResponse, dependencies=[Depends(authorize("SYSTEM_AUDIT"))])
 async def update_policy(policy_id: int, payload: PolicyUpdateRequest, request: Request):
     """Administratively update a system policy."""
-    modified_by = request.state.user
+    user = get_current_user(request)
     if audit_logger.update_policy(
         policy_id=policy_id, 
         required_role=payload.required_role, 
         is_active=payload.is_active, 
-        modified_by=modified_by,
+        modified_by=user["username"],
         source_doc=payload.source_doc
     ):
-        log_security_event(request, "POLICY_CHANGE", f"Policy ID {policy_id} updated to {payload.required_role} (Active={payload.is_active})")
+        log_security_event(request, "POLICY_CHANGE", f"User '{user['username']}' updated policy ID {policy_id} to role={payload.required_role} (Active={payload.is_active})")
         return StatusResponse(status="success", message="Policy updated successfully")
     raise HTTPException(status_code=400, detail="Failed to update policy")
 
@@ -337,7 +337,7 @@ async def chat_endpoint(request: Request, payload: GRCQuery, background_tasks: B
         background_tasks.add_task(
             audit_logger.log_interaction,
             request_id=request_id_var.get(),
-            query=grc_query.query,
+            query=payload.query,
             response=result.get("answer"),
             context=result.get("context", ""),
             sources=result.get("sources", [])
@@ -365,7 +365,14 @@ async def run_agent_endpoint(request: Request, payload: AgentRequest):
         result=result
     )
 
-@app.get("/api/v1/compliance/report", dependencies=[Depends(authorize("EVIDENCE_EXPORT"))])
+# --- COMPLIANCE ENDPOINTS ---
+
+@app.get("/api/v1/compliance/policies", response_model=List[PolicyItem], dependencies=[Depends(authorize("RAG_QUERY"))])
+def get_compliance_policies():
+    """Retrieve the main compliance policy grid (Analyst-facing)."""
+    return data_service.get_compliance_policies()
+
+@app.get("/api/v1/compliance/export", dependencies=[Depends(authorize("EVIDENCE_EXPORT"))])
 def export_compliance_csv():
     """Export compliance policies as a downloadable CSV file."""
     policies = data_service.get_compliance_policies()
@@ -400,7 +407,27 @@ def export_compliance_csv():
 @app.get("/api/v1/compliance/frameworks/{policy_id}", response_model=FrameworkMappingResponse, dependencies=[Depends(authorize("RAG_QUERY"))])
 def get_frameworks_for_policy(policy_id: str):
     frameworks = data_service.get_framework_mappings(policy_id)
+    # Ensure it returns the correct structure expected by the schema
+    # If get_framework_mappings returns List[FrameworkControl], we need to wrap it.
     return FrameworkMappingResponse(policy_id=policy_id, frameworks=frameworks)
+
+# --- OPERATIONS ENDPOINTS ---
+
+@app.get("/api/v1/ops/jobs", response_model=List[JobItem], dependencies=[Depends(authorize("RAG_QUERY"))])
+def get_ops_jobs():
+    return data_service.get_ops_jobs()
+
+# --- EXECUTIVE ENDPOINTS ---
+
+@app.get("/api/v1/executive/stats", response_model=ExecutiveStats, dependencies=[Depends(authorize("RAG_QUERY"))])
+def get_executive_stats():
+    return data_service.get_executive_stats()
+
+@app.get("/api/v1/executive/dashboard", response_model=DashboardStats, dependencies=[Depends(authorize("RAG_QUERY"))])
+def get_dashboard_stats():
+    return data_service.get_dashboard_stats()
+
+# --- KNOWLEDGE ENDPOINTS ---
 
 @app.get("/api/v1/notebook/structure", response_model=List[NotebookItem], dependencies=[Depends(authorize("RAG_QUERY"))])
 def get_notebook_structure():
@@ -418,38 +445,6 @@ def get_knowledge_documents():
 @app.get("/api/v1/knowledge/evidence", response_model=List[EvidenceRecord], dependencies=[Depends(authorize("EVIDENCE_VIEW"))])
 def get_evidence_chain():
     return audit_logger.get_evidence_records()
-
-# --- STRATEGIC POLICY MANAGEMENT (IAM-09) ---
-
-@app.get("/api/v1/admin/policies", response_model=List[PolicyModel], dependencies=[Depends(authorize("SYSTEM_AUDIT"))])
-def get_policies():
-    """Retrieve the full dynamic access policy registry."""
-    return audit_logger.get_policies()
-
-@app.put("/api/v1/admin/policies/{policy_id}", dependencies=[Depends(authorize("SYSTEM_AUDIT"))])
-def update_policy(request: Request, policy_id: int, payload: PolicyUpdate):
-    """
-    Update a dynamic policy.
-    Triggers immediate cache invalidation across the security layer.
-    """
-    user = get_current_user(request)
-    success = audit_logger.update_policy(
-        policy_id=policy_id,
-        required_role=payload.required_role,
-        is_active=payload.is_active,
-        modified_by=user["username"]
-    )
-    if not success:
-        raise HTTPException(status_code=404, detail="Policy not found")
-    
-    # Log the governance event
-    log_security_event(
-        request, 
-        "POLICY_UPDATE", 
-        f"User '{user['username']}' updated policy ID {policy_id} to role={payload.required_role}, active={payload.is_active}"
-    )
-    
-    return {"status": "success", "message": "Access policy synchronized."}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True)
