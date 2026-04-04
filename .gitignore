@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# Environment & secrets
+.env
+backend/.env
+
+# Database (regenerated on startup)
+backend/data/grc_audit.db
+backend/data/*.db
+
+# FAISS index (regenerated via ingestion)
+faiss_index/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated audit bundles (not source)
+full_system_audit.txt
+full_codebase.txt
+full_codebase_for_audit.txt
+frontend_current.txt
+frontend_redesign_verify.txt
+phase*_verify.txt
+project_structure.txt
+generate_audit.ps1

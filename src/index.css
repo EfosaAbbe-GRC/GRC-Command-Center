@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+    /* Depth layers (darkest to lightest) */
+    --layer-0: #010409;
+    --layer-1: #0d1117;
+    --layer-2: #161b22;
+    --layer-3: #21262d;
+    --layer-4: #30363d;
+
+    /* Borders */
+    --border-subtle: #21262d;
+    --border-default: #30363d;
+    --border-emphasis: #484f58;
+
+    /* Text hierarchy */
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-tertiary: #6e7681;
+    --text-disabled: #484f58;
+
+    /* Functional colors */
+    --accent: #58a6ff;
+    --accent-emphasis: #1f6feb;
+    --accent-subtle: rgba(56, 139, 253, 0.1);
+    --accent-glow: rgba(56, 139, 253, 0.15);
+
+    --success: #3fb950;
+    --success-subtle: rgba(63, 185, 80, 0.1);
+    --warning: #d29922;
+    --warning-subtle: rgba(210, 153, 34, 0.1);
+    --danger: #f85149;
+    --danger-subtle: rgba(248, 81, 73, 0.1);
+    --info: #58a6ff;
+
+    /* Typography */
+    --font-display: 'Outfit', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+
+    /* Spacing rhythm */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+}
+
+
+@supports (scrollbar-width: thin) {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--layer-4) transparent;
+    }
+}
+
+body {
+    background-color: var(--layer-0);
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--layer-4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-emphasis); }
+
+/* Utility classes */
+.font-mono { font-family: var(--font-mono) !important; }
+.glass { 
+    background: rgba(13, 17, 23, 0.8); 
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px); 
+}
+.glow-accent { box-shadow: 0 0 20px var(--accent-glow); }
+.glow-success { box-shadow: 0 0 15px rgba(63, 185, 80, 0.15); }
+.glow-danger { box-shadow: 0 0 15px rgba(248, 81, 73, 0.15); }
+
+/* Data grid row hover */
+.data-row { transition: background-color var(--transition-fast); }
+.data-row:hover { background-color: var(--accent-subtle) !important; }
+.data-row.selected { 
+    background-color: var(--accent-subtle) !important; 
+    border-left: 2px solid var(--accent);
+}
