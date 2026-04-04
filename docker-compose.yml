@@ -18,6 +18,8 @@ services:
       # Required — set in .env file (never commit real values)
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DOCUMENTS_PATH=/app/GRC_Analyst
+      - DATABASE_PATH=/app/data/grc_audit.db
       # Optional overrides — defaults from config.py are used if not set
       - AUTH_ENABLED=${AUTH_ENABLED:-true}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}

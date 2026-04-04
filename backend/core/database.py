@@ -6,9 +6,8 @@ from core.logger import logger
 class AuditLogger:
     def __init__(self, db_path: str = None):
         if db_path is None:
-            # Anchor to the actual backend directory
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            self.db_path = os.path.join(base_dir, "data", "grc_audit.db")
+            from core.config import settings
+            self.db_path = settings.DATABASE_PATH
         else:
             self.db_path = db_path
         self._init_db()

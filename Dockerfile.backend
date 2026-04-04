@@ -25,7 +25,8 @@ COPY backend/ .
 
 # Runtime directories — overridden by volume mounts in docker-compose
 RUN mkdir -p data faiss_index GRC_Analyst && \
-    chown -R grcuser:grcuser /app
+    chown -R grcuser:grcuser /app && \
+    chmod -R 755 /app/data /app/faiss_index
 
 USER grcuser
 

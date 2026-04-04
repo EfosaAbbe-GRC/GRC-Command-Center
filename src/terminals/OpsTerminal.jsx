@@ -4,7 +4,7 @@ import { Terminal, Activity, Play, RotateCcw, AlertOctagon, Cpu, Hash, Monitor, 
 import { api } from '../lib/api';
 import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 
 export const OpsTerminal = () => {
     const { user } = useAuth();

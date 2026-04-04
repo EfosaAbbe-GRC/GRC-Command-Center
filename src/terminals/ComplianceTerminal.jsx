@@ -3,7 +3,7 @@ import { Search, Filter, Download, ChevronDown, ChevronUp, ShieldCheck, AlertTri
 import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
 import { api } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 
 export const ComplianceTerminal = () => {
     const { user } = useAuth();

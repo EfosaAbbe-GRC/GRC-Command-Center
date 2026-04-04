@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Terminal, Activity, FileText, Monitor, Globe, Clock, UserCheck } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 
 export const TerminalSwitcher = ({ activeTerminal, setActiveTerminal }) => {
     const { user } = useAuth();
@@ -32,6 +32,9 @@ export const TerminalSwitcher = ({ activeTerminal, setActiveTerminal }) => {
     
     // Filter terminals based on hierarchical permission level
     const terminals = allTerminals.filter(t => userLevel >= roleLevels[t.minRole]);
+
+    // Stable session seed initialized once
+    const [sessionSeed] = useState(() => Math.floor(Math.random() * 9000) + 1000);
 
     return (
         <header className="h-16 bg-[var(--layer-1)] border-b border-[var(--border-default)] flex items-center justify-between px-6 shrink-0 z-50 relative selection:bg-transparent transition-all">
@@ -100,7 +103,9 @@ export const TerminalSwitcher = ({ activeTerminal, setActiveTerminal }) => {
                 <div className="flex items-center gap-3">
                     <div className="text-right">
                         <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Session ID</div>
-                        <div className="text-[11px] font-bold text-[var(--text-primary)]">USR_ADMIN_402</div>
+                        <div className="text-[11px] font-bold text-[var(--text-primary)] uppercase">
+                            USR_{user?.username || 'ANONYMOUS'}_{sessionSeed}
+                        </div>
                     </div>
                     <div className="w-8 h-8 rounded-sm bg-[var(--layer-2)] border border-[var(--border-default)] flex items-center justify-center">
                         <UserCheck size={14} className="text-[#94A3B8]" />

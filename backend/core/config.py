@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     ]
     
     # Paths
-    DOCUMENTS_PATH: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "GRC_Analyst")
+    DOCUMENTS_PATH: str = os.getenv("DOCUMENTS_PATH", "GRC_Analyst")
+    DATABASE_PATH: str = os.getenv("DATABASE_PATH", os.path.join("data", "grc_audit.db"))
     
     # AI
     GOOGLE_API_KEY: str = ""

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApiData } from '../hooks/useApiData';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import { api } from '../lib/api';
 import { 
     Activity, Shield, Monitor, UserCheck, Clock, PieChart, AlertTriangle, 

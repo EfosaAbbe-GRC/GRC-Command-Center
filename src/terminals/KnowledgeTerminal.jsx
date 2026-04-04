@@ -1,6 +1,6 @@
 import { api } from '../lib/api';
 import { useApiData } from '../hooks/useApiData';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Folder, FileText, Activity, Database, RefreshCw, Search, Filter, Download, FileType, FileCode, FileBarChart2, Eye, Tag, ShieldCheck, Layers, Laptop, UserCheck } from 'lucide-react';
 

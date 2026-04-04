@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './useAuth';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
@@ -14,6 +13,12 @@ export const AuthProvider = ({ children }) => {
         return isAuthenticated && mustChangePassword;
     });
 
+    const logout = async () => {
+        await api.logout();
+        setUser(null);
+        setNeedsReset(false);
+    };
+
     useEffect(() => {
         // 1. Wire security events to state
         api.onSecurityError = (code) => {
@@ -23,7 +28,6 @@ export const AuthProvider = ({ children }) => {
         };
 
         // 2. Periodic Session Heartbeat (IAM-08)
-        // Detects server-side revocation or expiration proactively
         const heartbeat = setInterval(async () => {
             if (api.getUser().isAuthenticated) {
                 try {
@@ -68,12 +72,6 @@ export const AuthProvider = ({ children }) => {
         setUser(prev => prev ? { ...prev, mustChangePassword: false } : null);
     };
 
-    const logout = async () => {
-        await api.logout();
-        setUser(null);
-        setNeedsReset(false);
-    };
-
     return (
         <AuthContext.Provider value={{ 
             user, 
@@ -89,4 +87,4 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+
