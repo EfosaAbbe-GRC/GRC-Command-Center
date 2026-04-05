@@ -30,7 +30,7 @@ export default function GRCChatBot() {
         content: data.response || "INSUFFICIENT_DATA", 
         sources: data.sources 
       }]);
-    } catch (err) {
+    } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: "ERR_CONNECTION_REFUSED. Critical interface failure." }]);
     }
     setLoading(false);

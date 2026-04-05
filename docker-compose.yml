@@ -33,7 +33,7 @@ services:
       - grc-db:/app/data
       - grc-faiss:/app/faiss_index
       # Mount your GRC documents folder (read-only inside container)
-      - ${DOCUMENTS_PATH:-./GRC_Analyst}:/app/GRC_Analyst:ro
+      - "${DOCUMENTS_PATH}:/app/GRC_Analyst:ro"
     networks:
       - grc-net
     healthcheck:

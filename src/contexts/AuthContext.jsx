@@ -13,6 +13,16 @@ export const AuthProvider = ({ children }) => {
         return isAuthenticated && mustChangePassword;
     });
 
+    // 1. Initial interceptor setup (Layout effect ensures this runs before paint/child effects)
+    React.useLayoutEffect(() => {
+        api.onSecurityError = (code) => {
+            if (code === 'PASSWORD_RESET_REQUIRED') {
+                setNeedsReset(true);
+            }
+        };
+        return () => { api.onSecurityError = null; };
+    }, []);
+
     const logout = async () => {
         await api.logout();
         setUser(null);
@@ -20,13 +30,6 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        // 1. Wire security events to state
-        api.onSecurityError = (code) => {
-            if (code === 'PASSWORD_RESET_REQUIRED') {
-                setNeedsReset(true);
-            }
-        };
-
         // 2. Periodic Session Heartbeat (IAM-08)
         const heartbeat = setInterval(async () => {
             if (api.getUser().isAuthenticated) {

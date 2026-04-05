@@ -8,7 +8,8 @@ from core.logger import logger
 from core.database import audit_logger
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -150,8 +151,8 @@ class RAGEngine:
             splits = text_splitter.split_documents(docs)
             self.ingestion_state.split_count = len(splits)
 
-            # text-embedding-004 is the modern institutional standard for Gemini v1 APIs
-            embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-004", google_api_key=self.api_key)
+            # all-MiniLM-L6-v2 is a lightweight, high-performance local standard (Phase C Pivot)
+            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             self.vector_store = FAISS.from_documents(splits, embeddings)
             
             # Persist to avoid re-indexing
@@ -177,8 +178,8 @@ class RAGEngine:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=60)
         texts = text_splitter.split_documents(documents)
         
-        # Create Embeddings & Vector Store
-        embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-004", google_api_key=self.api_key)
+        # Create Local Embeddings (Phase C Pivot)
+        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         
         # Merge with existing index if possible, otherwise create new
         if os.path.exists("faiss_index"):
@@ -281,7 +282,7 @@ class RAGEngine:
             if os.path.exists("faiss_index") and self.api_key:
                 if not self._verify_index_hash("faiss_index"):
                     return {"answer": "SECURITY ALERT: Knowledge base integrity check failed. Contact administrator.", "sources": []}
-                embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-004", google_api_key=self.api_key)
+                embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
                 try:
                     self.vector_store = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
                     self._init_chain()
