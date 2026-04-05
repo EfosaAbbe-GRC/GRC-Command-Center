@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, CheckCircle, XCircle, FileJson, Activity, Terminal, Command } from 'lucide-react';
+import { Search, Filter, Download, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, CheckCircle, XCircle, FileJson, Activity, Terminal, Command, AlertOctagon } from 'lucide-react';
 import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/useAuth';
 
 export const ComplianceTerminal = () => {
-    const { user } = useAuth();
+    const { user, needsReset } = useAuth();
     const isAdmin = user?.role === 'admin';
     const [selectedId, setSelectedId] = useState(null);
     const [frameworks, setFrameworks] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [remediating, setRemediating] = useState(false);
 
     const { data: policies, loading, error, refresh } = useApiData('/compliance/policies', {
         onSuccess: (resData) => {
@@ -19,6 +20,31 @@ export const ComplianceTerminal = () => {
             }
         }
     });
+
+    const handleTriggerRescan = async () => {
+        if (!isAdmin) return;
+        try {
+            await api.post('/ingest');
+            refresh();
+        } catch (err) {
+            console.error("Rescan trigger failed:", err);
+        }
+    };
+
+    const handleRemediate = async () => {
+        if (!isAdmin) return;
+        setRemediating(true);
+        try {
+            await api.post('/ingest');
+            setTimeout(() => {
+                refresh();
+                setRemediating(false);
+            }, 2000);
+        } catch (err) {
+            console.error("Remediation failed:", err);
+            setRemediating(false);
+        }
+    };
 
     const activePolicy = (policies && policies.length > 0) ? (policies.find(p => p.id === selectedId) || policies[0]) : {};
 
@@ -41,6 +67,12 @@ export const ComplianceTerminal = () => {
     }
 
     if (error) {
+        if (needsReset) return (
+            <div className="flex-1 bg-[var(--layer-0)] animate-pulse flex items-center justify-center">
+                 <ShieldCheck className="text-[var(--accent)] opacity-20" size={64} />
+            </div>
+        );
+
         return (
             <div className="flex-1 flex flex-col items-center justify-center bg-[var(--layer-0)] text-[var(--danger)]">
                 <AlertTriangle className="mb-4" size={48} />
@@ -120,7 +152,7 @@ export const ComplianceTerminal = () => {
 
                     {/* Policy Rows */}
                     <div className="divide-y divide-[var(--border-subtle)]">
-                        {policies.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((p, idx) => (
+                        {(policies || []).filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((p, idx) => (
                             <div
                                 key={idx}
                                 onClick={() => setSelectedId(p.id)}
@@ -247,11 +279,18 @@ export const ComplianceTerminal = () => {
                         {/* Summary Action */}
                         {isAdmin ? (
                             <div className="mt-4 pt-4 border-t border-[var(--border-default)] flex gap-3">
-                                <button className="flex-1 py-1 px-3 bg-[var(--layer-2)] hover:bg-[var(--layer-3)] border border-[var(--border-default)] rounded text-[10px] font-bold text-[var(--text-primary)] transition-all">
+                                <button 
+                                    onClick={handleTriggerRescan}
+                                    className="flex-1 py-1 px-3 bg-[var(--layer-2)] hover:bg-[var(--layer-3)] border border-[var(--border-default)] rounded text-[10px] font-bold text-[var(--text-primary)] transition-all"
+                                >
                                     Update Policy
                                 </button>
-                                <button className={`flex-1 py-1 px-3 border rounded text-[10px] font-bold transition-all shadow-lg ${activePolicy.status === 'FAIL' ? 'bg-[var(--danger)] hover:bg-[#f86d67] border-[var(--danger)]' : 'bg-[var(--layer-2)] border-[var(--border-default)] hover:bg-[var(--layer-3)]'}`}>
-                                    {activePolicy.status === 'FAIL' ? 'REMEDIATE_NOW' : 'TRIGGER_RESCAN'}
+                                <button 
+                                    disabled={remediating}
+                                    onClick={() => handleRemediate()}
+                                    className={`flex-1 py-1 px-3 border rounded text-[10px] font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${activePolicy.status === 'FAIL' ? 'bg-[var(--danger)] hover:bg-[#f86d67] border-[var(--danger)] text-white' : 'bg-[var(--layer-2)] border-[var(--border-default)] hover:bg-[var(--layer-3)]'}`}
+                                >
+                                    {remediating ? <Activity className="animate-spin" size={14} /> : (activePolicy.status === 'FAIL' ? 'REMEDIATE_NOW' : 'TRIGGER_RESCAN')}
                                 </button>
                             </div>
                         ) : (

@@ -151,13 +151,12 @@ class PolicyModel(BaseModel):
     description: str
     required_role: str
     is_active: bool
-    version: int
-    policy_version: int
+    version: int                          # DB column name
     source_doc: Optional[str] = None
     created_at: str
-    modified_at: str
+    updated_at: Optional[str] = None      # DB column name (was modified_at)
     created_by: str
-    modified_by: str
+    modified_by: Optional[str] = None     # nullable in DB
 
 class PolicyUpdate(BaseModel):
     required_role: str

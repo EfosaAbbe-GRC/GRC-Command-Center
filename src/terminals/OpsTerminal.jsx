@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import GRCChatBot from '../components/GRCChatBot';
-import { Terminal, Activity, Play, RotateCcw, AlertOctagon, Cpu, Hash, Monitor, Shield, Layers, ShieldAlert, FileKey, Lock, Unlock, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
+import { Terminal, Activity, Play, RotateCcw, AlertOctagon, Cpu, Hash, Monitor, Shield, Layers, ShieldAlert, FileKey, Lock, Unlock, ChevronDown, ChevronUp, CheckCircle2, Database } from 'lucide-react';
 import { api } from '../lib/api';
 import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
@@ -13,6 +13,20 @@ export const OpsTerminal = () => {
     const [manualOutput, setManualOutput] = useState(null);
     const [stats, setStats] = useState({ running: 2, queued: 0, failed: 2 });
     const [showGovernance, setShowGovernance] = useState(false);
+
+    // Fetch Ingestion Status (RAG Sync)
+    const { data: ingestStatus } = useApiData('/ingest/status', {
+        pollInterval: 2000
+    });
+
+    const handleGlobalIngest = async () => {
+        if (!isAdmin) return;
+        try {
+            await api.post('/ingest');
+        } catch (err) {
+            console.error("Global Ingestion trigger failed:", err);
+        }
+    };
 
     // Fetch Operational Policies (IAM-10)
     const { data: policies, refresh: refreshPolicies } = useApiData('/admin/policies', {
@@ -113,6 +127,22 @@ export const OpsTerminal = () => {
                             <span className="text-[var(--accent)] font-mono font-bold text-sm tracking-tight">{stats.running}</span>
                         </div>
                         <div className="w-px h-4 bg-[var(--border-subtle)]" />
+                        
+                        {/* RAG Ingestion Status */}
+                        <div className="flex items-center gap-4">
+                            {isAdmin && (
+                                <button 
+                                    onClick={handleGlobalIngest}
+                                    disabled={ingestStatus?.status === 'processing'}
+                                    className={`px-3 py-1 rounded border text-[9px] font-bold font-mono transition-all flex items-center gap-2 ${ingestStatus?.status === 'processing' ? 'bg-[var(--accent-subtle)] text-[var(--accent)] border-[var(--accent-glow)] animate-pulse' : 'bg-[var(--layer-2)] border-[var(--border-default)] hover:bg-[var(--layer-3)] text-[var(--text-primary)]'}`}
+                                >
+                                    <Database size={12} strokeWidth={2.5} />
+                                    {ingestStatus?.status === 'processing' ? `INGESTING_${ingestStatus.progress || 0}%` : 'GLOBAL_INGEST'}
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="w-px h-4 bg-[var(--border-subtle)]" />
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-[var(--warning)]" />
                             <span className="text-[10px] font-mono font-bold text-[var(--text-tertiary)] uppercase tracking-widest">Queued</span>
@@ -139,7 +169,7 @@ export const OpsTerminal = () => {
                         </div>
 
                         <div className="divide-y divide-[var(--border-subtle)]">
-                            {jobs.map((job, idx) => (
+                            {(jobs || []).map((job, idx) => (
                                 <div
                                     key={job.id}
                                     onClick={() => setSelectedJob(job.id)}

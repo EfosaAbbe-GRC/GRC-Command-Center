@@ -95,6 +95,7 @@ async function fetchWithRetry(url, options = {}, retries = 3) {
                 
                 // IAM-08: Route security codes to the AuthContext callback
                 if (errorData.code && api.onSecurityError) {
+                    console.info(`API Security: Intercepted code [${errorData.code}]`);
                     api.onSecurityError(errorData.code);
                 }
                 
@@ -130,6 +131,17 @@ export const api = {
     post: (endpoint, data = {}, signal = null) =>
         fetchWithRetry(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data),
+            signal
+        }),
+
+    put: (endpoint, data = {}, signal = null) =>
+        fetchWithRetry(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 ...getAuthHeaders()
