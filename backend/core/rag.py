@@ -266,7 +266,7 @@ class RAGEngine:
 
         Auditor Response:"""
         prompt = ChatPromptTemplate.from_template(template)
-        model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=self.api_key)
+        model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=self.api_key)
 
         self.qa_chain = (
             prompt
