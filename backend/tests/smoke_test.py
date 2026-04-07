@@ -357,10 +357,14 @@ def run_smoke_tests():
          headers={"Authorization": "Bearer this.is.fake"})
 
     # ─── 12. Rate Limiting ───
+    # NOTE: Tests /chat endpoint, NOT /ingest.
+    # Hammering /ingest triggers a real 18K-split re-ingestion blocking backend 15+ min.
     print("\n── RATE LIMITING ──")
     rate_limited = False
-    for i in range(7):
-        r = requests.post(f"{V1}/ingest", headers=AUTH_HEADERS, timeout=60)
+    for i in range(12):
+        r = requests.post(f"{V1}/chat",
+                          json={"query": "rate limit test"},
+                          headers=AUTH_HEADERS, timeout=10)
         if r.status_code == 429:
             rate_limited = True
             break
@@ -369,7 +373,7 @@ def run_smoke_tests():
         print(f"  ✅ Rate limiting active — got 429 after {i + 1} requests")
     else:
         PASS += 1
-        print(f"  ✅ Ingest endpoint responding (rate limit may not trigger in fresh session)")
+        print(f"  ✅ Chat endpoint responding (rate limit threshold not reached in test window)")
 
     # ─── 13. Audit DB Immutability ───
     print("\n── AUDIT IMMUTABILITY ──")
@@ -377,7 +381,7 @@ def run_smoke_tests():
         import sqlite3
         import os
         db_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "data", "grc_audit.db"
+            os.path.dirname(os.path.dirname(__file__)), "..", "backend", "data", "grc_audit.db"
         )
         if os.path.exists(db_path):
             conn = sqlite3.connect(db_path)
