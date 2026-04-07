@@ -14,7 +14,7 @@ def test_iam_07():
     print("✅ Generated LOGIN_FAIL event")
 
     # 2. Login as admin to access audit
-    login_data_admin = {"username": "admin", "password": "grc-admin-final-2026"}
+    login_data_admin = {"username": "admin", "password": "grc-admin-2026"}
     resp = requests.post(login_url, json=login_data_admin)
     assert resp.status_code == 200, "Admin login failed"
     admin_token = resp.json()["access_token"]
@@ -29,10 +29,10 @@ def test_iam_07():
     assert len(events) > 0, "No events found in audit"
     
     # Verify the fail event we just generated is at the top (or near it)
-    # Note: Login fails are logged as 'anonymous' because session state isn't set yet
-    found_fail = any(ev["event_type"] == "LOGIN_FAIL" and ev["user"] == "anonymous" for ev in events[:5])
+    # Note: Login fails are logged with user_override using the attempted username
+    found_fail = any(ev["event_type"] == "LOGIN_FAIL" and ev["user"] == "admin" for ev in events[:5])
     assert found_fail, f"LOGIN_FAIL event not captured correctly. Events: {events[:3]}"
-    print("✅ Audit trail verified with LOGIN_FAIL (anonymous)")
+    print("✅ Audit trail verified with LOGIN_FAIL (admin)")
 
     # 4. Verify Admin-Only Gating (Login as viewer)
     login_data_viewer = {"username": "viewer", "password": "grc-viewer-2026"}

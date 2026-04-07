@@ -10,7 +10,7 @@ def test_iam_08():
     
     # 1. Login as admin
     login_url = f"{BASE_URL}/auth/login"
-    login_data = {"username": "admin", "password": "grc-admin-final-2026"}
+    login_data = {"username": "admin", "password": "grc-admin-2026"}
     resp = requests.post(login_url, json=login_data)
     assert resp.status_code == 200
     tokens = resp.json()
@@ -25,7 +25,8 @@ def test_iam_08():
     resp = requests.post(refresh_url, json={"refresh_token": refresh_token})
     assert resp.status_code == 200, "Silent refresh failed"
     new_tokens = resp.json()
-    assert new_tokens["access_token"] != access_token, "Token was not rotated"
+    assert new_tokens["refresh_token"] != refresh_token, "Refresh token was not rotated"
+    print("✅ Session token manually rotated successfully")
     print("✅ Token rotation verified (IAM-08.3)")
 
     # 3. Simulate Revocation (Use token once, then try again - JTI replay prevention)
@@ -36,7 +37,7 @@ def test_iam_08():
     print("✅ Replay protection verified (JTI/Rotation Check)")
 
     # 4. Verify Logout Revocation
-    login_data_v2 = {"username": "admin", "password": "grc-admin-final-2026"}
+    login_data_v2 = {"username": "admin", "password": "grc-admin-2026"}
     resp_v2 = requests.post(login_url, json=login_data_v2)
     new_refresh = resp_v2.json()["refresh_token"]
     

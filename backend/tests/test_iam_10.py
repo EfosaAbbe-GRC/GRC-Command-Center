@@ -28,9 +28,9 @@ def test_iam_10_agent_sync():
 
     # 4. Elevate RAG_QUERY to Admin Only
     print("[4] Elevating RAG_QUERY dependency to 'admin' only...")
-    policies = requests.get("http://localhost:8001/admin/policies", headers=admin_headers).json()
+    policies = requests.get(f"{BASE_URL}/admin/policies", headers=admin_headers).json()
     rag_policy = next(p for p in policies if p["name"] == "RAG_QUERY")
-    update_res = requests.put(f"http://localhost:8001/admin/policies/{rag_policy['id']}", 
+    update_res = requests.put(f"{BASE_URL}/admin/policies/{rag_policy['id']}", 
                              json={"required_role": "admin", "is_active": True},
                              headers=admin_headers)
     
@@ -55,7 +55,7 @@ def test_iam_10_agent_sync():
 
     # 7. Restore RAG_QUERY for analysts
     print("[7] Restoring analyst access...")
-    requests.put(f"http://localhost:8001/admin/policies/{rag_policy['id']}", 
+    requests.put(f"{BASE_URL}/admin/policies/{rag_policy['id']}", 
                 json={"required_role": "analyst", "is_active": True},
                 headers=admin_headers)
     

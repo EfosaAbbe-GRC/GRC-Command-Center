@@ -63,5 +63,13 @@ def test_iam_05():
     assert data["must_change_password"] is False, "Flag not cleared after password change"
     print("✅ Password lifecycle cycle COMPLETE")
 
+    # 8. Revert password for subsequent tests
+    change_data_revert = {
+        "old_password": "grc-admin-new-2026",
+        "new_password": "grc-admin-2026"
+    }
+    requests.post(change_url, headers=headers, json=change_data_revert)
+    print("✅ Reverted password to original for the next tests")
+
 if __name__ == "__main__":
     test_iam_05()
