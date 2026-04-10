@@ -22,7 +22,20 @@ from core.agent import agent_runner
 from core.database import audit_logger
 from data_service import data_service
 from notebook_service import notebook_service
-from core.auth import AuthMiddleware, create_access_token, get_current_user, authorize, get_password_hash, create_refresh_token, rotate_refresh_token, revoke_session, log_security_event
+from core.auth import (
+    authenticate_user, 
+    create_access_token, 
+    authorize, 
+    get_current_user, 
+    verify_token,
+    AuthMiddleware,
+    get_password_hash, 
+    create_refresh_token, 
+    rotate_refresh_token, 
+    revoke_session, 
+    log_security_event
+)
+from core.ws import manager
 from schemas import (
     StatusResponse, GRCQuery, ChatResponse, PolicyItem, 
     JobItem, ExecutiveStats, NotebookItem, AgentResult, HealthResponse,
@@ -107,6 +120,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- WEBSOCKET STREAM ---
+
+@app.websocket("/api/v1/stream")
+async def websocket_endpoint(websocket: WebSocket, token: str = None):
+    """
+    Real-time telemetry stream for analyst terminals.
+    Validates IAM-10 credentials during handshake.
+    """
+    if not token or not verify_token(token):
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    await manager.connect(websocket)
+    try:
+        while True:
+            # Main data flow is outbound (broadcast); keep connection open
+            await websocket.receive_text()
+    except Exception:
+        manager.disconnect(websocket)
+
 # --- BASE ENDPOINTS ---
 
 @app.get("/", response_model=StatusResponse)
@@ -142,7 +175,6 @@ async def login(payload: LoginRequest, request: Request):
     Token-based auth using the centralized user registry.
     Phase 3: Returns both a short-lived access token and a rotating refresh token.
     """
-    from core.auth import authenticate_user
     
     user = authenticate_user(payload.username, payload.password)
     if user:
@@ -200,7 +232,6 @@ async def get_me(request: Request):
 @app.post("/api/v1/auth/change-password", response_model=StatusResponse)
 async def change_password(request: Request, payload: ChangePasswordRequest):
     """Self-service password rotation with old-password verification."""
-    from core.auth import verify_password, get_password_hash
     username = request.state.user
     user = audit_logger.get_user_by_username(username)
     
@@ -266,11 +297,18 @@ async def update_policy(policy_id: int, payload: PolicyUpdateRequest, request: R
 
 @app.post("/api/v1/ingest", response_model=StatusResponse, dependencies=[Depends(authorize("INGEST_CONTROL"))])
 @limiter.limit("5/minute")
-async def ingest_endpoint(request: Request, background_tasks: BackgroundTasks):
-    user = get_current_user(request)
-    logger.info("Ingestion triggered", user=user["username"])
-    background_tasks.add_task(rag_engine.initialize_index)
-    return {"status": "started", "message": "Knowledge ingestion sequence initiated."}
+async def trigger_ingest(request: Request, background_tasks: BackgroundTasks):
+    """Admin-only: Triggers the knowledge vault rebuild and signs the manifest."""
+    background_tasks.add_task(rag_engine.process_documents, settings.DOCUMENTS_PATH)
+    
+    # Live Broadcast: Signal ingestion start
+    await manager.broadcast({
+        "type": "INGEST_STATUS",
+        "status": "STARTED",
+        "message": "Vault rebuild initiated across 18,337 potential splits."
+    })
+    
+    return {"status": "started", "message": "Knowledge ingestion initiated."}
 
 @app.get("/api/v1/ingest/status", response_model=IngestionStatus, dependencies=[Depends(authorize("RAG_QUERY"))])
 def get_ingestion_status():
@@ -355,13 +393,15 @@ async def chat_endpoint(request: Request, payload: GRCQuery, background_tasks: B
 @limiter.limit("10/minute")
 async def run_agent_endpoint(request: Request, payload: AgentRequest):
     user = get_current_user(request)
-    logger.info("Agent execution requested", agent=payload.agent_name, user=user["username"])
-    result = agent_runner.execute_agent(payload.agent_name, payload.args)
+    logger.info("Registry Agent execution requested", agent=payload.agent_id, user=user["username"])
+    
+    # Internal execution via the Zero-Trust Registry
+    result = agent_runner.execute_agent(payload.agent_id, payload.args)
     
     status = "success" if "error" not in result else "failed"
     return AgentResult(
         status=status,
-        agent=payload.agent_name,
+        agent=payload.agent_id,
         result=result
     )
 

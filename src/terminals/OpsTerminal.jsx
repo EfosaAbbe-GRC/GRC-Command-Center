@@ -5,6 +5,7 @@ import { api } from '../lib/api';
 import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
 import { useAuth } from '../contexts/useAuth';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 export const OpsTerminal = () => {
     const { user } = useAuth();
@@ -15,9 +16,7 @@ export const OpsTerminal = () => {
     const [showGovernance, setShowGovernance] = useState(false);
 
     // Fetch Ingestion Status (RAG Sync)
-    const { data: ingestStatus } = useApiData('/ingest/status', {
-        pollInterval: 2000
-    });
+    const { data: ingestStatus, refresh: refreshIngest } = useApiData('/ingest/status');
 
     const handleGlobalIngest = async () => {
         if (!isAdmin) return;
@@ -29,9 +28,7 @@ export const OpsTerminal = () => {
     };
 
     // Fetch Operational Policies (IAM-10)
-    const { data: policies, refresh: refreshPolicies } = useApiData('/admin/policies', {
-        pollInterval: 10000
-    });
+    const { data: policies, refresh: refreshPolicies } = useApiData('/admin/policies');
 
     const updatePolicy = async (policyId, updates) => {
         try {
@@ -43,7 +40,6 @@ export const OpsTerminal = () => {
     };
 
     const { data: jobs, loading, error, refresh } = useApiData('/ops/jobs', {
-        pollInterval: 5000,
         onSuccess: (resData) => {
             if (resData.length > 0) {
                 if (!selectedJob) setSelectedJob(resData[0].id);
@@ -54,6 +50,17 @@ export const OpsTerminal = () => {
                 const failed = resData.filter(j => j.status === 'FAILED').length;
                 setStats({ running, queued, failed });
             }
+        }
+    });
+
+    // Real-time Event Stream
+    const { connected } = useWebSocket(user?.access_token, (message) => {
+        if (message.type === 'INGEST_STATUS') {
+            refreshIngest();
+        } else if (message.type === 'JOB_STATUS') {
+            refresh();
+        } else if (message.type === 'POLICY_UPDATE') {
+            refreshPolicies();
         }
     });
 
@@ -210,7 +217,9 @@ export const OpsTerminal = () => {
                             <span className="font-bold text-[var(--text-primary)] flex items-center gap-2.5 text-[10px] tracking-[0.2em] font-display uppercase">
                                 <Terminal size={14} className="text-[var(--accent)]" /> OPERATIONAL_CONSOLE // <span className="text-[var(--accent)] font-mono">{activeJob.id}</span>
                             </span>
-                            <div className="px-2 py-0.5 bg-[var(--accent-subtle)] border border-[var(--accent-glow)] rounded text-[8px] font-bold text-[var(--accent)] animate-pulse">ACTIVE_STREAM</div>
+                             <div className={`px-2 py-0.5 rounded text-[8px] font-bold shadow-sm ${connected ? 'bg-[var(--accent-subtle)] border border-[var(--accent-glow)] text-[var(--accent)] animate-pulse' : 'bg-[var(--danger-subtle)] border border-[var(--danger)] text-[var(--danger)]'}`}>
+                                {connected ? 'ACTIVE_STREAM' : 'STREAM_OFFLINE'}
+                             </div>
                         </div>
                         <div className="flex gap-1 items-center">
                             {isAdmin ? (
@@ -406,9 +415,9 @@ export const OpsTerminal = () => {
                      <span className="font-mono">PID: 8821</span>
                 </div>
                 <div className="flex items-center gap-4">
-                    <span className="animate-pulse flex items-center gap-2">
-                        <Activity size={10} className="text-[var(--accent)]" />
-                        SYNC_ACTIVE
+                    <span className={`flex items-center gap-2 ${connected ? 'text-[var(--accent)] animate-pulse' : 'text-[var(--danger)]'}`}>
+                        <Activity size={10} />
+                        {connected ? 'SYNC_ACTIVE' : 'SYNC_LOST'}
                     </span>
                     <span className="text-[var(--border-subtle)]">|</span>
                     <span className="font-mono">{new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</span>

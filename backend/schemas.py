@@ -59,6 +59,14 @@ class NotebookItem(BaseModel):
     path: Optional[str] = None
     children: Optional[List['NotebookItem']] = None
 
+class AgentRunRequest(BaseModel):
+    """
+    Strictly validated request model for agent execution (Rule #3).
+    Enforces alphanumeric IDs to prevent injection at the routing layer.
+    """
+    agent_id: str = Field(..., pattern="^[a-z0-9_-]+$", description="The unique identifier for the registered agent.")
+    args: Dict[str, Any] = Field(default_factory=dict, description="Key-value pairs for agent parameters.")
+
 class AgentResult(BaseModel):
     status: str
     agent: str

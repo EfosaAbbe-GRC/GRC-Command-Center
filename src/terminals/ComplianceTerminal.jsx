@@ -4,6 +4,7 @@ import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/useAuth';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 export const ComplianceTerminal = () => {
     const { user, needsReset } = useAuth();
@@ -18,6 +19,13 @@ export const ComplianceTerminal = () => {
             if (resData.length > 0 && !selectedId) {
                 setSelectedId(resData[0].id);
             }
+        }
+    });
+
+    // Real-time Telemetry: Refresh on broadcast events
+    const { connected } = useWebSocket(user?.access_token, (message) => {
+        if (message.type === 'INGEST_STATUS' && message.status === 'COMPLETED') {
+            refresh();
         }
     });
 
@@ -194,9 +202,9 @@ export const ComplianceTerminal = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-3 text-[10px] text-[var(--text-tertiary)] font-mono font-bold">
-                        <div className="flex items-center gap-1.5 text-[var(--success)]">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] glow-success animate-pulse" />
-                            SECURE_REAL_TIME_STREAM
+                        <div className={`flex items-center gap-1.5 ${connected ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-[var(--success)] glow-success animate-pulse' : 'bg-[var(--danger)]'}`} />
+                            {connected ? 'SECURE_REAL_TIME_STREAM' : 'STREAM_OFFLINE_RECONNECTING'}
                         </div>
                     </div>
                 </div>
@@ -310,9 +318,9 @@ export const ComplianceTerminal = () => {
                     <span className="h-3 w-px bg-[var(--border-subtle)]" />
                     <span className="tracking-[0.2em] font-mono">OBJECT_POOL: {policies.length}</span>
                 </div>
-                <div className="flex items-center gap-2 text-[#0ea5e9]">
-                    <Activity size={10} className="animate-pulse" />
-                    <span className="tracking-[0.1em]">LIVE TELEMETRY // {new Date().toLocaleTimeString()}</span>
+                <div className={`flex items-center gap-2 ${connected ? 'text-[#0ea5e9]' : 'text-[var(--danger)]'}`}>
+                    <Activity size={10} className={connected ? "animate-pulse" : ""} />
+                    <span className="tracking-[0.1em]">{connected ? 'LIVE TELEMETRY' : 'SIGNAL_LOST'} // {new Date().toLocaleTimeString()}</span>
                 </div>
             </footer>
         </div>

@@ -1,0 +1,103 @@
+# ─── GRC Command Center — Hardened Scaling Architecture (v2) ───────────────────
+# Features: PostgreSQL 16, Automated Backups, WebSocket Streams
+# Run: docker compose -f docker-compose-v2.yml up --build
+
+services:
+
+  # ── PostgreSQL Database ─────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: grc-db-pg
+    restart: unless-stopped
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: grc_audit
+      POSTGRES_USER: ${POSTGRES_USER:-grc_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grc_password_2026}
+    volumes:
+      - grc-db-data:/var/lib/postgresql/data
+    networks:
+      - grc-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grc_admin} -d grc_audit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Automated Backup Service (GRC Retention) ────────────────────────────────
+  db-backup:
+    image: prodrigestivill/postgres-backup-local:16-alpine
+    container_name: grc-db-backup
+    restart: unless-stopped
+    user: postgres:postgres
+    volumes:
+      - grc-db-backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: grc_audit
+      POSTGRES_USER: ${POSTGRES_USER:-grc_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grc_password_2026}
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 30
+      BACKUP_KEEP_WEEKS: 4
+    networks:
+      - grc-net
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: grc-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-grc_admin}:${POSTGRES_PASSWORD:-grc_password_2026}@db:5432/grc_audit
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DOCUMENTS_PATH=/app/GRC_Analyst
+      - AUTH_ENABLED=true
+    volumes:
+      - grc-faiss:/app/faiss_index
+      - "${DOCUMENTS_PATH}:/app/GRC_Analyst:ro"
+    networks:
+      - grc-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: grc-frontend
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - grc-net
+
+volumes:
+  grc-db-data:
+    driver: local
+  grc-db-backups:
+    driver: local
+  grc-faiss:
+    driver: local # Adjusted for local deployment sync
+
+networks:
+  grc-net:
+    driver: bridge
