@@ -11,6 +11,7 @@ The core models will be transitioned to SQLAlchemy 2.0 `DeclarativeBase`. The Pr
 In PostgreSQL, triggers require a separate function. We will implement a centralized security function to enforce the "Deny-by-Default" rule on the audit trail.
 
 ### Security Function
+
 ```sql
 CREATE OR REPLACE FUNCTION fn_prevent_audit_modification()
 RETURNS TRIGGER AS $$
@@ -21,6 +22,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 ### Trigger Bindings
+
 The following triggers must be applied to `audit_logs`, `evidence_chain`, and `security_events`:
 
 ```sql
@@ -43,10 +45,10 @@ FOR EACH ROW EXECUTE FUNCTION fn_prevent_audit_modification();
 
 Per the Supervisor's instruction, a custom Python script will perform a one-time "Extract, Transform, Load" (ETL) operation:
 
-1.  **Extract**: Connect to `grc_audit.db` via `sqlite3`.
-2.  **Transform**: Map SQLite `TEXT` (ISO timestamps) to PostgreSQL `TIMESTAMP`.
-3.  **Load**: Batch insert into the PostgreSQL container using `asyncpg` to ensure data integrity.
-4.  **Verify**: Perform a count-check on both databases to ensure 100% record parity before decommissioning the SQLite volume.
+1. **Extract**: Connect to `grc_audit.db` via `sqlite3`.
+2. **Transform**: Map SQLite `TEXT` (ISO timestamps) to PostgreSQL `TIMESTAMP`.
+3. **Load**: Batch insert into the PostgreSQL container using `asyncpg` to ensure data integrity.
+4. **Verify**: Perform a count-check on both databases to ensure 100% record parity before decommissioning the SQLite volume.
 
 ## 4. Volume Persistence Verification
 

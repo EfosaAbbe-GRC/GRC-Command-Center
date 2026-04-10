@@ -29,7 +29,6 @@ services:
     image: prodrigestivill/postgres-backup-local:16-alpine
     container_name: grc-db-backup
     restart: unless-stopped
-    user: postgres:postgres
     volumes:
       - grc-db-backups:/backups
     depends_on:

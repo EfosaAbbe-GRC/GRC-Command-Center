@@ -10,8 +10,9 @@ export const useWebSocket = (token, onMessage) => {
     const socketRef = useRef(null);
     const onMessageRef = useRef(onMessage);
 
-    // Keep onMessage callback stable
-    onMessageRef.current = onMessage;
+    useEffect(() => {
+        onMessageRef.current = onMessage;
+    }, [onMessage]);
 
     const connect = useCallback(() => {
         if (!token) return;
@@ -57,11 +58,10 @@ export const useWebSocket = (token, onMessage) => {
             
             setTimeout(() => {
                 setRetryCount(prev => prev + 1);
-                connect();
             }, timeout);
         };
 
-        ws.onerror = (err) => {
+        ws.onerror = () => {
             console.error("WebSocket_Fault: Connection error detected.");
             ws.close();
         };

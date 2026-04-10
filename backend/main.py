@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks, Request, Response, HTTPException, Depends
+from fastapi import FastAPI, BackgroundTasks, Request, Response, HTTPException, Depends, WebSocket, status
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
@@ -156,7 +156,7 @@ def health_check():
     checks = {
         "api": "healthy",
         "rag": "healthy" if rag_engine.api_key else "degraded",
-        "agent_registry": "healthy" if len(agent_runner.approved_agents) > 0 else "error",
+        "agent_registry": "healthy" if len(agent_runner.get_approved_agents()) > 0 else "error",
         "database": "healthy" if os.path.exists(audit_logger.db_path) else "degraded",
         "faiss_index": "healthy" if os.path.exists("faiss_index") else "not_indexed",
         "auth": "enforced" if settings.AUTH_ENABLED else "disabled",

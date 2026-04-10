@@ -53,5 +53,9 @@ class InternalAgentRunner:
             logger.error("Internal Agent Execution Fault", agent_id=agent_id, error=str(e))
             return {"error": f"Internal Execution Error: {str(e)}"}
 
+    def get_approved_agents(self) -> list:
+        """Returns the list of currently registered zero-trust agent identifiers."""
+        return list(self._registry.keys())
+
 # Singleton Instance for application-wide injection
 agent_runner = InternalAgentRunner(AGENT_REGISTRY)
