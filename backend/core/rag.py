@@ -294,7 +294,7 @@ class RAGEngine:
         # 1. Explicit Retrieval
         try:
             # Similarity search is currently synchronous in FAISS-cpu
-            docs = self.vector_store.similarity_search(text, k=3)
+            docs = self.vector_store.similarity_search(text, k=5)
             context_text = "\n\n".join([d.page_content for d in docs])
             
             # 2. Extract Sources
