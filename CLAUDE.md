@@ -1,109 +1,117 @@
 # GRC Command Center — CLAUDE.md
+
 ## System Reference for AI-Assisted Development
-**Version:** 1.1.0 (Containerized Production Candidate)
-**Last Updated:** 2026-04-04
+
+**Version:** 1.2.0 (High-Concurrency Production Hardened)
+**Last Updated:** 2026-04-10
 
 ---
 
 ## System Overview
-GRC.OS is an agentic Governance, Risk, and Compliance platform that orchestrates AI-powered document analysis, autonomous compliance checking, and real-time executive visibility. Built for high-density security auditing, the system enforces zero-trust access control, immutability of audit trails via database triggers, and a "Deny-by-Default" governance model for all agentic AI actions.
+
+GRC.OS is an agentic Governance, Risk, and Compliance platform that orchestrates AI-powered document analysis, autonomous compliance checking, and real-time executive visibility. Built for high-density security auditing, the system enforces zero-trust access control, immutability of audit trails via PL/pgSQL database triggers, and a "Deny-by-Default" governance model for all agentic AI actions.
 
 ---
 
 ## Architecture
 
-```
-GRC Command Center v1.1.0
+```text
+GRC Command Center v1.2.0
 ├── Backend: FastAPI (Python 3.11, port 8001)
 │   ├── LLM: Google Gemini 2.0 Flash
 │   ├── Embeddings: text-embedding-004
 │   ├── Vector Store: FAISS (with SHA-256 integrity hashing)
-│   ├── Database: SQLite (grc_audit.db) - Mounted Volume
+│   ├── Database: PostgreSQL 16 (High-Concurrency)
 │   ├── Auth: JWT (Access + Refresh Rotation)
+│   ├── Agent Registry: Zero-Trust Python Handlers (Eradicated subprocess)
 │   └── Policy Engine: Capability-based RBAC
 │
 ├── Frontend: React 19 + Vite 7 + Tailwind CSS v4
 │   ├── UI: "Enterprise Command Authority" Design System
 │   ├── Logic: AuthContext + useAuth Hook (Modularized)
-│   └── Comms: api.js (Retry + Refresh + Polling)
+│   └── Comms: Synchronous Event Bus (WebSocket @ /api/v1/stream)
 │
-└── Orchestration: Docker Compose
+└── Orchestration: Docker Compose (v2)
     ├── grc-backend: Python 3.11-slim
-    └── grc-frontend: Nginx Alpine (Multi-stage build)
+    ├── grc-frontend: Nginx Alpine (Multi-stage build)
+    ├── grc-db-pg: PostgreSQL 16
+    └── grc-db-backup: Automated Daily Backups
 ```
 
 ---
 
 ## File Structure
 
-```
+```text
 GRC_Command_Center/
 ├── backend/
 │   ├── main.py                    # Root FastAPI application & endpoint registry
 │   ├── core/
+│   │   ├── agent.py               # InternalAgentRunner: Zero-Trust Registry Pattern
 │   │   ├── auth.py                # JWT, RBAC middleware, and policy enforcement
 │   │   ├── config.py              # Pydantic Settings and environment configuration
-│   │   ├── database.py            # AuditLogger: SQLite schema and immutable triggers
+│   │   ├── database.py            # AuditLogger: SQLAlchemy 2.0 / PostgreSQL integration
 │   │   ├── logger.py              # Structured JSON logging with Correlation IDs
-│   │   └── rag.py                 # RAGEngine: FAISS indexing and Gemini orchestration
+│   │   ├── rag.py                 # RAGEngine: FAISS indexing and Gemini orchestration
+│   │   └── ws.py                  # ConnectionManager: WebSocket synchronization
 │   ├── data/
-│   │   └── grc_audit.db           # SQLite Audit Database (Mounted Volume)
-│   ├── requirements.txt           # Backend dependencies (Pinned: 2.12.0)
+│   │   └── data_fixtures.py       # Initial GRC seeding logic
+│   ├── requirements.txt           # Backend dependencies
 │   └── tests/
 │       └── smoke_test.py          # Primary functional endpoint verification
 │
 ├── src/
 │   ├── App.jsx                    # Root component with Auth and Reset gates
 │   ├── contexts/
-│   │   ├── useAuth.js             # AuthContext creation and useAuth Hook (Fast Refresh Safe)
+│   │   ├── useAuth.js             # AuthContext creation and useAuth Hook
 │   │   └── AuthContext.jsx        # AuthProvider component logic
+│   ├── hooks/
+│   │   ├── useWebSocket.js        # Exponential backoff telemetry hook
+│   │   └── useApiData.js          # REST data fetching hook
 │   ├── lib/
 │   │   └── api.js                 # Unified API client with automatic refresh
 │   └── terminals/
-│       ├── ComplianceTerminal.jsx  # Policy management and framework mapping
-│       ├── ExecutiveTerminal.jsx   # High-level KPIs and security audit history
-│       ├── OpsTerminal.jsx        # Job oversight and agent execution
+│       ├── ComplianceTerminal.jsx  # Policy management (WebSocket synced)
+│       ├── ExecutiveTerminal.jsx   # High-level KPIs
+│       ├── OpsTerminal.jsx        # Job oversight (WebSocket synced)
 │       └── KnowledgeTerminal.jsx  # Vector store and document metadata
 │
 ├── Dockerfile.backend             # Production backend build
 ├── Dockerfile.frontend            # Production frontend build (Nginx)
-├── docker-compose.yml             # Service orchestration and volumes
-└── .gitignore                     # Production-hardened exclusion manifest
+├── docker-compose-v2.yml          # Production-hardened orchestration (Postgres)
+└── GOVERNANCE.md                  # Project Root: Immutable Prime Directive
 ```
 
 ---
 
 ## Build, Run & Test Commands
-- **Containerized Run (Recommended):** `docker compose up --build`
+
+- **Production Boot (Hardened):** `docker compose -f docker-compose-v2.yml up --build`
 - **Backend Dev:** `cd backend && python main.py` (Port 8001)
 - **Frontend Dev:** `npm run dev` (Port 3006)
-- **Smoke Test (Auth-Aware):** `python backend/tests/smoke_test.py`
-- **Backend Linting:** `flake8 backend/`
-- **Frontend Linting:** `npm run lint`
+- **Deployment Smoke Test:** `python backend/tests/smoke_test.py`
+- **Lints:** `flake8 backend/`, `npm run lint`
 
 ---
 
-## Authentication & Authorization
+## Key technical Decisions
 
-### Flow
-1. Login via `POST /api/v1/auth/login` (Returns Access + Refresh pair).
-2. Frontend imports `useAuth` from `src/contexts/useAuth.js`.
-3. `AuthProvider` manages state in `src/contexts/AuthContext.jsx`.
-4. `AuthMiddleware` verifies JWT and attaches user metadata to `request.state`.
+### 1. Infrastructure Scaling
+- **PostgreSQL 16**: Migrated from SQLite to support multi-agent concurrency and row-level locking.
+- **Automated Backups**: Integrated `postgres-backup-local` for daily GRC record persistence.
 
-### Role Hierarchy
-`admin` (3) > `analyst` (2) > `viewer` (1)
+### 2. Zero-Trust Security
+- **Subprocess Eradication**: Replaced `subprocess.run()` with a hardcoded `AGENT_REGISTRY` in `core/agent.py`.
+- **PL/pgSQL Triggers**: Implemented `fn_prevent_audit_modification` to enforce audit trail immutability at the engine level.
 
----
-
-## Key Technical Decisions
-- **Fast Refresh Compliance**: Split `AuthContext` into a hook file (`useAuth.js`) and a provider file (`AuthContext.jsx`) to avoid Vite build/HMR errors.
-- **Path Abstraction**: `Settings` class in `config.py` now uses environment-aware paths for `DOCUMENTS_PATH` and `DATABASE_PATH`.
-- **Permission Enforcement**: `Dockerfile.backend` explicitly enforces `chmod 755` on persistent data volumes to prevent SQLite permission locks.
+### 3. Real-Time Telemetry
+- **WebSocket Event Bus**: Replaced 5s polling with a synchronous stream at `/api/v1/stream`.
+- **Decoupled Lifecycle**: WebSocket state is isolated from `useAuth` to prevent Vite Fast Refresh collisions.
 
 ---
 
 ## Audit History
+
+- **Hardening (Current Session)**: SQLite to Postgres migration complete. WebSocket event bus established. Zero-Trust Agent Registry implemented.
+- **Phase B**: Production-ready containerization completed. Fixed dependency conflicts and pathing resolution.
 - **Phase A**: Auth-aware smoke test (27/27), lifespan-ordered seeding, immutability triggers verified.
-- **Phase B**: Production-ready containerization completed. Fixed dependency conflicts, pathing resolution, and frontend HMR logic.
-- **Hardening**: Health check verified at `status: healthy` across all subsystems.

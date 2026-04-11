@@ -23,10 +23,10 @@ All architectural decisions and code generation must strictly adhere to the foll
 
 Security is the primary directive. Agents must operate under a **Deny-by-Default** philosophy.
 
-1.  **Zero-Trust Execution:** The use of `subprocess.run()` or any arbitrary shell execution is strictly prohibited. All agents must be registered and executed via the internal `AGENT_REGISTRY` mapping.
-2.  **Audit Immutability:** The audit trail (`audit_logs`, `evidence_chain`) must remain append-only. This is enforced at the database level via PL/pgSQL triggers (`fn_prevent_audit_modification`). Do not attempt to bypass this.
-3.  **Strict Authentication:** All real-time telemetry and API endpoints must validate IAM-10 JWT credentials. WebSockets must handshake via the `?token=` query parameter before upgrading the connection.
-4.  **Vault Preservation:** Docker volumes containing the `faiss_index` must always be treated as `external: true` or explicitly preserved during infrastructure modifications.
+1. **Zero-Trust Execution:** The use of `subprocess.run()` or any arbitrary shell execution is strictly prohibited. All agents must be registered and executed via the internal `AGENT_REGISTRY` mapping.
+2. **Audit Immutability:** The audit trail (`audit_logs`, `evidence_chain`) must remain append-only. This is enforced at the database level via PL/pgSQL triggers (`fn_prevent_audit_modification`). Do not attempt to bypass this.
+3. **Strict Authentication:** All real-time telemetry and API endpoints must validate IAM-10 JWT credentials. WebSockets must handshake via the `?token=` query parameter before upgrading the connection.
+4. **Vault Preservation:** Docker volumes containing the `faiss_index` must always be treated as `external: true` or explicitly preserved during infrastructure modifications.
 
 ---
 
@@ -49,9 +49,9 @@ To prevent context contamination and ensure human-in-the-loop oversight, agents 
 
 No agent is permitted to write directly to production files without prior authorization.
 
-1.  **Draft:** Output proposed code changes as a Markdown Diff Artifact (e.g., `[Feature]_refactor.md`).
-2.  **Review:** Await explicit human/supervisor approval of the artifact.
-3.  **Deploy:** Apply changes to the source code only after receiving the "EXECUTE" command.
+1. **Draft:** Output proposed code changes as a Markdown Diff Artifact (e.g., `[Feature]_refactor.md`).
+2. **Review:** Await explicit human/supervisor approval of the artifact.
+3. **Deploy:** Apply changes to the source code only after receiving the "EXECUTE" command.
 
 ### B. Skill Encapsulation
 

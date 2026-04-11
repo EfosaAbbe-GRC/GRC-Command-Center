@@ -30,6 +30,7 @@ from core.auth import (
     verify_token,
     AuthMiddleware,
     get_password_hash, 
+    verify_password,
     create_refresh_token, 
     rotate_refresh_token, 
     revoke_session, 
