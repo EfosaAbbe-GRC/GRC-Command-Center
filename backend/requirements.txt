@@ -21,6 +21,11 @@ langchain-google-genai>=2.0.0
 langchain-huggingface>=0.1.0
 sentence-transformers>=3.0.1
 
+# --- Database / ORM (PostgreSQL 16) ---
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+greenlet>=3.0.0
+
 # --- Vector Store ---
 faiss-cpu==1.13.2
 

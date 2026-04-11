@@ -54,6 +54,7 @@ npm run dev
 ## Security & Governance
 
 This platform operates under the **GRC.OS Prime Directive**:
+
 - **Zero-Trust**: No arbitrary code execution via subprocess. Everything is registered in the `InternalAgentRunner`.
 - **Immutability**: Audit trails are protected by PL/pgSQL triggers that prevent all `UPDATE` or `DELETE` operations on core GRC tables.
 - **Synchronous Telemetry**: No polling allowed. All data updates are pushed via the custom `useWebSocket` hook.

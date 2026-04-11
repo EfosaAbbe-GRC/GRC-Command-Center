@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # Paths
     DOCUMENTS_PATH: str = os.getenv("DOCUMENTS_PATH", "GRC_Analyst")
     DATABASE_PATH: str = os.getenv("DATABASE_PATH", os.path.join("data", "grc_audit.db"))
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://grc_admin:grc_password_2026@localhost:5432/grc_audit")
     
     # AI
     GOOGLE_API_KEY: str = ""

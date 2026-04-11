@@ -42,57 +42,59 @@ from schemas import (
     JobItem, ExecutiveStats, NotebookItem, AgentResult, HealthResponse,
     LoginRequest, TokenResponse, TokenRefreshRequest, DocumentItem, DashboardStats,
     FrameworkMappingResponse, EvidenceRecord, IngestionStatus, ReadinessResponse,
-    ChangePasswordRequest, PolicyModel, PolicyUpdate, AgentRequest
+    ChangePasswordRequest, PolicyModel, PolicyUpdate, AgentRunRequest
 )
 
 @asynccontextmanager
 async def lifespan(app):
-    logger.info("System startup", version=settings.VERSION, mode="PRODUCTION_READY")
+    logger.info("System startup", version=settings.VERSION, mode="POSTGRES_V2")
     
-    # Seed user registry (Phase 2 Hardening)
-    if not audit_logger.get_user_by_username(settings.ADMIN_USERNAME):
-        logger.info("Security: Seeding initial user registry from secrets/.env", user=settings.ADMIN_USERNAME)
-        audit_logger.create_user(
-            settings.ADMIN_USERNAME, 
-            get_password_hash(settings.ADMIN_PASSWORD), 
-            "admin"
-        )
-        audit_logger.create_user(
-            settings.ANALYST_USERNAME, 
-            get_password_hash(settings.ANALYST_PASSWORD), 
-            "analyst"
-        )
-        audit_logger.create_user(
-            settings.VIEWER_USERNAME, 
-            get_password_hash(settings.VIEWER_PASSWORD), 
-            "viewer"
-        )
+    # Initialize PostgreSQL schema + SECURITY DEFINER triggers
+    await audit_logger.init_db()
+    
+    # Seed user registry (Phase 2 Hardening) — use async methods directly
+    from core.database import AsyncSessionLocal
+    async with AsyncSessionLocal() as session:
+        from sqlalchemy import select
+        from core.models import User as UserModel, Policy as PolicyModel
+        
+        # Seed each user independently — prevents partial-seed gaps from prior boots
+        for uname, upass, urole in [
+            (settings.ADMIN_USERNAME, settings.ADMIN_PASSWORD, "admin"),
+            (settings.ANALYST_USERNAME, settings.ANALYST_PASSWORD, "analyst"),
+            (settings.VIEWER_USERNAME, settings.VIEWER_PASSWORD, "viewer"),
+        ]:
+            result = await session.execute(select(UserModel).where(UserModel.username == uname))
+            if not result.scalar_one_or_none():
+                logger.info("Security: Seeding user", user=uname, role=urole)
+                session.add(UserModel(username=uname, hashed_password=get_password_hash(upass), role=urole))
+        await session.commit()
 
-    # Seed Strategic Policy Engine (IAM-09) — runs after DB is guaranteed initialized
-    _seed_initial_policies()
+        # Seed Strategic Policy Engine (IAM-09)
+        policies = [
+            ("AUDIT_VIEW",      "Review the security identity audit trail",          "admin"),
+            ("INGEST_CONTROL",  "Trigger global database and document ingestion",     "admin"),
+            ("AGENT_EXECUTE",   "Trigger autonomous AI agent execution",              "admin"),
+            ("RAG_QUERY",       "Interact with the RAG Co-Pilot system",             "analyst"),
+            ("EVIDENCE_VIEW",   "View the chain-of-custody evidence records",        "admin"),
+            ("EVIDENCE_EXPORT", "Export and download compliance audit evidence",      "admin"),
+            ("NOTEBOOK_SYNC",   "Synchronize analyst notebooks with the RAG core",   "admin"),
+            ("SYSTEM_REPORTS",  "Generate and export compliance reports",            "analyst"),
+            ("USER_MANAGEMENT", "Administratively manage system users",              "admin"),
+            ("SYSTEM_AUDIT",    "Access high-level security audit logs",             "admin"),
+        ]
+        for name, desc, role in policies:
+            result = await session.execute(select(PolicyModel).where(PolicyModel.name == name))
+            if not result.scalar_one_or_none():
+                logger.info("Policy Engine: Seeding baseline policy", name=name, role=role)
+                session.add(PolicyModel(name=name, description=desc, required_role=role, created_by="system"))
+        await session.commit()
 
     yield
+    # Dispose engine connections on shutdown
+    from core.database import engine as db_engine
+    await db_engine.dispose()
     logger.info("System shutdown")
-
-# Strategic Policy Engine seed — called from inside lifespan() only
-def _seed_initial_policies():
-    """Establish the baseline Strategic Policy Engine configuration (IAM-09)."""
-    policies = [
-        ("AUDIT_VIEW",      "Review the security identity audit trail",          "admin"),
-        ("INGEST_CONTROL",  "Trigger global database and document ingestion",     "admin"),
-        ("AGENT_EXECUTE",   "Trigger autonomous AI agent execution",              "admin"),
-        ("RAG_QUERY",       "Interact with the RAG Co-Pilot system",             "analyst"),
-        ("EVIDENCE_VIEW",   "View the chain-of-custody evidence records",        "admin"),
-        ("EVIDENCE_EXPORT", "Export and download compliance audit evidence",      "admin"),
-        ("NOTEBOOK_SYNC",   "Synchronize analyst notebooks with the RAG core",   "admin"),
-        ("SYSTEM_REPORTS",  "Generate and export compliance reports",            "analyst"),
-        ("USER_MANAGEMENT", "Administratively manage system users",              "admin"),
-        ("SYSTEM_AUDIT",    "Access high-level security audit logs",             "admin"),
-    ]
-    for name, desc, role in policies:
-        if not audit_logger.get_policy(name):
-            logger.info("Policy Engine: Seeding baseline policy", name=name, role=role)
-            audit_logger.create_policy(name, desc, role, "system")
 
 # Rate Limiter Setup
 limiter = Limiter(key_func=get_remote_address)
@@ -154,11 +156,23 @@ def read_root():
 @app.get("/api/v1/health", response_model=HealthResponse)
 def health_check():
     """Detailed system health check with subsystem visibility."""
+    # Probe PostgreSQL connectivity
+    db_status = "healthy"
+    try:
+        from core.database import _run_async, AsyncSessionLocal
+        from sqlalchemy import text as sa_text
+        async def _probe():
+            async with AsyncSessionLocal() as session:
+                await session.execute(sa_text("SELECT 1"))
+        _run_async(_probe())
+    except Exception:
+        db_status = "degraded"
+
     checks = {
         "api": "healthy",
         "rag": "healthy" if rag_engine.api_key else "degraded",
         "agent_registry": "healthy" if len(agent_runner.get_approved_agents()) > 0 else "error",
-        "database": "healthy" if os.path.exists(audit_logger.db_path) else "degraded",
+        "database": db_status,
         "faiss_index": "healthy" if os.path.exists("faiss_index") else "not_indexed",
         "auth": "enforced" if settings.AUTH_ENABLED else "disabled",
         "ingestion": rag_engine.ingestion_state.status,
@@ -300,7 +314,7 @@ async def update_policy(policy_id: int, payload: PolicyUpdateRequest, request: R
 @limiter.limit("5/minute")
 async def trigger_ingest(request: Request, background_tasks: BackgroundTasks):
     """Admin-only: Triggers the knowledge vault rebuild and signs the manifest."""
-    background_tasks.add_task(rag_engine.process_documents, settings.DOCUMENTS_PATH)
+    background_tasks.add_task(rag_engine.initialize_index)
     
     # Live Broadcast: Signal ingestion start
     await manager.broadcast({
@@ -319,18 +333,17 @@ def get_ingestion_status():
 @app.get("/api/v1/readiness", response_model=ReadinessResponse)
 def readiness_check():
     """Deep readiness probe for all subsystems."""
-    import sqlite3
     checks = {}
 
-    # 1. Database
+    # 1. Database (PostgreSQL)
     try:
-        db_path = audit_logger.db_path
-        if os.path.exists(db_path):
-            with sqlite3.connect(db_path) as conn:
-                conn.execute("SELECT 1 FROM audit_logs LIMIT 1")
-            checks["database"] = {"status": "ready", "detail": f"SQLite OK ({db_path})"}
-        else:
-            checks["database"] = {"status": "not_ready", "detail": "Database file not found"}
+        from core.database import _run_async, AsyncSessionLocal
+        from sqlalchemy import text as sa_text
+        async def _probe_pg():
+            async with AsyncSessionLocal() as session:
+                await session.execute(sa_text("SELECT 1"))
+        _run_async(_probe_pg())
+        checks["database"] = {"status": "ready", "detail": "PostgreSQL 16 OK"}
     except Exception as e:
         checks["database"] = {"status": "error", "detail": str(e)}
 
@@ -392,7 +405,7 @@ async def chat_endpoint(request: Request, payload: GRCQuery, background_tasks: B
 
 @app.post("/api/v1/run-agent", response_model=AgentResult, dependencies=[Depends(authorize("AGENT_EXECUTE"))])
 @limiter.limit("10/minute")
-async def run_agent_endpoint(request: Request, payload: AgentRequest):
+async def run_agent_endpoint(request: Request, payload: AgentRunRequest):
     user = get_current_user(request)
     logger.info("Registry Agent execution requested", agent=payload.agent_id, user=user["username"])
     

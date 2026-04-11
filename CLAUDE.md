@@ -97,14 +97,17 @@ GRC_Command_Center/
 ## Key technical Decisions
 
 ### 1. Infrastructure Scaling
+
 - **PostgreSQL 16**: Migrated from SQLite to support multi-agent concurrency and row-level locking.
 - **Automated Backups**: Integrated `postgres-backup-local` for daily GRC record persistence.
 
 ### 2. Zero-Trust Security
+
 - **Subprocess Eradication**: Replaced `subprocess.run()` with a hardcoded `AGENT_REGISTRY` in `core/agent.py`.
 - **PL/pgSQL Triggers**: Implemented `fn_prevent_audit_modification` to enforce audit trail immutability at the engine level.
 
 ### 3. Real-Time Telemetry
+
 - **WebSocket Event Bus**: Replaced 5s polling with a synchronous stream at `/api/v1/stream`.
 - **Decoupled Lifecycle**: WebSocket state is isolated from `useAuth` to prevent Vite Fast Refresh collisions.
 

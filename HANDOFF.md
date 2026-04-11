@@ -1,6 +1,7 @@
 # GRC Command Center — Session Handoff Document
 
 ## Continue from this point in a new chat
+
 **Date:** April 10, 2026
 **Version:** 1.2.0 (High-Concurrency Production Hardened)
 **Last commit:** eefe6bb (main) — "Admin: Codebase polish - Fixed React ref-lifecycle and Markdown lints"
@@ -20,6 +21,7 @@ I'm continuing work on the GRC Command Center. Here's where we are:
 **Current state:** Fully hardened and production-ready (v1.2.0). Docker Compose v2 is active and healthy.
 
 **Architecture Refresher:**
+
 - **Backend:** FastAPI (port 8001), PostgreSQL 16 (port 5432), FAISS Vector Store.
 - **Frontend:** React 19 + Vite + Tailwind CSS v4 (port 3006).
 - **Security:** Zero-Trust Agent Registry (agent.py), IAM-10 JWT Auth with refresh rotation.
