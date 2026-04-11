@@ -2,8 +2,8 @@
 
 ## System Reference for AI-Assisted Development
 
-**Version:** 1.2.0 (High-Concurrency Production Hardened)
-**Last Updated:** 2026-04-10
+**Version:** 1.3.0 (PostgreSQL-Powered / Hardened Baseline)
+**Last Updated:** 2026-04-11 (Phase 3 Hardening Sprint Complete)
 
 ---
 
@@ -21,10 +21,11 @@ GRC Command Center v1.2.0
 │   ├── LLM: Google Gemini 2.0 Flash
 │   ├── Embeddings: text-embedding-004
 │   ├── Vector Store: FAISS (with SHA-256 integrity hashing)
-│   ├── Database: PostgreSQL 16 (High-Concurrency)
-│   ├── Auth: JWT (Access + Refresh Rotation)
-│   ├── Agent Registry: Zero-Trust Python Handlers (Eradicated subprocess)
-│   └── Policy Engine: Capability-based RBAC
+│   ├── Database: PostgreSQL 16 (Hardened with SECURITY DEFINERTriggers)
+│   ├── Auth: JWT (IAM-10 with Independent Account Seeding)
+│   ├── Agent Registry: Zero-Trust Python Registry (Subprocess eliminated)
+│   ├── Database Engine: SQLAlchemy 2.0 Async (Asyncpg + NullPool)
+│   └── Policy Engine: Capability-based RBAC with Sync Bridge fallback
 │
 ├── Frontend: React 19 + Vite 7 + Tailwind CSS v4
 │   ├── UI: "Enterprise Command Authority" Design System
@@ -47,13 +48,14 @@ GRC_Command_Center/
 ├── backend/
 │   ├── main.py                    # Root FastAPI application & endpoint registry
 │   ├── core/
-│   │   ├── agent.py               # InternalAgentRunner: Zero-Trust Registry Pattern
-│   │   ├── auth.py                # JWT, RBAC middleware, and policy enforcement
-│   │   ├── config.py              # Pydantic Settings and environment configuration
-│   │   ├── database.py            # AuditLogger: SQLAlchemy 2.0 / PostgreSQL integration
+│   │   ├── agent.py               # Zero-Trust Registry Pattern (InternalAgentRunner)
+│   │   ├── auth.py                # JWT, RBAC, and policy enforcement
+│   │   ├── config.py              # Pydantic Settings & PostgreSQL connection strings
+│   │   ├── database.py            # AuditLogger & Sync Bridge Pattern (NullPool enforced)
+│   │   ├── models.py              # SQLAlchemy 2.0 Declarative Models
 │   │   ├── logger.py              # Structured JSON logging with Correlation IDs
-│   │   ├── rag.py                 # RAGEngine: FAISS indexing and Gemini orchestration
-│   │   └── ws.py                  # ConnectionManager: WebSocket synchronization
+│   │   ├── rag.py                 # RAGEngine: Vector Indexing & LLM Orchestration
+│   │   └── ws.py                  # Sync Event Bus: WebSocket stream management
 │   ├── data/
 │   │   └── data_fixtures.py       # Initial GRC seeding logic
 │   ├── requirements.txt           # Backend dependencies
@@ -96,25 +98,28 @@ GRC_Command_Center/
 
 ## Key technical Decisions
 
-### 1. Infrastructure Scaling
+### 1. High-Concurrency Infrastructure
 
-- **PostgreSQL 16**: Migrated from SQLite to support multi-agent concurrency and row-level locking.
-- **Automated Backups**: Integrated `postgres-backup-local` for daily GRC record persistence.
+- **PostgreSQL 16 Migration**: Replaced SQLite with a production-grade PostgreSQL stack to support multi-agent concurrency and row-level locking.
+- **NullPool Fix**: Implemented `sqlalchemy.pool.NullPool` to resolve the "Different Loop" runtime error caused by asyncpg connections binding to discarded import-time loops.
+- **Sync Bridge Pattern**: Established `_run_async` helpers in `database.py` to allow legacy synchronous middleware and seeding tasks to interface with the new Async engine.
 
-### 2. Zero-Trust Security
+### 2. Zero-Trust Security & Immutability
 
-- **Subprocess Eradication**: Replaced `subprocess.run()` with a hardcoded `AGENT_REGISTRY` in `core/agent.py`.
-- **PL/pgSQL Triggers**: Implemented `fn_prevent_audit_modification` to enforce audit trail immutability at the engine level.
+- **Subprocess Eradication**: Eliminated all `subprocess.run()` calls. Agents are now hardcoded Python functions in the `AGENT_REGISTRY`.
+- **Hardened Triggers**: Implemented native PL/pgSQL `SECURITY DEFINER` triggers (`fn_prevent_audit_modification`, `fn_prevent_evidence_modification`) that block all `UPDATE` and `DELETE` operations at the database layer.
+- **Independent Seeding**: Refactored the `lifespan` startup to check for `admin`, `analyst`, and `viewer` accounts independently, ensuring 100% RBAC test coverage on every boot.
 
 ### 3. Real-Time Telemetry
 
-- **WebSocket Event Bus**: Replaced 5s polling with a synchronous stream at `/api/v1/stream`.
-- **Decoupled Lifecycle**: WebSocket state is isolated from `useAuth` to prevent Vite Fast Refresh collisions.
+- **WebSocket Event Bus**: Replaced high-latency polling with a low-latency event stream at `/api/v1/stream`.
+- **Telemetry Isolation**: Decoupled WebSocket state from `useAuth` to ensure stable UI updates without triggering AuthContext cascading re-renders.
 
 ---
 
 ## Audit History
 
-- **Hardening (Current Session)**: SQLite to Postgres migration complete. WebSocket event bus established. Zero-Trust Agent Registry implemented.
-- **Phase B**: Production-ready containerization completed. Fixed dependency conflicts and pathing resolution.
-- **Phase A**: Auth-aware smoke test (27/27), lifespan-ordered seeding, immutability triggers verified.
+- **Hardening Sprint (Apr 11)**: PostgreSQL 16 migration complete. Baseline smoke test reached **27/27 GREEN**. Implemented NullPool stability and independent user seeding.
+- **Zero-Trust (Apr 10)**: Registry pattern implemented in `agent.py`. All subprocess paths neutralized. 
+- **WebSocket Bus (Apr 10)**: Transitioned UI to Synchronous Event Bus telemetry. Resolved React 19 ref-lifecycle conflicts.
+- **Legacy Phase**: SQLite foundation and initial RAG orchestration (v1.0.0).

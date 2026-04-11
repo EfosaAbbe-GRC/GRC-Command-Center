@@ -16,7 +16,7 @@ This report defines the transition of the GRC Command Center from a single-user 
 The core identity and audit trail database has been re-architected to leverage PostgreSQL 16's row-level locking capabilities.
 
 - **Scaling Driver**: Replaced SQLite's file-based locks with PostgreSQL's process-based concurrency model.
-- **Abstraction Layer**: Proposed transition to SQLAlchemy 2.0 to provide a unified `DATABASE_URL` interface for the FastAPI backend.
+- **Abstraction Layer**: Implemented migration to SQLAlchemy 2.0 to provide a unified `DATABASE_URL` interface for the FastAPI backend.
 - **Performance Tuning**: Allocated 128MB of shared memory (SHM) in the `grc-db-pg` container to handle high-frequency agent audit writes.
 
 ---
