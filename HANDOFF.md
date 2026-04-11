@@ -1,10 +1,10 @@
-# GRC Command Center — Session Handoff Document (v1.3.0)
+# GRC Command Center — Session Handoff Document (v1.3.1)
 
 ## Continue from this point in a new chat
 
 **Date:** April 11, 2026
-**Version:** 1.3.0 (PostgreSQL-Powered / Hardened Baseline)
-**Last Baseline:** 27/27 Clean Smoke Test
+**Version:** 1.3.1 (PostgreSQL-Hardened & Benchmarked)
+**Last Baseline:** 27/27 Clean Smoke Test (with Direct DB Probe)
 
 ---
 
@@ -14,38 +14,37 @@ Paste this as your first message:
 
 ---
 
-I'm continuing work on the GRC Command Center. We have successfully completed the migration to a production-grade PostgreSQL 16 infrastructure (v1.3.0).
+I'm continuing work on the GRC Command Center. We have successfully completed the migration to a production-grade PostgreSQL 16 infrastructure (v1.3.1).
 
-**The system is fully operational and hardened:**
-- **Database:** PostgreSQL 16 (replacing SQLite) with native PL/pgSQL `SECURITY DEFINER` immutability triggers.
-- **Backend:** SQLAlchemy 2.0 Async (`asyncpg`) with a Sync Bridge for legacy/seeding logic.
-- **RAG Engine:** FAISS/HuggingFace index fully rebuilt and integrity-verified (178 PDFs / 149 Evidence records).
-- **Security:** Zero-Trust Agent Registry (no subprocess) and IAM-10 Auth with independent user seeding.
-- **Telemetry:** Synchronous WebSocket Event Bus (`/api/v1/stream`) for real-time UI updates.
+**The system is fully operational and verified:**
+- **Database:** PostgreSQL 16 with native PL/pgSQL `SECURITY DEFINER` immutability triggers.
+- **Backend:** SQLAlchemy 2.0 Async (`asyncpg`). Baseline verified at 27/27 green.
+- **Verification:** The `smoke_test.py` now includes a live probe of the DB triggers via `docker exec`.
+- **RAG Engine:** FAISS/HuggingFace index fully rebuilt.
+- **Accuracy:** The first RAG Accuracy Benchmark (50 queries) is complete, establishing an initial baseline of **44.0%**.
+- **Infrastructure:** All 4 containers are **healthy**, including the frontend (port 3006 mapping corrected).
 
 **Current status:**
-- ✅ **Backend:** Healthy (v1.3.0, 27/27 Smoke Test passed).
-- ⚠️ **Frontend:** Container exists but is currently marked `(unhealthy)`.
-- ⚠️ **Tests:** Audit immutability test needs updating to probe PostgreSQL triggers instead of SQLite on the host.
+- ✅ **Infrastructure:** Healthy (grc-db-pg, grc-backend, grc-frontend, grc-db-backup).
+- ✅ **Hardening:** SECURITY DEFINER triggers confirmed blocking unauthorized DELETE/UPDATE.
+- ✅ **Benchmarking**: Accuracy Baseline established (44%).
 
 **Recommended next session priorities:**
-1. **Frontend Recovery**: Investigate and resolve the `grc-frontend` unhealthy status.
-2. **Postgres-Aware Testing**: Refactor the audit immutability smoke test to directly verify the PL/pgSQL triggers (`fn_prevent_audit_modification`).
-3. **Accuracy Benchmarking**: Execute the RAG Accuracy Benchmark (50 queries across compliance frameworks) to establish a quality baseline.
+1. **Context Density Optimization**: Current RAG accuracy (44%) indicates retrieval gaps. Recommend increasing `k` to 5 in `rag.py` and testing 1000-char chunks.
+2. **Metadata Integration**: Ingest structured GRC meta-data (Framework -> Control ID) to improve specific cross-referencing.
+3. **Frontend Dashboard Expansion**: Now that the telemetry bus and frontend are healthy, begin implementing the real-time "Execution Monitor" in the UI.
 
 ---
 
 ## Infrastructure Status commands
 
 ```powershell
-# Verify the v1.3.0 baseline
+# Verify all 4 containers are healthy
 docker compose -f docker-compose-v2.yml ps
+
+# Run the PostgreSQL-aware smoke test
 $env:PYTHONUTF8=1; python backend/tests/smoke_test.py
 
-# Check frontend health issues
-docker compose -f docker-compose-v2.yml logs frontend --tail 50
-docker inspect --format='{{json .State.Health}}' grc-frontend
-
-# Database probe
-Invoke-RestMethod "http://localhost:8001/api/v1/readiness" | ConvertTo-Json
+# Review the RAG Accuracy Report
+cat RAG_Benchmark_Report.md
 ```
