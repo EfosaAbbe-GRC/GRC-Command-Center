@@ -1,10 +1,10 @@
-# GRC Command Center — Session Handoff Document
+# GRC Command Center — Session Handoff Document (v1.3.0)
 
 ## Continue from this point in a new chat
 
-**Date:** April 10, 2026
-**Version:** 1.2.0 (High-Concurrency Production Hardened)
-**Last commit:** eefe6bb (main) — "Admin: Codebase polish - Fixed React ref-lifecycle and Markdown lints"
+**Date:** April 11, 2026
+**Version:** 1.3.0 (PostgreSQL-Powered / Hardened Baseline)
+**Last Baseline:** 27/27 Clean Smoke Test
 
 ---
 
@@ -14,56 +14,38 @@ Paste this as your first message:
 
 ---
 
-I'm continuing work on the GRC Command Center. Here's where we are:
+I'm continuing work on the GRC Command Center. We have successfully completed the migration to a production-grade PostgreSQL 16 infrastructure (v1.3.0).
 
-**The system is a production-hardened GRC (Governance, Risk, Compliance) platform** with a FastAPI backend, React 19 frontend, and a PostgreSQL 16 database. It features a Zero-Trust Agent Registry (no shell execution), real-time WebSocket synchronization (Synchronous Event Bus), and automated GRC backups.
+**The system is fully operational and hardened:**
+- **Database:** PostgreSQL 16 (replacing SQLite) with native PL/pgSQL `SECURITY DEFINER` immutability triggers.
+- **Backend:** SQLAlchemy 2.0 Async (`asyncpg`) with a Sync Bridge for legacy/seeding logic.
+- **RAG Engine:** FAISS/HuggingFace index fully rebuilt and integrity-verified (178 PDFs / 149 Evidence records).
+- **Security:** Zero-Trust Agent Registry (no subprocess) and IAM-10 Auth with independent user seeding.
+- **Telemetry:** Synchronous WebSocket Event Bus (`/api/v1/stream`) for real-time UI updates.
 
-**Current state:** Fully hardened and production-ready (v1.2.0). Docker Compose v2 is active and healthy.
+**Current status:**
+- ✅ **Backend:** Healthy (v1.3.0, 27/27 Smoke Test passed).
+- ⚠️ **Frontend:** Container exists but is currently marked `(unhealthy)`.
+- ⚠️ **Tests:** Audit immutability test needs updating to probe PostgreSQL triggers instead of SQLite on the host.
 
-**Architecture Refresher:**
-
-- **Backend:** FastAPI (port 8001), PostgreSQL 16 (port 5432), FAISS Vector Store.
-- **Frontend:** React 19 + Vite + Tailwind CSS v4 (port 3006).
-- **Security:** Zero-Trust Agent Registry (agent.py), IAM-10 JWT Auth with refresh rotation.
-- **Monitoring:** Automated backups (grc-db-backup), health checks with 60s start period.
-- **Comms:** WebSockets (`/api/v1/stream`) for zero-latency terminal updates.
-
-**What was completed this session (Hardening Sprint):**
-
-1. ✅ **PostgreSQL Migration**: Migrated from SQLite to full PostgreSQL 16 for high-concurrency compliance logging.
-2. ✅ **Zero-Trust Registry**: Removed all `subprocess.run()` risky paths. Agents are now hardcoded Python callables in `core/agent.py`.
-3. ✅ **WebSocket Event Bus**: Replaced 5s polling with real-time WebSocket streams (`useWebSocket.js` hook).
-4. ✅ **Immutability Triggers**: Ported SQLite triggers to native PL/pgSQL `fn_prevent_audit_modification`.
-5. ✅ **Automated Backups**: Integrated daily `pg_dump` service with 30-day retention.
-6. ✅ **Healthcheck Optimization**: Fixed startup race conditions by adding a `start_period` to the backend.
-7. ✅ **React Ref Fix**: Resolved "Cannot update ref during render" in `useWebSocket.js`.
-8. ✅ **Codebase Polish**: Neutralized all Markdown linting warnings across the repository.
-
-**Seeded Users (Current):**
-
-- admin / (env-defined) (role: admin)
-- analyst / (env-defined) (role: analyst)
-- viewer / (env-defined) (role: viewer)
-
-**Credentials derived from `backend/data_fixtures.py` during seeding.**
-
-**What comes next:**
-
-- **Stability Monitoring**: Monitor the WebSocket connection stability under high multi-user stress.
-- **Recovery Testing**: Perform a manual data recovery from a generated backup file in the `grc-db-backups` volume.
-- **E2E Scaling**: Test the UI's reaction to high-frequency agent event bursts via the WebSocket bus.
+**Recommended next session priorities:**
+1. **Frontend Recovery**: Investigate and resolve the `grc-frontend` unhealthy status.
+2. **Postgres-Aware Testing**: Refactor the audit immutability smoke test to directly verify the PL/pgSQL triggers (`fn_prevent_audit_modification`).
+3. **Accuracy Benchmarking**: Execute the RAG Accuracy Benchmark (50 queries across compliance frameworks) to establish a quality baseline.
 
 ---
 
 ## Infrastructure Status commands
 
 ```powershell
-# Check hardened containers
+# Verify the v1.3.0 baseline
 docker compose -f docker-compose-v2.yml ps
+$env:PYTHONUTF8=1; python backend/tests/smoke_test.py
 
-# Monitor logs for WebSocket events
-docker compose -f docker-compose-v2.yml logs -f backend
+# Check frontend health issues
+docker compose -f docker-compose-v2.yml logs frontend --tail 50
+docker inspect --format='{{json .State.Health}}' grc-frontend
 
-# Verify Backend health (Postgres + Agent Registry probes)
-Invoke-RestMethod "http://localhost:8001/api/v1/health" | ConvertTo-Json
+# Database probe
+Invoke-RestMethod "http://localhost:8001/api/v1/readiness" | ConvertTo-Json
 ```
