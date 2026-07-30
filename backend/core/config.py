@@ -34,13 +34,16 @@ class Settings(BaseSettings):
     JWT_REFRESH_EXPIRE_DAYS: int = 7
     AUTH_ENABLED: bool = True
 
-    # User Registry (loaded from .env — temporary test identities)
+    # User Registry — set real values in .env (gitignored). These fallbacks are
+    # intentionally non-functional placeholders, not working credentials, so a
+    # clone that forgets to create .env fails loudly instead of booting with a
+    # known password.
     ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "grc-admin-2026"
+    ADMIN_PASSWORD: str = "CHANGE-ME-SET-IN-ENV"
     ANALYST_USERNAME: str = "analyst"
-    ANALYST_PASSWORD: str = "grc-analyst-2026"
+    ANALYST_PASSWORD: str = "CHANGE-ME-SET-IN-ENV"
     VIEWER_USERNAME: str = "viewer"
-    VIEWER_PASSWORD: str = "grc-viewer-2026"
+    VIEWER_PASSWORD: str = "CHANGE-ME-SET-IN-ENV"
 
     class Config:
         env_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")

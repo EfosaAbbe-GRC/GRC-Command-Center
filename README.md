@@ -1,14 +1,31 @@
 # GRC Command Center
 
-An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered document analysis, automated compliance checking, and real-time executive dashboards.
+An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered document analysis, automated compliance checking, third-party risk management, and real-time executive dashboards.
+
+## Highlights
+
+- **RAG accuracy 44% → 86%** on a fixed 50-query benchmark, driven by three
+  measured changes (chunking, retrieval depth, cross-encoder re-ranking) —
+  each kept only after an independent before/after evidence check. Full
+  writeups in `RAG_Benchmark_Report_v2/v3/v5.md`.
+- **Immutable audit trail** — PL/pgSQL `SECURITY DEFINER` triggers block
+  `UPDATE`/`DELETE` on audit logs, evidence, and TPRM risk acceptances at
+  the database layer, not just the application layer.
+- **Third-Party Risk Management** — 13-stage vendor assessment workflow
+  with automatic risk tiering and admin-signed, append-only risk
+  acceptances.
+- **27/27 smoke tests green**, including a live probe that attempts to
+  tamper with an audit row via `docker exec` and asserts the trigger
+  rejects it.
 
 ## Architecture
 
-- **Backend:** FastAPI (Python) with Gemini 2.0 Flash LLM, FAISS vector store.
+- **Backend:** FastAPI (Python) with Gemini 2.5 Flash LLM, FAISS vector store.
 - **Database:** PostgreSQL 16 for high-concurrency audit logging and user registry.
 - **Real-Time:** Synchronous Event Bus (WebSockets) for zero-latency terminal updates.
 - **Frontend:** React 19 + Vite + Tailwind CSS v4.
-- **AI Engine:** RAG pipeline using LangChain + text-embedding-004 Google Generative AI embeddings.
+- **AI Engine:** RAG pipeline using LangChain, local `all-MiniLM-L6-v2` embeddings, and a
+  `cross-encoder/ms-marco-MiniLM-L-6-v2` re-ranker (wide k=20 recall filtered to top 10).
 
 ## Production Setup (Docker)
 
@@ -22,7 +39,9 @@ The production stack is fully containerized and hardened. This is the recommende
 ### Quick Start
 
 1. **Configure Environment:**
-   Create `backend/.env` with your API key.
+   Create `backend/.env` with your `GOOGLE_API_KEY`, plus `ADMIN_PASSWORD` / `ANALYST_PASSWORD` /
+   `VIEWER_PASSWORD` and `JWT_SECRET_KEY`. The checked-in defaults for those four are non-functional
+   placeholders (`CHANGE-ME-...`), so the seeded accounts won't log in until you set real values.
 
 2. **Launch the Hardened Stack:**
 
@@ -31,8 +50,7 @@ The production stack is fully containerized and hardened. This is the recommende
    ```
 
 3. **Access the Terminal:**
-   Open: <http://localhost:3006>  
-   *Default Credentials:* `admin` / `admin` (if seeded via fixtures)
+   Open: <http://localhost:3006>
 
 ## Development Setup
 
@@ -72,6 +90,10 @@ For more details, see [GOVERNANCE.md](GOVERNANCE.md).
 | POST | `/api/v1/run-agent` | Execute zero-trust compliance agent |
 | GET | `/api/v1/compliance/policies` | Policy status grid |
 | GET | `/api/v1/knowledge/documents` | Indexed document metadata |
+| GET/POST | `/api/v1/tprm/vendors`, `/tprm/integrations` | Vendor & integration risk register |
+| POST | `/api/v1/tprm/integrations/{id}/stages/{stage_id}` | Submit a control-stage response |
+| POST | `/api/v1/tprm/integrations/{id}/risk-acceptances` | Admin-signed, append-only risk acceptance |
+| POST | `/api/v1/tprm/integrations/{id}/approve` | Sign off (blocked while stages are unreviewed) |
 
 ## Testing
 
