@@ -59,6 +59,18 @@ def _run_async(coro):
         return future.result(timeout=30)
 
 
+def _naive_utcnow() -> datetime.datetime:
+    """UTC 'now' as a NAIVE datetime.
+
+    The User/Policy timestamp columns are DateTime == TIMESTAMP WITHOUT TIME
+    ZONE. asyncpg raises DataError ('can't subtract offset-naive and
+    offset-aware datetimes') if a tz-aware value is bound to such a column,
+    which silently failed update_last_login and 500'd change-password
+    (breaking forced-reset recovery). All writes to those columns must be naive.
+    """
+    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+
+
 class AuditLogger:
     """
     PostgreSQL-backed audit logger with SECURITY DEFINER immutability.
@@ -110,6 +122,25 @@ class AuditLogger:
                         IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_evidence_no_delete') THEN
                             CREATE TRIGGER trg_evidence_no_delete BEFORE DELETE ON evidence_chain
                             FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
+                        END IF;
+                    END $$;
+                """))
+
+                # 4. Risk acceptances (TPRM) — block UPDATE and DELETE.
+                # Reuses fn_prevent_immutability_violation(); guarded so it is a
+                # no-op until the TPRM models have been registered/created.
+                await conn.execute(text("""
+                    DO $$ BEGIN
+                        IF EXISTS (SELECT 1 FROM information_schema.tables
+                                   WHERE table_name = 'risk_acceptances') THEN
+                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_risk_acc_no_update') THEN
+                                CREATE TRIGGER trg_risk_acc_no_update BEFORE UPDATE ON risk_acceptances
+                                FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
+                            END IF;
+                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_risk_acc_no_delete') THEN
+                                CREATE TRIGGER trg_risk_acc_no_delete BEFORE DELETE ON risk_acceptances
+                                FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
+                            END IF;
                         END IF;
                     END $$;
                 """))
@@ -278,9 +309,9 @@ class AuditLogger:
                 if not user:
                     return False
                 user.hashed_password = hashed_password
-                user.password_changed_at = datetime.datetime.now(datetime.timezone.utc)
+                user.password_changed_at = _naive_utcnow()
                 user.must_change_password = False
-                user.updated_at = datetime.datetime.now(datetime.timezone.utc)
+                user.updated_at = _naive_utcnow()
                 await session.commit()
             logger.info("Security logic: password updated", user_id=user_id)
             return True
@@ -315,7 +346,7 @@ class AuditLogger:
                 result = await session.execute(select(User).where(User.username == username))
                 user = result.scalar_one_or_none()
                 if user:
-                    user.last_login = datetime.datetime.now(datetime.timezone.utc)
+                    user.last_login = _naive_utcnow()
                     await session.commit()
         except Exception as e:
             logger.error("Failed to update last_login", username=username, error=str(e))
@@ -459,7 +490,7 @@ class AuditLogger:
                 policy.modified_by = modified_by
                 policy.source_doc = source_doc
                 policy.policy_version = policy.policy_version + 1
-                policy.updated_at = datetime.datetime.now(datetime.timezone.utc)
+                policy.updated_at = _naive_utcnow()
                 await session.commit()
             logger.info("Policy Engine: Policy updated", id=policy_id, role=required_role)
             return True

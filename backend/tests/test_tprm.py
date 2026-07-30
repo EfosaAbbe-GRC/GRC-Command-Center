@@ -1,0 +1,256 @@
+"""
+GRC Command Center — TPRM Module Tests (Auth + RBAC + lifecycle + immutability)
+
+Integration-style, consistent with test_iam_*.py / test_auth.py: exercises the
+live backend on localhost:8001. Run with either:
+
+    pytest tests/test_tprm.py -v
+    python tests/test_tprm.py
+
+Requires the stack up (docker compose -f docker-compose-v2.yml up) and the
+assessment_stages table seeded (python -m data.seed_tprm_stages).
+
+Tests skip (not fail) when the backend is unreachable, so a bare `pytest` run
+without the stack does not produce false red.
+"""
+import os
+import uuid
+import subprocess
+
+import pytest
+import requests
+
+BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8001")
+V1 = f"{BASE}/api/v1"
+
+CREDS = {
+    "admin":   ("admin",   "grc-admin-2026"),
+    "analyst": ("analyst", "grc-analyst-2026"),
+    "viewer":  ("viewer",  "grc-viewer-2026"),
+}
+
+
+# ─── Helpers ────────────────────────────────────────────────────────────────
+def _require_backend():
+    try:
+        requests.get(f"{V1}/health", timeout=10)
+    except requests.ConnectionError:
+        pytest.skip("backend not reachable on :8001 — start the stack to run TPRM tests")
+
+
+def _login(role):
+    user, pwd = CREDS[role]
+    try:
+        r = requests.post(f"{V1}/auth/login", json={"username": user, "password": pwd}, timeout=30)
+    except requests.ConnectionError:
+        pytest.skip("backend not reachable on :8001 — start the stack to run TPRM tests")
+    if r.status_code != 200:
+        pytest.skip(f"cannot login as {role} ({r.status_code}) — is the DB seeded?")
+    return r.json()["access_token"]
+
+
+def _headers(role):
+    return {"Authorization": f"Bearer {_login(role)}"}
+
+
+def _create_integration(headers, direction="egress", classification="PII",
+                        volume=0, regulated="none"):
+    v = requests.post(
+        f"{V1}/tprm/vendors", headers=headers,
+        json={"name": f"pytest-vendor-{uuid.uuid4().hex[:8]}",
+              "contact_email": "pytest@example.com"}, timeout=30)
+    assert v.status_code == 200, f"vendor create: {v.status_code} {v.text}"
+    vendor_id = v.json()["id"]
+
+    r = requests.post(
+        f"{V1}/tprm/integrations", headers=headers,
+        json={"vendor_id": vendor_id, "name": f"pytest-integ-{uuid.uuid4().hex[:8]}",
+              "direction": direction, "transfer_method": "file",
+              "data_classification": classification, "volume_per_transfer": volume,
+              "involves_regulated_data": regulated}, timeout=30)
+    assert r.status_code == 200, f"integration create: {r.status_code} {r.text}"
+    return r.json()
+
+
+def _stages(headers, integ_id):
+    r = requests.get(f"{V1}/tprm/integrations/{integ_id}/stages", headers=headers, timeout=30)
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def _set_stage(headers, integ_id, stage_id, status):
+    r = requests.post(f"{V1}/tprm/integrations/{integ_id}/stages/{stage_id}",
+                      headers=headers, json={"status": status}, timeout=30)
+    assert r.status_code == 200, r.text
+
+
+# ─── Authentication / RBAC boundaries ───────────────────────────────────────
+def test_tprm_requires_authentication():
+    _require_backend()
+    r = requests.get(f"{V1}/tprm/integrations", timeout=30)  # no token
+    assert r.status_code == 401, f"unauthenticated access should be 401, got {r.status_code}"
+
+
+def test_tprm_viewer_denied_view():
+    # TPRM_VIEW requires analyst; viewer is below that.
+    r = requests.get(f"{V1}/tprm/integrations", headers=_headers("viewer"), timeout=30)
+    assert r.status_code == 403, f"viewer should be 403, got {r.status_code}"
+
+
+def test_tprm_analyst_can_view():
+    r = requests.get(f"{V1}/tprm/integrations", headers=_headers("analyst"), timeout=30)
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+
+
+def test_tprm_signoff_requires_admin():
+    """Analyst may assess but must NOT approve or sign risk acceptances."""
+    integ = _create_integration(_headers("admin"))
+    a = _headers("analyst")
+
+    r_approve = requests.post(f"{V1}/tprm/integrations/{integ['id']}/approve", headers=a, timeout=30)
+    assert r_approve.status_code == 403, f"analyst approve should be 403, got {r_approve.status_code}"
+
+    r_accept = requests.post(
+        f"{V1}/tprm/integrations/{integ['id']}/risk-acceptances", headers=a,
+        json={"stage_id": str(uuid.uuid4()), "gap_description": "x",
+              "compensating_control": "x"}, timeout=30)
+    assert r_accept.status_code == 403, f"analyst risk-acceptance should be 403, got {r_accept.status_code}"
+
+
+# ─── Risk tiering (server-computed, not client-chosen) ──────────────────────
+def test_tprm_risk_tiering():
+    h = _headers("admin")
+    assert _create_integration(h, classification="PHI", regulated="HIPAA")["computed_risk_tier"] == "critical"
+    assert _create_integration(h, classification="PII", volume=50000)["computed_risk_tier"] == "high"
+    assert _create_integration(h, classification="PII")["computed_risk_tier"] == "medium"
+    assert _create_integration(h, classification="public")["computed_risk_tier"] == "low"
+
+
+# ─── Deny-by-default approval ───────────────────────────────────────────────
+def test_tprm_deny_by_default_then_clean_approve():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    assert integ["status"] == "under_assessment"
+
+    # Cannot approve while stages are unreviewed.
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/approve", headers=h, timeout=30)
+    assert r.status_code == 409, f"pending approval should be 409, got {r.status_code}"
+
+    stages = _stages(h, iid)
+    assert len(stages) == 13, f"egress should have 13 stages, got {len(stages)}"
+    for s in stages:
+        _set_stage(h, iid, s["stage_id"], "pass")
+
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/approve", headers=h, timeout=30)
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "approved"
+
+
+def test_tprm_gap_requires_acceptance_to_approve():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+
+    gap_stage = stages[0]["stage_id"]
+    _set_stage(h, iid, gap_stage, "gap")
+    for s in stages[1:]:
+        _set_stage(h, iid, s["stage_id"], "pass")
+
+    # Open gap with no acceptance → blocked.
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/approve", headers=h, timeout=30)
+    assert r.status_code == 409, f"uncovered gap should block approval, got {r.status_code}"
+
+    # Admin signs the acceptance for that gap.
+    ra = requests.post(
+        f"{V1}/tprm/integrations/{iid}/risk-acceptances", headers=h,
+        json={"stage_id": gap_stage, "gap_description": "pytest gap",
+              "compensating_control": "pytest control", "expires_in_days": 30}, timeout=30)
+    assert ra.status_code == 200, ra.text
+    assert ra.json()["integration_status"] == "approved_with_exceptions"
+
+    # Now the gap is covered → approval succeeds as an exception.
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/approve", headers=h, timeout=30)
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "approved_with_exceptions"
+
+    sm = requests.get(f"{V1}/tprm/integrations/{iid}/summary", headers=h, timeout=30).json()
+    assert sm["open_gaps"] == 1
+
+
+# ─── Input & target validation ──────────────────────────────────────────────
+def test_tprm_input_validation():
+    h = _headers("admin")
+    v = requests.post(f"{V1}/tprm/vendors", headers=h,
+                      json={"name": f"pytest-vendor-{uuid.uuid4().hex[:8]}"}, timeout=30)
+    vid = v.json()["id"]
+
+    # Invalid enum value for direction → 422.
+    bad_dir = requests.post(f"{V1}/tprm/integrations", headers=h, json={
+        "vendor_id": vid, "name": "x", "direction": "sideways",
+        "transfer_method": "file", "data_classification": "PII"}, timeout=30)
+    assert bad_dir.status_code == 422
+
+    # Missing required data_classification → 422.
+    missing = requests.post(f"{V1}/tprm/integrations", headers=h, json={
+        "vendor_id": vid, "name": "x", "direction": "egress",
+        "transfer_method": "file"}, timeout=30)
+    assert missing.status_code == 422
+
+
+def test_tprm_risk_acceptance_target_validation():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+
+    # Stage that isn't part of this integration → 404.
+    r_foreign = requests.post(
+        f"{V1}/tprm/integrations/{iid}/risk-acceptances", headers=h,
+        json={"stage_id": str(uuid.uuid4()), "gap_description": "x",
+              "compensating_control": "x"}, timeout=30)
+    assert r_foreign.status_code == 404
+
+    # Real stage but not a GAP (still not_started) → 409.
+    r_notgap = requests.post(
+        f"{V1}/tprm/integrations/{iid}/risk-acceptances", headers=h,
+        json={"stage_id": stages[0]["stage_id"], "gap_description": "x",
+              "compensating_control": "x"}, timeout=30)
+    assert r_notgap.status_code == 409
+
+
+# ─── Append-only immutability (parity with audit_logs / evidence_chain) ──────
+def test_tprm_risk_acceptance_immutable():
+    """A signed risk acceptance must be UPDATE/DELETE-proof at the DB layer."""
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+    gap_stage = stages[0]["stage_id"]
+    _set_stage(h, iid, gap_stage, "gap")
+
+    ra = requests.post(
+        f"{V1}/tprm/integrations/{iid}/risk-acceptances", headers=h,
+        json={"stage_id": gap_stage, "gap_description": "immutability probe",
+              "compensating_control": "x", "expires_in_days": 30}, timeout=30)
+    assert ra.status_code == 200, ra.text
+
+    try:
+        probe = subprocess.run(
+            ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+             "-c", "UPDATE risk_acceptances SET gap_description = 'TAMPER' "
+                   "WHERE id = (SELECT id FROM risk_acceptances LIMIT 1);"],
+            capture_output=True, text=True, timeout=15)
+    except FileNotFoundError:
+        pytest.skip("docker not on PATH — cannot probe DB trigger directly")
+
+    combined = probe.stdout + probe.stderr
+    assert "ERROR" in combined and "immutable" in combined.lower(), \
+        f"UPDATE on risk_acceptances was NOT blocked: {combined[:200]}"
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(pytest.main([__file__, "-v"]))

@@ -4,6 +4,7 @@ import { ComplianceTerminal } from './terminals/ComplianceTerminal'
 import { OpsTerminal } from './terminals/OpsTerminal'
 import { ExecutiveTerminal } from './terminals/ExecutiveTerminal'
 import { KnowledgeTerminal } from './terminals/KnowledgeTerminal'
+import VendorRiskTerminal from './terminals/VendorRiskTerminal'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -73,6 +74,7 @@ function AppContent() {
       case 'OPS': return <ErrorBoundary><OpsTerminal /></ErrorBoundary>;
       case 'EXEC': return <ErrorBoundary><ExecutiveTerminal /></ErrorBoundary>;
       case 'KNOWLEDGE': return <ErrorBoundary><KnowledgeTerminal /></ErrorBoundary>;
+      case 'TPRM': return <ErrorBoundary><VendorRiskTerminal /></ErrorBoundary>;
       default: return <ErrorBoundary><ComplianceTerminal /></ErrorBoundary>;
     }
   };

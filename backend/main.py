@@ -37,6 +37,7 @@ from core.auth import (
     log_security_event
 )
 from core.ws import manager
+from core.tprm import router as tprm_router   # also registers TPRM models on Base.metadata
 from schemas import (
     StatusResponse, GRCQuery, ChatResponse, PolicyItem, 
     JobItem, ExecutiveStats, NotebookItem, AgentResult, HealthResponse,
@@ -82,6 +83,9 @@ async def lifespan(app):
             ("SYSTEM_REPORTS",  "Generate and export compliance reports",            "analyst"),
             ("USER_MANAGEMENT", "Administratively manage system users",              "admin"),
             ("SYSTEM_AUDIT",    "Access high-level security audit logs",             "admin"),
+            ("TPRM_VIEW",       "View third-party risk assessments",                 "analyst"),
+            ("TPRM_ASSESS",     "Create/score integrations and submit stages",       "analyst"),
+            ("TPRM_SIGNOFF",    "Sign risk acceptances and approve integrations",    "admin"),
         ]
         for name, desc, role in policies:
             result = await session.execute(select(PolicyModel).where(PolicyModel.name == name))
@@ -89,6 +93,16 @@ async def lifespan(app):
                 logger.info("Policy Engine: Seeding baseline policy", name=name, role=role)
                 session.add(PolicyModel(name=name, description=desc, required_role=role, created_by="system"))
         await session.commit()
+
+    # Seed TPRM assessment stages (idempotent reference data) — same convention
+    # as the user/policy seeding above, so no manual `docker exec ... seed` step
+    # is required, even on a fresh DB volume. data/seed_tprm_stages.py remains the
+    # single source of truth and is still runnable standalone for CI/manual use.
+    try:
+        from data.seed_tprm_stages import seed as seed_tprm_stages
+        await seed_tprm_stages()
+    except Exception as e:
+        logger.error("TPRM stage seeding failed at startup", error=str(e))
 
     yield
     # Dispose engine connections on shutdown
@@ -122,6 +136,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- TPRM MODULE ROUTER ---
+app.include_router(tprm_router, prefix="/api/v1/tprm", tags=["tprm"])
 
 # --- WEBSOCKET STREAM ---
 
