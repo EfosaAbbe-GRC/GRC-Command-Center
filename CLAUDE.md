@@ -2,8 +2,10 @@
 
 ## System Reference for AI-Assisted Development
 
-**Version:** 1.3.0 (PostgreSQL-Powered / Hardened Baseline)
-**Last Updated:** 2026-04-11 (Phase 3 Hardening Sprint Complete)
+**Version:** 1.4.0 (Retrieval-Tuned & Re-Ranked)
+**Last Updated:** 2026-07-18 (Retrieval Sprint Complete — RAG accuracy 86%)
+
+> Cold-start order: read `MEMORY.md` (durable facts) → `SESSION.md` (last session) → `task.md` (live board).
 
 ---
 
@@ -18,8 +20,9 @@ GRC.OS is an agentic Governance, Risk, and Compliance platform that orchestrates
 ```text
 GRC Command Center v1.2.0
 ├── Backend: FastAPI (Python 3.11, port 8001)
-│   ├── LLM: Google Gemini 2.0 Flash
-│   ├── Embeddings: text-embedding-004
+│   ├── LLM: Google Gemini 2.5 Flash
+│   ├── Embeddings: all-MiniLM-L6-v2 (local HuggingFace)
+│   ├── Re-Ranker: cross-encoder/ms-marco-MiniLM-L-6-v2 (k=20 → top 10)
 │   ├── Vector Store: FAISS (with SHA-256 integrity hashing)
 │   ├── Database: PostgreSQL 16 (Hardened with SECURITY DEFINERTriggers)
 │   ├── Auth: JWT (IAM-10 with Independent Account Seeding)
@@ -119,6 +122,7 @@ GRC_Command_Center/
 
 ## Audit History
 
+- **Retrieval Sprint (Jul 18)**: RAG accuracy 44% → **86%** (k=10, 1000-char chunks, corpus repaired/expanded to 158 official docs, cross-encoder re-ranker). Fixed latent `.integrity` signer bug (true root cause of FAISS-INT-001). Corpus pinned against OneDrive dehydration; 7 truncated PDFs quarantined and substituted with official NIST/SEC/OWASP sources.
 - **Hardening Sprint (Apr 11)**: PostgreSQL 16 migration complete. Baseline smoke test reached **27/27 GREEN**. Implemented NullPool stability and independent user seeding.
 - **Zero-Trust (Apr 10)**: Registry pattern implemented in `agent.py`. All subprocess paths neutralized. 
 - **WebSocket Bus (Apr 10)**: Transitioned UI to Synchronous Event Bus telemetry. Resolved React 19 ref-lifecycle conflicts.

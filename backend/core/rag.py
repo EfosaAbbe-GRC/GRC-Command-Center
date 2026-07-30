@@ -15,6 +15,19 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
 
+PRODUCTION_PROMPT_TEMPLATE = """You are a senior GRC (Governance, Risk, and Compliance) Auditor.
+Answer the following question explicitly and ONLY based on the provided context.
+- If the answer is not in the context, state: "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+- Do not cite outside knowledge or invent controls.
+- Maintain a professional, technical, and objective tone.
+
+Context:
+{context}
+
+Question: {question}
+
+Auditor Response:"""
+
 
 @dataclass
 class IngestionState:
@@ -58,6 +71,7 @@ class RAGEngine:
         self.qa_chain = None
         self.api_key = settings.GOOGLE_API_KEY
         self.ingestion_state = IngestionState()
+        self.reranker = None  # lazy-loaded cross-encoder (Change 3)
         if not self.api_key:
             logger.warn("GOOGLE_API_KEY not found. RAG will not work until set.")
 
@@ -147,7 +161,7 @@ class RAGEngine:
                 self.ingestion_state.end_time = time.time()
                 return
 
-            text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=60)
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
             splits = text_splitter.split_documents(docs)
             self.ingestion_state.split_count = len(splits)
 
@@ -175,7 +189,7 @@ class RAGEngine:
             return {"status": "warning", "message": "No documents found to ingest."}
 
         # Split Text
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=60)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         texts = text_splitter.split_documents(documents)
         
         # Create Local Embeddings (Phase C Pivot)
@@ -203,6 +217,8 @@ class RAGEngine:
         if not os.path.exists(path):
             return None
         for fname in sorted(os.listdir(path)):
+            if fname == ".integrity":
+                continue
             filepath = os.path.join(path, fname)
             if os.path.isfile(filepath):
                 with open(filepath, "rb") as f:
@@ -253,19 +269,7 @@ class RAGEngine:
         Initializes the LCEL Chain (Prompt | LLM | Parser).
         Retrieval is now handled explicitly in query() to capture sources.
         """
-        template = """You are a senior GRC (Governance, Risk, and Compliance) Auditor.
-        Answer the following question explicitly and ONLY based on the provided context.
-        - If the answer is not in the context, state: "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
-        - Do not cite outside knowledge or invent controls.
-        - Maintain a professional, technical, and objective tone.
-
-        Context:
-        {context}
-
-        Question: {question}
-
-        Auditor Response:"""
-        prompt = ChatPromptTemplate.from_template(template)
+        prompt = ChatPromptTemplate.from_template(PRODUCTION_PROMPT_TEMPLATE)
         model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=self.api_key)
 
         self.qa_chain = (
@@ -291,10 +295,16 @@ class RAGEngine:
             else:
                 return {"answer": "RAG Engine not initialized. Please ingest documents first.", "sources": []}
         
-        # 1. Explicit Retrieval
+        # 1. Explicit Retrieval (wide bi-encoder recall, cross-encoder precision)
         try:
             # Similarity search is currently synchronous in FAISS-cpu
-            docs = self.vector_store.similarity_search(text, k=5)
+            candidates = self.vector_store.similarity_search(text, k=20)
+            if self.reranker is None:
+                from sentence_transformers import CrossEncoder
+                self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+            scores = self.reranker.predict([(text, d.page_content) for d in candidates])
+            ranked = sorted(zip(scores, candidates), key=lambda p: p[0], reverse=True)
+            docs = [d for _, d in ranked[:10]]
             context_text = "\n\n".join([d.page_content for d in docs])
             
             # 2. Extract Sources

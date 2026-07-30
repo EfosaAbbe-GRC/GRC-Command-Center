@@ -1,0 +1,413 @@
+{
+    "summary": {
+        "total": 50,
+        "answered": 39,
+        "insufficient_data": 11,
+        "error": 0,
+        "total_latency": 196.84,
+        "accuracy_percentage": 78.0,
+        "avg_latency": 3.94
+    },
+    "results": [
+        {
+            "id": 1,
+            "query": "What are the four core functions of the NIST AI Risk Management Framework?",
+            "outcome": "ANSWERED",
+            "latency": 4.89,
+            "sources_count": 2,
+            "answer": "The four core functions of the NIST AI Risk Management Framework are GOVERN, MAP, MEASURE, and MANAGE."
+        },
+        {
+            "id": 2,
+            "query": "What is the difference between AI-specific risks and traditional IT risks according to NIST AI RMF?",
+            "outcome": "ANSWERED",
+            "latency": 3.43,
+            "sources_count": 1,
+            "answer": "According to NIST AI RMF 1.0, while risks from AI-based technology, like traditional software, can be larger than an enterprise, span organizations, and lead to societal impacts, AI systems introduce a set of risks not comprehensively addressed by current risk frameworks.\n\nSpecifically, compared to traditional software, AI-specific risks that are new or increased include:\n*   The data used for building an AI system may not be a true or appropriate representation of the context or intended use of the AI system, and the ground truth may either... (the provided text is truncated here)."
+        },
+        {
+            "id": 3,
+            "query": "How does NIST CSF 2.0 address supply chain risk management?",
+            "outcome": "ANSWERED",
+            "latency": 5.74,
+            "sources_count": 4,
+            "answer": "NIST CSF 2.0 addresses supply chain risk management by incorporating several changes and a dedicated focus on this area. Key aspects include:\n\n*   **Expanded Scope:** The new version released in February 2024 specifically includes changes to address growing challenges related to third parties and cybersecurity supply chain risk management (C-SCRM).\n*   **Dedicated Category (GV.SC):** It features a \"Cybersecurity Supply Chain Risk Management (GV.SC)\" category, emphasizing that cyber supply chain risk management processes are identified, established, managed, monitored, and improved by organizational stakeholders.\n*   **Specific Subcategories and Practices:** The framework provides detailed subcategories and recommendations for implementing C-SCRM, such as:\n    *   **GV.SC-01:** Establishing a comprehensive cybersecurity supply chain risk management program, strategy, objectives, policies, and processes agreed upon by organizational stakeholders.\n    *   **GV.SC-02:** Establishing, communicating, and coordinating cybersecurity roles and responsibilities for suppliers, customers, and partners internally and externally.\n    *   **GV.SC-03:** Integrating cybersecurity supply chain risk management into overall cybersecurity and enterprise risk management, risk assessment, and improvement processes.\n    *   **GV.SC-05:** Establishing, prioritizing, and integrating requirements to address cybersecurity risks in supply chains into contracts and other agreements with suppliers and third parties.\n    *   **GV.SC-06:** Performing planning and due diligence to reduce risks before entering into formal supplier or other third-party relationships.\n    *   **GV.SC-07:** Understanding, recording, prioritizing, assessing, responding to, and monitoring risks posed by a supplier, their products and services, and other third parties over the course of the relationship.\n    *   **GV.SC-08:** Including relevant suppliers and other third parties in incident planning, response, and recovery activities.\n    *   **GV.SC-09:** Integrating supply chain security practices into cybersecurity and enterprise risk management programs, and monitoring their performance throughout the technology product and service life cycle.\n*   **Enhanced Guidance:** CSF 2.0 provides enhanced guidance specifically for supply chain risk management."
+        },
+        {
+            "id": 4,
+            "query": "List the core outcomes of the 'Govern' function in NIST AI RMF.",
+            "outcome": "ANSWERED",
+            "latency": 7.51,
+            "sources_count": 2,
+            "answer": "The core outcomes of the 'Govern' function in NIST AI RMF are:\n\n*   Cultivates and implements a culture of risk management within organizations.\n*   Provides organizations with the opportunity to clarify and define the roles and responsibilities for the humans in Human-AI team configurations and those who are overseeing the AI system performance.\n*   Creates mechanisms for organizations to make their decision-making processes more explicit, to help counter systemic biases."
+        },
+        {
+            "id": 5,
+            "query": "Explain the 'Map' function in NIST AI RMF 1.0.",
+            "outcome": "ANSWERED",
+            "latency": 3.84,
+            "sources_count": 1,
+            "answer": "The MAP function in NIST AI RMF 1.0 is one of the four core functions\u2014GOVERN, MAP, MEASURE, and MANAGE\u2014that organize AI risk management activities. Its primary purpose is to enhance an organization\u2019s ability to identify AI risks and broader contributing factors.\n\nKey aspects and activities of the MAP function include:\n*   **Context Establishment and Understanding:** It involves defining and documenting intended purposes, potentially beneficial uses, context-specific laws, norms, expectations, and prospective settings for AI system deployment (MAP 1.1). This also includes understanding user expectations, potential positive and negative impacts on individuals, communities, organizations, society, and the planet, as well as assumptions and limitations regarding AI system purposes, uses, and risks across the AI lifecycle.\n*   **Interdisciplinary Collaboration:** It suggests defining and documenting processes for operator and practitioner proficiency with AI system performance and trustworthiness concepts, and defining relevant technical standards and certifications. This helps organizations improve internal competency. It also involves ensuring interdisciplinary AI actors, competencies, skills, and capacities for establishing context reflect demographic diversity and broad domain and user experience expertise, with their participation documented and opportunities for collaboration prioritized (MAP 1.2).\n*   **Risk Identification and Prevention:** The information gathered during the MAP function enables negative risk prevention and informs decisions for processes such as model management, as well as an initial decision about the appropriateness or need for an AI solution. It explicitly involves identifying constraints in real-world applications that may lead to negative impacts, identifying known and foreseeable negative impacts related to intended use, and anticipating risks of use beyond intended use.\n*   **Foundation for Subsequent Functions:** Outcomes in the MAP function are the basis for the MEASURE and MANAGE functions. It identifies knowledge relevant to AI risks that the MEASURE function then uses for analysis and assessment. Similarly, the MANAGE function prioritizes and responds to AI risks based on assessments and analytical output from the MAP and MEASURE functions.\n*   **Decision-Making:** After completing the MAP function, Framework users should possess sufficient contextual knowledge about AI system impacts to inform an initial go/no-go decision regarding whether to design, develop, or deploy an AI system.\n*   **Continuous Application:** It is incumbent on Framework users to continue applying the MAP function to AI systems as context, capabilities, risks, benefits, and potential impacts evolve over time.\n*   **Feedback Integration:** It includes practices and personnel for supporting regular engagement with relevant AI actors and integrating feedback about positive, negative, and unanticipated impacts (MAP 5.2).\n\nThe MAP function is crucial for anticipating, assessing, and addressing potential sources of negative risk, thereby mitigating uncertainty and enhancing the integrity of the decision process. It ensures that without contextual knowledge and awareness of risks, risk management is difficult to perform."
+        },
+        {
+            "id": 6,
+            "query": "What are the Tier 1 thru Tier 4 implementation levels in NIST CSF 2.0?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 3.28,
+            "sources_count": 5,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information. The context only defines Tier 1 of the NIST Cybersecurity Framework implementation tiers:\n\n*   **Tier 1: Partial**\n    *   **Risk management process:** Organizational cybersecurity risk management practices are not formalized, and risk is managed in an ad hoc and sometimes reactive manner.\n    *   **Integrated risk management program:** There is limited awareness of cybersecurity risk at the organizational level. The organization implements cybersecurity risk management on an irregular, case-by-case basis due to varied experience or information gained from outside sources.\n    *   **External participation:** The organization does not understand its role in the larger ecosystem with respect to either its dependencies or dependents.\n\nThe context mentions \"Tier 2, 3, or 4\" in relation to mapping CSF Implementation Tiers but does not provide their definitions."
+        },
+        {
+            "id": 7,
+            "query": "How should organizations manage bias in AI models according to NIST?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 4.92,
+            "sources_count": 4,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+        },
+        {
+            "id": 8,
+            "query": "What is the role of 'Measure' in the AI RMF lifecycle?",
+            "outcome": "ANSWERED",
+            "latency": 3.43,
+            "sources_count": 1,
+            "answer": "The MEASURE function is one of the four core functions of the NIST AI RMF, along with GOVERN, MAP, and MANAGE. It is applied in AI system-specific contexts and at specific stages of the AI lifecycle, and should be continuous.\n\nIts role is to:\n*   Employ quantitative, qualitative, or mixed-method tools, techniques, and methodologies to analyze, assess, benchmark, and monitor AI risk and related impacts.\n*   Utilize knowledge relevant to AI risks identified in the MAP function.\n*   Inform the MANAGE function by providing measurement outcomes to assist risk monitoring and response efforts.\n*   Involve testing AI systems before deployment and regularly while in operation.\n*   Include documenting aspects of systems\u2019 functionality and trustworthiness.\n*   Track metrics for trustworthy characteristics, social impact, and human-AI configurations.\n*   Establish and document verification, and validation (TEVV) processes, including metrics, methods, and methodologies."
+        },
+        {
+            "id": 9,
+            "query": "What are the key changes in ISO 27001:2022 compared to the 2013 version?",
+            "outcome": "ANSWERED",
+            "latency": 3.1,
+            "sources_count": 4,
+            "answer": "The key changes in ISO 27001:2022 compared to the 2013 version are as follows:\n\n*   **Structure Adaptation:** The main chapters of ISO/IEC 27001:2022 have been adapted to the updated \"Harmonized Structure\" from Annex SL of the ISO/IEC Directives, Part 1, which changed in 2021.\n*   **Reduction of Controls:** The total number of controls has been reduced from 114 to 93 through merging and streamlining.\n*   **New Controls Added:** 11 new controls have been introduced, including:\n    *   Threat intelligence\n    *   Cloud security\n    *   Configuration management\n    *   Data masking\n    *   Secure coding\n*   **Improved Structure of Controls:** Controls are now grouped into 4 themes instead of 14 domains.\n*   **Language and Alignment:** The standard features clearer language and better alignment with other ISO standards."
+        },
+        {
+            "id": 10,
+            "query": "Explain the purpose of Annex A.5.7 (Threat Intelligence) in ISO 27001.",
+            "outcome": "ANSWERED",
+            "latency": 2.08,
+            "sources_count": 8,
+            "answer": "Annex A.5.7 (Threat intelligence) in ISO 27001 involves the collection and evaluation of information on the specific threat environment of the organization. The purpose is to enable the organization to take appropriate reactive measures based on this intelligence."
+        },
+        {
+            "id": 11,
+            "query": "What is ISO/IEC 42001 and how does it relate to AI Management Systems?",
+            "outcome": "ANSWERED",
+            "latency": 3.46,
+            "sources_count": 4,
+            "answer": "ISO/IEC 42001:2023 is the first international standard for managing AI responsibly, published in December 2023. It specifies requirements and provides guidance for establishing, implementing, maintaining, and continually improving an Artificial Intelligence Management System (AIMS) within the context of an organization.\n\nThe standard relates to an AI Management System (AIMS) by:\n*   **Being the AIMS itself:** The full title of the standard is \"ISO/IEC 42001:2023 \u2013 Artificial Intelligence Management System (AIMS)\".\n*   **Providing the framework:** It sets a structured framework for organizations to govern, implement, and continually improve AI systems in a trustworthy, ethical, and accountable manner.\n*   **Offering requirements and guidance:** It provides requirements and guidance for organizations to develop and use AI responsibly and in compliance with applicable regulations and ethical standards.\n*   **Serving as a management system:** It can be seen as a management system for the governance of responsible AI in an organization, similar to how ISO 27001 is a management system for information security.\n*   **Addressing AI-specific issues and risks:** The AI management system provides requirements specific to managing the issues and risks arising from using AI."
+        },
+        {
+            "id": 12,
+            "query": "List the mandatory documentation required for ISO 27001 certification.",
+            "outcome": "ANSWERED",
+            "latency": 4.42,
+            "sources_count": 5,
+            "answer": "The provided context indicates the following mandatory documentation for ISO 27001 certification:\n\n*   **Risk Assessment Methodology:** ISO 27001 requires documenting the entire risk assessment process (clause 6.1.2), typically in a document referred to as the Risk Assessment Methodology.\n*   **ISMS Compliance Documentation:** This includes the Manual, Systems, Procedures, Policies, and Processes, which are presented as integral to ISMS compliance under ISO 27001 Standards & Requirements.\n*   **Documentation and Records:** These are generally required to be examined during an internal audit to verify compliance."
+        },
+        {
+            "id": 13,
+            "query": "How does ISO 27001:2022 address cloud security controls?",
+            "outcome": "ANSWERED",
+            "latency": 5.69,
+            "sources_count": 5,
+            "answer": "The provided context indicates that ISO/IEC 27001:2022 establishes requirements for an Information Security Management System (ISMS), which includes the systematic assessment of information security risks and implementing controls to address those risks. However, the document does not explicitly detail how ISO 27001:2022, through its own listed controls, directly addresses cloud security controls.\n\nInstead, the context highlights other ISO standards that are specifically tailored for cloud security:\n*   **ISO/IEC 27017:2015** provides security guidelines specifically tailored for cloud service providers and users.\n*   **ISO/IEC 27018:2019** focuses on the protection of Personally Identifiable Information (PII) in public cloud computing.\n\nTherefore, while ISO 27001:2022 provides the overarching framework for an ISMS, the specific guidelines and controls for cloud security are addressed by these complementary ISO standards."
+        },
+        {
+            "id": 14,
+            "query": "What is the significance of Clause 4 (Context of the Organization) in ISO 27001?",
+            "outcome": "ANSWERED",
+            "latency": 3.26,
+            "sources_count": 5,
+            "answer": "Clause 4 (Context of the Organization) in ISO 27001 is significant because it mandates the organization to consider its internal and external context when establishing the Information Security Management System (ISMS).\n\nSpecifically, it requires the organization to:\n*   Determine external and internal issues that are relevant to its purpose and affect its ability to achieve the intended outcome(s) of its ISMS.\n*   Define the purpose and scope of the ISMS.\n*   Identify information assets and the reasons for handling them.\n*   Capture the expectations of customers and stakeholders.\n*   Document the ISMS scope statement.\n\nThis clause serves as a foundational step, ensuring the ISMS is tailored to the organization's specific environment and strategic direction."
+        },
+        {
+            "id": 15,
+            "query": "What are the key AI governance controls specified in ISO 42001?",
+            "outcome": "ANSWERED",
+            "latency": 2.35,
+            "sources_count": 4,
+            "answer": "The key AI governance controls specified in ISO 42001 include:\n*   Establish AI governance committee.\n*   Assign roles.\n*   Approve policies."
+        },
+        {
+            "id": 16,
+            "query": "What are the four risk categories defined in the EU AI Act?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 3.83,
+            "sources_count": 5,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information. The EU AI Act is described as having a \"tiered, risk-based approach\" which imposes strict controls on \"high-risk applications\" and bans \"unacceptable risks,\" but it does not explicitly define four distinct risk categories."
+        },
+        {
+            "id": 17,
+            "query": "What constitutes a 'High-Risk' AI system under the EU AI Act?",
+            "outcome": "ANSWERED",
+            "latency": 1.64,
+            "sources_count": 3,
+            "answer": "Under the EU AI Act, 'High-Risk' AI systems include applications such as healthcare and financial services. The Act imposes strict controls on these types of applications."
+        },
+        {
+            "id": 18,
+            "query": "Explain the OWASP Top 10 for LLMs (Large Language Models).",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 2.02,
+            "sources_count": 4,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information. The text mentions \"OWASP\" in a URL and lists several controls to limit the effects of unwanted model behavior, but it does not present or explain an \"OWASP Top 10 for LLMs\" as a specific framework or list."
+        },
+        {
+            "id": 19,
+            "query": "How does the EU AI Act handle generative AI like ChatGPT?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 2.29,
+            "sources_count": 8,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+        },
+        {
+            "id": 20,
+            "query": "What are the transparency requirements for AI systems targeting humans?",
+            "outcome": "ANSWERED",
+            "latency": 5.6,
+            "sources_count": 6,
+            "answer": "Based on the provided context, the transparency requirements for AI systems targeting humans include:\n\n*   **General Information Availability**: Transparency reflects the extent to which information about an AI system and its outputs is available to individuals interacting with such a system, regardless of their awareness of the interaction.\n*   **Tailored Information Access**: Meaningful transparency provides access to appropriate levels of information based on the stage of the AI lifecycle and tailored to the role or knowledge of individuals interacting with or using the AI system.\n*   **Acknowledgement of AI Involvement**: The simplest form of transparency is to inform users that an AI model is being involved (e.g., as required by the EU AI Act for chatbots).\n*   **Scope of Transparency**: This characteristic's scope spans from design decisions and training data to model training, the structure of the model, its intended use cases, and how and when deployment, post-deployment, or end-user decisions were made and by whom.\n*   **Abstract System Information**: Transparency should provide abstract information regarding the AI system, including:\n    *   The rough working of the model.\n    *   The training approach.\n    *   The type of data used and its source.\n    *   The expected accuracy and robustness of the AI system\u2019s output.\n    *   Any residual (security) risks.\n*   **Support for Redress**: Transparency is often necessary for actionable redress related to AI system outputs that are incorrect or otherwise lead to negative impacts.\n*   **Human-AI Interaction Consideration**: Transparency should consider human-AI interaction, such as informing users of potential manipulation risks if an agent reads untrusted data, the consequences, and recommended configurations.\n*   **Deployment and Usage Transparency**: Ensure transparency in the AI system deployment, usage, and proactive compliance with regulatory requirements.\n*   **Traceability of Decisions**: Maintain transparency and traceability of AI system decisions and actions.\n*   **Understanding Outputs**: Transparency enables users to understand how an AI system generates outputs or decisions."
+        },
+        {
+            "id": 21,
+            "query": "What are the penalties for non-compliance with the EU AI Act?",
+            "outcome": "ANSWERED",
+            "latency": 2.88,
+            "sources_count": 2,
+            "answer": "Non-compliance with the EU AI Act is subject to the following administrative fines:\n\n*   Non-compliance with the prohibition of AI practices referred to in Article 5 shall be subject to administrative fines of up to EUR 1,500,000.\n*   Non-compliance of the AI system with any requirements or obligations under this Regulation, other than those laid down in Article 5, shall be subject to administrative fines of up to EUR 750,000.\n\nAdditionally, Union and national law already provide effective remedies to natural and legal persons whose rights and freedoms are adversely affected by the use of AI systems. Member States are also required to lay down and notify the Commission of their rules on penalties, including administrative fines, to be properly and effectively implemented from 2 August 2025."
+        },
+        {
+            "id": 22,
+            "query": "List three strategies to mitigate Prompt Injection according to OWASP.",
+            "outcome": "ANSWERED",
+            "latency": 3.81,
+            "sources_count": 2,
+            "answer": "Based on the provided context, three strategies to mitigate Prompt Injection according to OWASP (as presented in the \"Seven layers of Prompt Injection protection\" linked to owaspai.org) are:\n\n1.  **Model alignment:** Tell models to behave and to be robust against manipulation through pre-training, reinforcement learning, and system prompts.\n2.  **Prompt injection I/O handling:** Invest effort to sanitize, filter, and detect prompt injection.\n3.  **Human oversight:** Ask a human-in-the-loop to approve selected critical actions, taking ability and fatigue into account."
+        },
+        {
+            "id": 23,
+            "query": "What is 'Model Inversion' in the context of OWASP AI security?",
+            "outcome": "ANSWERED",
+            "latency": 4.28,
+            "sources_count": 2,
+            "answer": "In the context of OWASP AI security, 'Model Inversion' refers to an attack that can reveal sensitive and private data from a model, particularly training data. These attacks can take various forms:\n\n*   **Prompt Engineering:** An attacker can query the model using natural language to extract training data.\n*   **Access to the Model:** If an attacker has direct access to the model, they can train an inversion model to extract significant amounts of data, including private data used for fine-tuning.\n\nThe primary objective of model inversion attacks is to steal training data. The OWASP AI Exchange references Model Inversion as a type of sensitive information disclosure and inference-based data disclosure attack."
+        },
+        {
+            "id": 24,
+            "query": "How does GDPR apply to automated decision-making and profiling?",
+            "outcome": "ANSWERED",
+            "latency": 9.82,
+            "sources_count": 6,
+            "answer": "The GDPR applies to automated decision-making and profiling as follows:\n\n1.  **Fair Processing**: GDPR's Article 5 refers to \"fair processing,\" which means handling personal data in a way individuals expect and not using it in ways that lead to unjustified adverse effects. Algorithms should not behave in a discriminating way, and processing must not be \"unjustifiably detrimental, unlawfully discriminatory, unexpected or misleading.\"\n2.  **Auditability**: Organizations must ensure the auditability of models, particularly under Articles 5 and 22 GDPR.\n3.  **Redress and Review**: Data subjects have rights to redress or review related to decisions, as indicated by Articles 13.2.f, 14.2.g, and 15 GDPR.\n4.  **Explainability Profiling**: Explainability is a requirement for profiling, as referenced by Recital 71 GDPR.\n5.  **Data Protection Impact Assessments (DPIAs)**: Prior to adopting new ways of processing personal data, organizations must assess the impact of those operations on the data. DPIAs are required for high-risk personal data projects and should incorporate privacy controls from the start.\n6.  **Limiting Excessive Profiling**: Periodic audits of AI recommendation engines are implemented to ensure no excessive profiling of user behavior occurs.\n7.  **Objective Functions**: For models, objective functions are relevant under Article 5.1.d GDPR."
+        },
+        {
+            "id": 25,
+            "query": "What is a DPIA (Data Protection Impact Assessment) and when is it required?",
+            "outcome": "ANSWERED",
+            "latency": 3.05,
+            "sources_count": 8,
+            "answer": "A Data Protection Impact Assessment (DPIA) is an assessment of the impact of envisaged processing operations on the protection of personal data. It involves describing the nature, scope, context, and purposes of processing, assessing the necessity and proportionality of the processing, identifying risks to individuals' rights and freedoms, and defining measures to mitigate those risks. It also requires documenting all decisions and outcomes.\n\nA DPIA is required when a type of processing, particularly using new technologies and considering its nature, scope, context, and purposes, is likely to result in a high risk to the rights and freedoms of natural persons. It should be conducted prior to the processing. Examples of sensitive processing that may require a DPIA include medical and financial data."
+        },
+        {
+            "id": 26,
+            "query": "List the seven core principles of GDPR.",
+            "outcome": "ANSWERED",
+            "latency": 1.04,
+            "sources_count": 5,
+            "answer": "The seven core principles of GDPR are:\n\n1.  Lawfulness, fairness and Transparency\n2.  Purpose limitation\n3.  Data minimization\n4.  Accuracy\n5.  Storage Limitation\n6.  Integrity and confidentiality\n7.  Accountability"
+        },
+        {
+            "id": 27,
+            "query": "How does 'Privacy by Design' apply to AI model training?",
+            "outcome": "ANSWERED",
+            "latency": 2.38,
+            "sources_count": 3,
+            "answer": "'Privacy by Design' in AI model training involves embedding privacy controls throughout the AI lifecycle. Specifically for training, this includes:\n\n*   Using anonymization or pseudonymization techniques in training data.\n*   Limiting data retention for AI training.\n*   Training AI models using only synthetic data in regions with data localization laws, or using original data only in-country and under access restrictions."
+        },
+        {
+            "id": 28,
+            "query": "What are the requirements for cross-border data transfers under GDPR?",
+            "outcome": "ANSWERED",
+            "latency": 4.72,
+            "sources_count": 7,
+            "answer": "The requirements for cross-border data transfers under GDPR, as outlined in the provided context, are as follows:\n\n1.  **Identify International Flows:** Identify international flows of personal data to controllers or processors located in third countries outside of the U/EEA.\n2.  **Check for Adequacy Decision:** Check if there is an adequacy decision in the third country.\n    *   If an adequacy decision exists (per GDPR Article 45), the transfer of personal data may take place, and no specific authorization is required.\n3.  **If No Adequacy Decision:** If there is no adequacy decision in the third country:\n    *   Conduct a Transfer Impact Assessment (TIA) to assess the Article 46 transfer tool being relied upon.\n    *   Standard Contractual Clauses (SCC) are most commonly used when an adequacy decision isn't available.\n    *   Take into account the legal framework and practical application of the law in the third country destination.\n    *   Adopt appropriate supplementary measures, as outlined by EDPB guidance, including encryption or cryptographic keys.\n4.  **Documentation and Reevaluation:** Document the data transfer and reevaluate at regular intervals."
+        },
+        {
+            "id": 29,
+            "query": "What are the key steps in the TPRM lifecycle?",
+            "outcome": "ANSWERED",
+            "latency": 1.1,
+            "sources_count": 4,
+            "answer": "The key steps in the TPRM lifecycle are:\nA. Initiation & Planning\nB. Risk Tiering & Vendor Classification\nC. Pre -assessment & Document Collection\nD. Risk Assessment & Audit\nE. Reporting\nF. Continuous Monitoring"
+        },
+        {
+            "id": 30,
+            "query": "How should an organization assess the security of an AI SaaS vendor?",
+            "outcome": "ANSWERED",
+            "latency": 3.5,
+            "sources_count": 7,
+            "answer": "An organization should assess the security of an AI SaaS vendor by:\n\n1.  **Evaluating Vendor Compliance:** Assess the vendor's compliance with privacy and security standards, specifically ISO 42001, ISO 27001, and ISO 27701 controls.\n2.  **Requiring Evidence:** Require suppliers to provide audit evidence and transparency reports.\n3.  **Establishing Agreements:** Establish data processing agreements aligning with privacy and security standards.\n4.  **Utilizing Questionnaires:** Create and use a questionnaire covering critical aspects such as encryption, data location, certifications, and incident handling.\n5.  **Reviewing Public Documentation:** Answer the questionnaire using the vendor's public security and compliance pages.\n6.  **Summarizing Findings:** Produce a summary report to determine vendor approval based on the assessment."
+        },
+        {
+            "id": 31,
+            "query": "What is a SOC 2 Type II report and why is it important for TPRM?",
+            "outcome": "ANSWERED",
+            "latency": 5.34,
+            "sources_count": 2,
+            "answer": "A SOC 2 Type II report confirms that an organization's controls were operated effectively over time. An unqualified opinion in a SOC 2 report, which includes a Type II assessment, indicates that the service organization's system was designed and operated effectively to meet the applicable Trust Services Criteria over the review period.\n\nThe importance of such a report, applicable to third-party relationships (TPRM), stems from several factors:\n*   It provides confidence to clients, partners, and regulators that the organization maintains strong controls over data privacy and security.\n*   It boosts trust and credibility, especially in B2B environments.\n*   It can be a competitive differentiator in industries like cloud services, SaaS, healthcare, or finance.\n*   It helps demonstrate compliance readiness for frameworks such as HIPAA, ISO 27001, or GDPR."
+        },
+        {
+            "id": 32,
+            "query": "List the primary risk factors when onboarding a fourth-party vendor.",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 2.75,
+            "sources_count": 4,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+        },
+        {
+            "id": 33,
+            "query": "How do you verify GDPR compliance for a non-EU third party?",
+            "outcome": "ANSWERED",
+            "latency": 3.99,
+            "sources_count": 4,
+            "answer": "To verify GDPR compliance for a non-EU third party, the following actions are indicated:\n\n*   Conduct risk assessments and ongoing monitoring of all third parties accessing, processing, and using personal information.\n*   Ensure that appropriate controls are in place within the third party to ensure the privacy and security of personal data, as the information controller is liable for this.\n*   Perform a thorough evaluation of the risks present in each third party and ensure that appropriate controls are in place to mitigate identified risks.\n*   Utilize objective and consistently scored assessments to satisfy GDPR requirements, as manual assessments are noted as inconsistent and unscalable.\n*   Consider using vendor intelligence networks for on-demand access to completed, standardized risk reports to identify inherent risks and avoid third parties with histories of non-compliance."
+        },
+        {
+            "id": 34,
+            "query": "What are ITGC (IT General Controls) and give three examples.",
+            "outcome": "ANSWERED",
+            "latency": 3.02,
+            "sources_count": 3,
+            "answer": "IT General Controls (ITGC) or General Computer Controls (GCC) are controls that relate to the environment supporting IT Applications. These controls are policies and procedures that support application controls and IT components of manual controls, have a pervasive impact on controls at the application level, can relate to multiple applications, operate centrally or in multiple locations, and support automated controls within applications. They are foundational controls critical for ensuring the integrity, security, and reliability of Information Technology systems and data, especially those supporting financial reporting processes.\n\nThree examples of ITGC are:\n1.  Access Control (e.g., Role-based access, Multi-factor authentication, Regular access reviews)\n2.  Change Management (e.g., Development protocols, Testing processes, Deployment procedures)\n3.  Data Backup and Recovery Controls (guarantees that systems are processing accurately and includes critical backup and recovery procedures)"
+        },
+        {
+            "id": 35,
+            "query": "Explain the 'Three Lines of Defense' model in GRC.",
+            "outcome": "ANSWERED",
+            "latency": 4.42,
+            "sources_count": 3,
+            "answer": "The Three Lines of Defense (3LoD) model is a governance framework that defines roles and responsibilities in managing risk and ensuring compliance.\n\nBased on the provided context, the model includes:\n\n*   **1st Line: Business & Operational Management**\n    *   **Who:** Department managers, frontline employees, IT operations, HR, etc.\n    *   **Role:** Own and manage risk; implement controls as part of daily operations.\n    *   **Example:** A system admin enforces access control policies; a billing team follows coding accuracy protocols.\n\n*   **2nd Line: Risk Management & Compliance Functions**\n    *   The context identifies this as the second line but does not detail its specific role or examples.\n\nINSUFFICIENT_DATA: The provided compliance frameworks do not contain information regarding the specific role, responsibilities, or examples for the 2nd Line of Defense beyond its name, nor does it describe the 3rd Line of Defense."
+        },
+        {
+            "id": 36,
+            "query": "How do you perform a gap assessment between NIST CSF and ISO 27001?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 4.7,
+            "sources_count": 3,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+        },
+        {
+            "id": 37,
+            "query": "What is the difference between a Key Risk Indicator (KRI) and a KPI?",
+            "outcome": "ANSWERED",
+            "latency": 3.29,
+            "sources_count": 7,
+            "answer": "Based on the provided context, the difference between a Key Risk Indicator (KRI) and a Key Performance Indicator (KPI) is as follows:\n\n*   **Key Performance Indicators (KPIs)** measure the effectiveness of functions and processes. They are crucial to management's oversight of how the business is performing against its objectives, focusing on target achievement, efficiency, and effectiveness.\n*   **Key Risk Indicators (KRIs)** are measurable values that signal increasing risk exposure in a process or activity. They indicate how much risk the organization faces and which risk treatments to apply. KRIs measure the level of risk a business is exposed to, providing advance warning that a risk is increasing in its potential to materialize, thereby helping to detect potential issues early before they turn into major losses. They show whether changes in the risk profile potentially exceed desired tolerance limits and thus jeopardize the achievement of objectives."
+        },
+        {
+            "id": 38,
+            "query": "What are the common pitfalls in SOX internal controls implementation?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 1.92,
+            "sources_count": 2,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+        },
+        {
+            "id": 39,
+            "query": "List the steps for an effective incident response plan per NIST 800-61.",
+            "outcome": "ANSWERED",
+            "latency": 1.6,
+            "sources_count": 6,
+            "answer": "The steps for an effective incident response plan, per NIST 800-61 guidelines, are:\n\n1.  Preparation\n2.  Identification\n3.  Containment & Escalation\n4.  Analysis & Eradication\n5.  Recovery\n6.  Lessons Learned"
+        },
+        {
+            "id": 40,
+            "query": "How do you manage evidence chain-of-custody during a compliance audit?",
+            "outcome": "ANSWERED",
+            "latency": 12.83,
+            "sources_count": 4,
+            "answer": "To manage evidence chain-of-custody during a compliance audit, the approach involves systematic collection, secure storage, and clear documentation of audit artifacts.\n\nBased on the provided context, this includes:\n*   **Centralized and Version-Controlled Repositories:** Evidence is stored in centralized, version-controlled repositories, such as SharePoint or GRC platforms like Archer. This ensures documentation, policies, risk assessments, internal audit reports, and corrective actions are maintained in a structured manner.\n*   **Automated Evidence Collection:** Utilizing tools like Audit Manager to automatically and continuously collect evidence as activities happen. This ensures timely collection and organization of digital artifacts by control requirements, generating audit-ready documentation.\n*   **Coordination and Documentation of Collection:** Collaborating with policy owners and Subject Matter Experts (SMEs) to coordinate the timely collection and organization of compliance evidence, such as system screenshots, access logs, and control test results.\n*   **Tracking and Mapping:** Employing audit trackers to map required controls to specific documentation, thereby tracking the association and lifecycle of evidence.\n*   **Pre-Audit Validation:** Conducting pre-audit walkthroughs with stakeholders to validate control implementation and identify gaps. Prior to the audit, verifying that evidence meets assessor standards for completeness and time coverage.\n\nThese practices contribute to maintaining the integrity and traceability of audit evidence, aligning with the principles of chain of custody by documenting how evidence is collected, stored, tracked, and accessed within the audit preparation and response framework."
+        },
+        {
+            "id": 41,
+            "query": "What is 'Shadow AI' and how can organizations detect it?",
+            "outcome": "ANSWERED",
+            "latency": 3.5,
+            "sources_count": 5,
+            "answer": "Shadow AI refers to the unauthorized or unsanctioned use of ready-made models for general-purpose Generative AI (e.g., ChatGPT) by employees within an organization. This typically occurs when employees access public AI tools, sometimes due to a lack of better alternatives, which may not satisfy the organization's requirements for security and privacy. A common issue is that employees upload sensitive data to these public AI tools without realizing it may become training data for the models.\n\nOrganizations can detect potential Shadow AI usage by watching for employees copying customer data, financial information, or proprietary processes into AI chat interfaces."
+        },
+        {
+            "id": 42,
+            "query": "What are the ethical considerations for using AI in hiring processes?",
+            "outcome": "ANSWERED",
+            "latency": 3.61,
+            "sources_count": 6,
+            "answer": "Based on the provided context, the ethical considerations for using AI in hiring processes include:\n\n*   **Bias:** Evaluating and mitigating risks of bias in AI-based hiring tools. This involves integrating ethical design principles such as fairness and bias mitigation into development processes, conducting bias and fairness testing during model training and validation, and including a process to review datasets to avoid and prevent any bias.\n*   **Fairness:** Ensuring fairness as an ethical design principle and conducting fairness testing.\n*   **Transparency:** Integrating transparency as an ethical design principle.\n*   **Accountability:** Ensuring AI systems are accountable for actions and outputs."
+        },
+        {
+            "id": 43,
+            "query": "How can organizations ensure data quality for AI readiness?",
+            "outcome": "ANSWERED",
+            "latency": 6.84,
+            "sources_count": 4,
+            "answer": "Organizations can ensure data quality for AI readiness through the following measures:\n\n1.  **Define and Document Data Quality Requirements:**\n    *   Define and document explicit data quality requirements for AI systems.\n    *   Establish criteria for accuracy, completeness, consistency, and reliability of data.\n2.  **Ensure Data Meets Requirements:**\n    *   Ensure that data used to develop and operate AI systems meets the defined data quality requirements.\n3.  **Validate and Monitor Data Quality:**\n    *   Implement a process to validate and monitor data quality during AI development and operation.\n    *   Regularly review and update data quality checks based on AI system needs.\n4.  **Document Data Acquisition and Selection:**\n    *   Document the criteria and process for acquiring and selecting data for AI systems.\n    *   Verify data sources for accuracy, reliability, and compliance with regulations.\n    *   Maintain records of data provenance and justification for data selection.\n    *   Periodically review and update data selection criteria.\n5.  **Utilize Automated Analytics Tools:**\n    *   Employ automated analytics tools to quickly blend multiple data sources, remove nulls, deduplicate records, and standardize formats.\n    *   Use these tools to validate data quality and flag inconsistencies or anomalies, as well as to summarize, group, and analyze data to surface patterns."
+        },
+        {
+            "id": 44,
+            "query": "Explain 'Adversarial Machine Learning' and its impact on security.",
+            "outcome": "ANSWERED",
+            "latency": 6.11,
+            "sources_count": 5,
+            "answer": "Adversarial Machine Learning, as described in the provided context, involves inputs (referred to as adversarial examples or adversarial attacks) that are syntactically and semantically valid but are intentionally crafted to exploit learned model behavior. These attacks target the statistical and representational properties of machine learning models rather than explicit rules or schemas.\n\nThe impact of Adversarial Machine Learning on security is significant:\n*   **Widespread Unpreparedness:** A Microsoft survey indicated that most industry practitioners have not yet come to terms with adversarial machine learning, lack the necessary tools, and are actively seeking guidance. This unpreparedness spans various organization types, from Fortune 500 companies to non-profits.\n*   **Evasion of Defenses:** Adversarial attacks often evolve to bypass known detection methods, and adversarial examples may be crafted to evade both the primary machine learning model and dedicated detectors.\n*   **Risk Reduction Dependency:** The effectiveness of controls against these attacks, such as evasion input handling, depends on regular evaluation, adaptation, and combination with complementary defenses.\n*   **Computational Overhead:** Some detection techniques for adversarial examples introduce additional computational overhead or can reduce model accuracy.\n*   **Training Challenges:** Generating adversarial examples for training can create significant overhead, does not scale well with model complexity or input dimension, can lead to overfitting, and may not generalize well to new attack methods.\n*   **Need for Specialized Controls:** The context highlights the development of specific controls like Adversarial-Robust Distillation, Train Adversarial, and Gradient Masking to build resilience and robustness against these types of attacks, underscoring the severity of the threat."
+        },
+        {
+            "id": 45,
+            "query": "What are the benefits of using AI agents for compliance monitoring?",
+            "outcome": "ANSWERED",
+            "latency": 1.13,
+            "sources_count": 6,
+            "answer": "The benefits of using AI for compliance monitoring include:\n*   Reduces manual effort.\n*   Reduces audit preparation time."
+        },
+        {
+            "id": 46,
+            "query": "How does 'Model Poisoning' differ from 'Data Poisoning'?",
+            "outcome": "ANSWERED",
+            "latency": 6.11,
+            "sources_count": 1,
+            "answer": "Model Poisoning differs from Data Poisoning as follows:\n\n*   **Data Poisoning:** This occurs when an attacker manipulates the data that the model uses to learn (e.g., training data, or data used for in-context learning) to affect the algorithm's behavior. This manipulation can occur by changing data while in storage, in transit, at the supplier, or through manipulating data entry in operation.\n*   **Model Poisoning:** This is a broader category of development-time threats where an attacker manipulates development elements (the engineering environment and the supply chain) to alter the behavior of the model. It directly alters the model, either at the supplier, development-time, or during runtime. Model poisoning encompasses three types:\n    1.  **Data Poisoning:** As described above, manipulating training data or data used for in-context learning.\n    2.  **Development-environment model poisoning:** An attacker manipulates model parameters or other engineering elements that contribute to creating the model, such as code, configuration, or libraries.\n    3.  **Supply-chain model poisoning:** This involves using a supplied trained model which has already been manipulated by an attacker.\n\nIn summary, data poisoning specifically targets the data used for learning, while model poisoning is a broader concept that includes data poisoning, but also direct manipulation of the model's parameters, code, configuration, libraries, or the use of pre-manipulated supplied models."
+        },
+        {
+            "id": 47,
+            "query": "What is a 'Risk Heat Map' and how is it used in GRC?",
+            "outcome": "ANSWERED",
+            "latency": 5.68,
+            "sources_count": 3,
+            "answer": "A Risk Heat Map is a visual, often color-coded tool used in risk management to assist in rating risks and facilitating discussions and decision-making throughout the risk assessment process. It represents the qualitative and quantitative evaluations of the probability of risk occurrence (likelihood) and its potential impact on the organization.\n\nIn GRC, a Risk Heat Map is used to:\n*   **Rate and Visualize Risks**: It plots risks based on two key components: Likelihood/Probability (the probability of a risk event occurring) and Impact/Potential Consequences (the potential severity of the event on operations, finances, reputation, or compliance).\n*   **Prioritize Efforts**: By categorizing risks, often using color-coding (e.g., red for high risk) and typically measuring risk on two axes (likelihood and impact), it simplifies communication and helps identify the most critical issues. Risks that rate high on both scales are prioritized higher for immediate action.\n*   **Support Decision-Making**: It enables the prioritization of efforts, focusing on critical and high-risk issues. Organizations often calculate a Total Risk Exposure Score (RES) using the formula RES = Likelihood (L) x Impact (I), focusing on addressing risks with the highest scores first.\n*   **Assess Residual Risk**: Many organizations visualize risks on a heat map using a \u2018residual risk\u2019 basis, which considers the extent to which risks are currently mitigated, reduced by internal controls, or affected by other risk response strategies.\n*   **Communicate Risk Characteristics**: Whether arranged in a 3x3 or 5x5 grid, it provides a clear picture of the various ranges in risk characteristics, using either a numeric system (e.g., 1-25) or a language-based system (e.g., mild-moderate-critical).\n\nThe development of an effective heat map requires a common and understood set of terms, a common understanding of the company\u2019s risk appetite, definitions for varying levels of impact, and the assignment of probabilities and likelihood of risk occurrence and its potential impacts."
+        },
+        {
+            "id": 48,
+            "query": "What are the 6 pillars for AI-ready security?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 1.47,
+            "sources_count": 9,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+        },
+        {
+            "id": 49,
+            "query": "How does the EU AI Act impact open-source AI development?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 2.61,
+            "sources_count": 7,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+        },
+        {
+            "id": 50,
+            "query": "What is the significance of the AI Audit Booklet for CISA auditors?",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 2.56,
+            "sources_count": 6,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information. The text describes the focus and purpose of an \"AI audit checklist\" but does not explicitly state its significance for CISA auditors."
+        }
+    ]
+}
