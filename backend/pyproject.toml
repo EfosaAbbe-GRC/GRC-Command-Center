@@ -1,4 +1,7 @@
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
-ignore = ["tests/smoke_test.py"]
+# smoke_test.py is a standalone script (run directly), not a pytest module —
+# its `test()` helper would otherwise be mis-collected. --ignore is the correct
+# key (the previous `ignore=` was silently invalid).
+addopts = "--ignore=tests/smoke_test.py"

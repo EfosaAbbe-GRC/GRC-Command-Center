@@ -7,6 +7,15 @@ import requests
 import json
 import sys
 
+# Windows consoles default to cp1252, which cannot encode the box-drawing /
+# emoji characters in this script's output. Force UTF-8 so a plain
+# `python tests/test_auth.py` works without PYTHONUTF8/PYTHONIOENCODING.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 BASE = "http://localhost:8001"
 V1 = f"{BASE}/api/v1"
 PASS = 0
