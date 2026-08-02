@@ -24,7 +24,7 @@ All architectural decisions and code generation must strictly adhere to the foll
 Security is the primary directive. Agents must operate under a **Deny-by-Default** philosophy.
 
 1. **Zero-Trust Execution:** The use of `subprocess.run()` or any arbitrary shell execution is strictly prohibited. All agents must be registered and executed via the internal `AGENT_REGISTRY` mapping.
-2. **Audit Immutability:** The audit trail (`audit_logs`, `evidence_chain`) must remain append-only. This is enforced at the database level via PL/pgSQL triggers (`fn_prevent_audit_modification`). Do not attempt to bypass this.
+2. **Audit Immutability:** The audit trail (`audit_logs`, `evidence_chain`, `risk_acceptances`) must remain append-only. This is enforced at the database level via PL/pgSQL triggers (`fn_prevent_immutability_violation`). Do not attempt to bypass this.
 3. **Strict Authentication:** All real-time telemetry and API endpoints must validate IAM-10 JWT credentials. WebSockets must handshake via the `?token=` query parameter before upgrading the connection.
 4. **Vault Preservation:** Docker volumes containing the `faiss_index` must always be treated as `external: true` or explicitly preserved during infrastructure modifications.
 

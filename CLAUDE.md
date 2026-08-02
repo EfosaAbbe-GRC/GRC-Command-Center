@@ -58,9 +58,12 @@ GRC_Command_Center/
 │   │   ├── models.py              # SQLAlchemy 2.0 Declarative Models
 │   │   ├── logger.py              # Structured JSON logging with Correlation IDs
 │   │   ├── rag.py                 # RAGEngine: Vector Indexing & LLM Orchestration
+│   │   ├── tprm.py                # TPRM: 13-stage vendor egress/ingress assessment, risk acceptances
 │   │   └── ws.py                  # Sync Event Bus: WebSocket stream management
 │   ├── data/
-│   │   └── data_fixtures.py       # Initial GRC seeding logic
+│   │   ├── fixtures.json          # Initial GRC seeding data (policies, KPIs, framework mappings)
+│   │   └── seed_tprm_stages.py    # Idempotent seeding of 26 reference TPRM stages (run from lifespan)
+│   ├── data_service.py            # Loads fixtures.json; serves policies/dashboard/framework mappings
 │   ├── requirements.txt           # Backend dependencies
 │   └── tests/
 │       └── smoke_test.py          # Primary functional endpoint verification
@@ -79,7 +82,8 @@ GRC_Command_Center/
 │       ├── ComplianceTerminal.jsx  # Policy management (WebSocket synced)
 │       ├── ExecutiveTerminal.jsx   # High-level KPIs
 │       ├── OpsTerminal.jsx        # Job oversight (WebSocket synced)
-│       └── KnowledgeTerminal.jsx  # Vector store and document metadata
+│       ├── KnowledgeTerminal.jsx  # Vector store and document metadata
+│       └── VendorRiskTerminal.jsx # TPRM: vendor risk register, stage review, sign-off (minRole analyst)
 │
 ├── Dockerfile.backend             # Production backend build
 ├── Dockerfile.frontend            # Production frontend build (Nginx)
@@ -110,7 +114,7 @@ GRC_Command_Center/
 ### 2. Zero-Trust Security & Immutability
 
 - **Subprocess Eradication**: Eliminated all `subprocess.run()` calls. Agents are now hardcoded Python functions in the `AGENT_REGISTRY`.
-- **Hardened Triggers**: Implemented native PL/pgSQL `SECURITY DEFINER` triggers (`fn_prevent_audit_modification`, `fn_prevent_evidence_modification`) that block all `UPDATE` and `DELETE` operations at the database layer.
+- **Hardened Triggers**: Implemented native PL/pgSQL `SECURITY DEFINER` triggers, all bound to a single shared function (`fn_prevent_immutability_violation`), that block all `UPDATE` and `DELETE` operations on `audit_logs`, `evidence_chain`, and `risk_acceptances` at the database layer.
 - **Independent Seeding**: Refactored the `lifespan` startup to check for `admin`, `analyst`, and `viewer` accounts independently, ensuring 100% RBAC test coverage on every boot.
 
 ### 3. Real-Time Telemetry
