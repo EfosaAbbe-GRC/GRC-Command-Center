@@ -109,6 +109,26 @@ export default function VendorRiskTerminal() {
           )}
         </div>
 
+        {vendors?.length > 0 && (
+          <div className="flex gap-1.5 px-3 py-2 border-b border-[var(--border-default)] overflow-x-auto shrink-0">
+            {vendors.map((v) => {
+              const tier = TIER_STYLE[v.overall_risk_tier] || TIER_STYLE.unscored;
+              return (
+                <div key={v.id}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-sm border shrink-0"
+                  style={{ borderColor: tier.color, backgroundColor: tier.bg }}
+                  title={`${v.name} — ${v.overall_risk_tier}`}
+                >
+                  <span className="text-[10px] font-bold text-[var(--text-primary)] truncate max-w-[100px]">{v.name}</span>
+                  <span className="text-[8px] font-bold uppercase font-mono" style={{ color: tier.color }}>
+                    {v.overall_risk_tier}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin scrollbar-thumb-[var(--layer-4)]">
           {loading && <div className="p-4 text-[10px] text-[var(--text-tertiary)] font-mono uppercase tracking-widest animate-pulse">Loading integrations…</div>}
           {!loading && integrations?.length === 0 && (
@@ -415,7 +435,7 @@ function CreateIntegrationModal({ vendors, onClose, onCreated }) {
             ) : (
               <select className={field} value={form.vendor_id} onChange={set('vendor_id')}>
                 <option value="">— select vendor —</option>
-                {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                {vendors.map((v) => <option key={v.id} value={v.id}>{v.name} — {v.overall_risk_tier}</option>)}
               </select>
             )}
           </div>

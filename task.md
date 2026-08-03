@@ -67,10 +67,16 @@
 - [x] **2.4 Method applicability + `NOT_APPLICABLE` status** *(2026-08-02)* — seed data fixed (egress #4/#6 marked `file`-only; DB reconciled on boot), stage fan-out filter, justification-required N/A with audit logging, summary fix (N/A counts as completed). **Bug found & fixed live:** Postgres `stagestatus` enum needed `ALTER TYPE ... ADD VALUE` — `create_all()` doesn't alter an existing enum type for new Python enum members. 4 new tests; **smoke 42/42**, **pytest 25/25** (20 TPRM + 5 IAM)
 - [x] **2.1 Surface stage guidance in the UI** *(2026-08-02)* — `StageOut` widened with `guidance`/`review_questions`/`evidence_to_collect`; `VendorRiskTerminal.jsx` stage rows expand into a detail panel. No schema risk (additive read-only fields). **smoke 42/42**, **pytest 25/25**, manual API content check passed
 - [x] **2.2 UI risk-acceptance form (admin)** *(2026-08-02)* — frontend-only (`RiskAcceptanceModal`, acceptance status embedded in the GAP stage detail panel). **smoke 42/42**, **pytest 25/25**, manual end-to-end sign→list check passed
-- [ ] Tier 2 next: 2.3 (vendor-level risk rollup) per roadmap's recommended sequence
+- [x] **2.3 Vendor-level risk rollup** *(2026-08-03)* — `_recompute_vendor_tier` (max-severity across a vendor's integrations) hooked into `create_integration` + both `approve_integration` success paths; `VendorRiskTerminal.jsx` gained a vendor-portfolio strip + tiered dropdown labels. New `test_tprm_vendor_rollup`. **smoke 42/42**, **pytest 26/26**, live API check confirmed real tier distribution (was 100% `unscored`). Not browser-verified (no browser-automation tool this session). **Tier 2 now fully complete.**
+
+## P5 — TPRM Tier 3 (lifecycle & reporting — not yet started)
+
+- [ ] **3.1 Reassessment surfacing** — WebSocket-pushed badge/panel from `GET /reassessments/due` + expiring-acceptance data (no polling, per GOVERNANCE §3)
+- [ ] **3.2 TPRM assessment report export** — streaming CSV, parity with `/compliance/export`
+- [ ] **3.3 Evidence linkage to `evidence_chain`** — replace free-text `evidence_notes` with hashed, chain-of-custody evidence
 
 ---
 
 **Active item:** RETRIEVAL SPRINT COMPLETE *(2026-07-18)* — trajectory **44% → 72% → 78% → 82% → 86%** (+42 pts, zero errors across 250 queries). Corpus expanded to 158 docs; cross-encoder re-ranker A/B'd (+4 net, +0.94s latency) and **kept**. See `RAG_Benchmark_Report_v5.md`.
 Remaining 7 failures need *different* levers: EU AI Act clause structure → Golden Mapping (P2); CSF tiers table → structured extraction; CISA booklet → missing source; 2 jitter queries → judge calibration (P2).
-**Next session:** P2 Judge Calibration + Golden Mapping, or pivot to P3 Execution Monitor UI. Refresh HANDOFF.md at session close.
+**Next session:** TPRM Tier 3 (3.1 reassessment surfacing next per roadmap sequence), or pivot to RAG P2 Judge Calibration + Golden Mapping. Refresh HANDOFF.md at session close.

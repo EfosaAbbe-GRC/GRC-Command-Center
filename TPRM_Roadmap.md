@@ -80,6 +80,17 @@ Recommended sequence: **2.3** (vendor-level risk rollup).
 - *Where:* `VendorRiskTerminal.jsx` (new modal, token-styled like `CreateIntegrationModal`).
 - *Depends-on:* 1.2 (list endpoint), 1.1 (so the sign-off is audited).
 
+**✅ 2.3 COMPLETE (2026-08-03)** — executed per `TPRM_Tier2_2.3_refactor.md` (now marked EXECUTED).
+`_recompute_vendor_tier` (max-severity rollup) hooked into both `create_integration` and both
+`approve_integration` success paths; `VendorRiskTerminal.jsx` gained a vendor-portfolio strip
+(name + tier-badge chips) and the create-integration vendor dropdown now shows each vendor's tier
+inline. New `test_tprm_vendor_rollup` (asserts a later lower-tier integration doesn't downgrade an
+already-critical vendor). Verified: smoke 42/42, pytest 26/26, plus a live API check confirming
+real tier distribution across 244 vendors (was 100% `unscored` before). Not independently
+browser-verified — no browser-automation tool this session; substituted a live API check (same gap
+2.2 had). Tier 2 is now fully complete (2.1/2.2/2.3/2.4 all ✅). Next up: **Tier 3** (3.1
+reassessment surfacing, per the roadmap's recommended sequence).
+
 **2.3 Vendor-level risk rollup** — S/M
 - *What:* compute `Vendor.overall_risk_tier` as the max tier across its integrations (currently hard-stuck at `UNSCORED`).
 - *Why:* a vendor with three CRITICAL integrations should read CRITICAL at the vendor level; today the field exists but is never populated. Enables a vendor-portfolio view.

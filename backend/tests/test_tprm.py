@@ -55,13 +55,14 @@ def _headers(role):
 
 
 def _create_integration(headers, direction="egress", classification="PII",
-                        volume=0, regulated="none"):
-    v = requests.post(
-        f"{V1}/tprm/vendors", headers=headers,
-        json={"name": f"pytest-vendor-{uuid.uuid4().hex[:8]}",
-              "contact_email": "pytest@example.com"}, timeout=30)
-    assert v.status_code == 200, f"vendor create: {v.status_code} {v.text}"
-    vendor_id = v.json()["id"]
+                        volume=0, regulated="none", vendor_id=None):
+    if vendor_id is None:
+        v = requests.post(
+            f"{V1}/tprm/vendors", headers=headers,
+            json={"name": f"pytest-vendor-{uuid.uuid4().hex[:8]}",
+                  "contact_email": "pytest@example.com"}, timeout=30)
+        assert v.status_code == 200, f"vendor create: {v.status_code} {v.text}"
+        vendor_id = v.json()["id"]
 
     r = requests.post(
         f"{V1}/tprm/integrations", headers=headers,
@@ -71,6 +72,14 @@ def _create_integration(headers, direction="egress", classification="PII",
               "involves_regulated_data": regulated}, timeout=30)
     assert r.status_code == 200, f"integration create: {r.status_code} {r.text}"
     return r.json()
+
+
+def _get_vendor(headers, vendor_id):
+    r = requests.get(f"{V1}/tprm/vendors", headers=headers, timeout=30)
+    assert r.status_code == 200, r.text
+    match = next((v for v in r.json() if v["id"] == vendor_id), None)
+    assert match is not None, f"vendor {vendor_id} not found in list"
+    return match
 
 
 def _stages(headers, integ_id):
@@ -126,6 +135,21 @@ def test_tprm_risk_tiering():
     assert _create_integration(h, classification="PII", volume=50000)["computed_risk_tier"] == "high"
     assert _create_integration(h, classification="PII")["computed_risk_tier"] == "medium"
     assert _create_integration(h, classification="public")["computed_risk_tier"] == "low"
+
+
+# ─── Vendor-level risk rollup (Tier 2.3) ────────────────────────────────────
+def test_tprm_vendor_rollup():
+    h = _headers("admin")
+    low = _create_integration(h, classification="public")
+    vendor_id = low["vendor_id"]
+    assert _get_vendor(h, vendor_id)["overall_risk_tier"] == "low"
+
+    _create_integration(h, classification="PHI", regulated="HIPAA", vendor_id=vendor_id)
+    assert _get_vendor(h, vendor_id)["overall_risk_tier"] == "critical"
+
+    # A later, lower-tier integration must not downgrade the vendor's rollup.
+    _create_integration(h, classification="public", vendor_id=vendor_id)
+    assert _get_vendor(h, vendor_id)["overall_risk_tier"] == "critical"
 
 
 # ─── Deny-by-default approval ───────────────────────────────────────────────

@@ -176,6 +176,29 @@ def compute_risk_tier(data_classification: str, volume: int, regulated: str) -> 
     return RiskTier.LOW
 
 
+RISK_TIER_SEVERITY = {
+    RiskTier.CRITICAL: 4,
+    RiskTier.HIGH: 3,
+    RiskTier.MEDIUM: 2,
+    RiskTier.LOW: 1,
+    RiskTier.UNSCORED: 0,
+}
+
+
+async def _recompute_vendor_tier(vendor_id: uuid.UUID, db: AsyncSession) -> None:
+    """Vendor.overall_risk_tier = max(severity) across its integrations."""
+    result = await db.execute(
+        select(Integration.computed_risk_tier).where(Integration.vendor_id == vendor_id)
+    )
+    tiers = result.scalars().all()
+    new_tier = max(tiers, key=lambda t: RISK_TIER_SEVERITY[t]) if tiers else RiskTier.UNSCORED
+
+    vendor = await db.get(Vendor, vendor_id)
+    if vendor and vendor.overall_risk_tier != new_tier:
+        vendor.overall_risk_tier = new_tier
+        await db.commit()
+
+
 # ── Schemas ─────────────────────────────────────────────────────────────────
 class VendorCreate(BaseModel):
     name: str
@@ -329,6 +352,8 @@ async def create_integration(
     for stage in stages_result.scalars().all():
         db.add(StageResponse(integration_id=integration.id, stage_id=stage.id))
     await db.commit()
+
+    await _recompute_vendor_tier(integration.vendor_id, db)
     return integration
 
 
@@ -523,6 +548,7 @@ async def approve_integration(integration_id: uuid.UUID, request: Request, db: A
         integration.status = IntegrationStatus.APPROVED
         await db.commit()
         await db.refresh(integration)
+        await _recompute_vendor_tier(integration.vendor_id, db)
         log_security_event(request, "TPRM_APPROVE",
             f"Integration {integration.id} ('{integration.name}') approved clean")
         return integration
@@ -545,6 +571,7 @@ async def approve_integration(integration_id: uuid.UUID, request: Request, db: A
     integration.status = IntegrationStatus.APPROVED_WITH_EXCEPTIONS
     await db.commit()
     await db.refresh(integration)
+    await _recompute_vendor_tier(integration.vendor_id, db)
     log_security_event(request, "TPRM_APPROVE_WITH_EXCEPTIONS",
         f"Integration {integration.id} ('{integration.name}') approved with exceptions")
     return integration
