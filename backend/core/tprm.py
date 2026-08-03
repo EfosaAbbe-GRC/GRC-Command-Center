@@ -33,7 +33,7 @@ from sqlalchemy.orm import relationship
 
 from core.models import Base                    # Base lives in core.models
 from core.database import get_db
-from core.auth import authorize, get_current_user
+from core.auth import authorize, get_current_user, log_security_event
 
 
 def _utcnow() -> datetime:
@@ -64,6 +64,7 @@ class StageStatus(str, enum.Enum):
     IN_REVIEW = "in_review"
     PASS_ = "pass"
     GAP = "gap"
+    NOT_APPLICABLE = "not_applicable"
 
 
 class IntegrationStatus(str, enum.Enum):
@@ -151,6 +152,14 @@ class RiskAcceptance(Base):
 # ── Risk tiering ────────────────────────────────────────────────────────────
 REGULATED_KEYWORDS = {"hipaa", "phi", "gdpr", "pci", "pci-dss"}
 
+# Per-tier reassessment cadence (industry standard: risk-proportionate recurrence).
+REASSESSMENT_DAYS_BY_TIER = {
+    RiskTier.CRITICAL: 90,
+    RiskTier.HIGH: 180,
+    RiskTier.MEDIUM: 365,
+    RiskTier.LOW: 365,
+}
+
 
 def compute_risk_tier(data_classification: str, volume: int, regulated: str) -> RiskTier:
     regulated_l = (regulated or "").lower()
@@ -217,6 +226,12 @@ class StageOut(BaseModel):
     stage_number: int
     title: str
     status: StageStatus
+    evidence_notes: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    guidance: str
+    review_questions: str
+    evidence_to_collect: str
 
 
 class RiskAcceptanceIn(BaseModel):
@@ -225,6 +240,20 @@ class RiskAcceptanceIn(BaseModel):
     compensating_control: str
     expires_in_days: int = Field(365, ge=1, le=1095)
     # accepted_by intentionally absent — taken from the authenticated admin.
+
+
+class RiskAcceptanceOut(BaseModel):
+    id: uuid.UUID
+    integration_id: uuid.UUID
+    stage_id: uuid.UUID
+    gap_description: str
+    compensating_control: str
+    accepted_by: str
+    accepted_at: datetime
+    expires_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class IntegrationSummary(BaseModel):
@@ -284,7 +313,7 @@ async def create_integration(
         involves_regulated_data=payload.involves_regulated_data,
         computed_risk_tier=tier,
         status=IntegrationStatus.UNDER_ASSESSMENT,
-        reassessment_due=_utcnow() + timedelta(days=365),
+        reassessment_due=_utcnow() + timedelta(days=REASSESSMENT_DAYS_BY_TIER.get(tier, 365)),
         created_by=current_user["username"],
     )
     db.add(integration)
@@ -292,7 +321,10 @@ async def create_integration(
     await db.refresh(integration)
 
     stages_result = await db.execute(
-        select(AssessmentStage).where(AssessmentStage.direction == payload.direction)
+        select(AssessmentStage).where(
+            AssessmentStage.direction == payload.direction,
+            AssessmentStage.applies_to_methods.in_(["both", payload.transfer_method.value]),
+        )
     )
     for stage in stages_result.scalars().all():
         db.add(StageResponse(integration_id=integration.id, stage_id=stage.id))
@@ -316,6 +348,8 @@ async def get_integration_stages(integration_id: uuid.UUID, db: AsyncSession = D
         select(
             AssessmentStage.id, AssessmentStage.stage_number,
             AssessmentStage.title, StageResponse.status,
+            StageResponse.evidence_notes, StageResponse.reviewed_by, StageResponse.reviewed_at,
+            AssessmentStage.guidance, AssessmentStage.review_questions, AssessmentStage.evidence_to_collect,
         )
         .join(StageResponse, StageResponse.stage_id == AssessmentStage.id)
         .where(StageResponse.integration_id == integration_id)
@@ -325,7 +359,10 @@ async def get_integration_stages(integration_id: uuid.UUID, db: AsyncSession = D
     if not rows:
         raise HTTPException(status_code=404, detail="Integration not found or no stages")
     return [
-        StageOut(stage_id=r.id, stage_number=r.stage_number, title=r.title, status=r.status)
+        StageOut(stage_id=r.id, stage_number=r.stage_number, title=r.title, status=r.status,
+                 evidence_notes=r.evidence_notes, reviewed_by=r.reviewed_by, reviewed_at=r.reviewed_at,
+                 guidance=r.guidance, review_questions=r.review_questions,
+                 evidence_to_collect=r.evidence_to_collect)
         for r in rows
     ]
 
@@ -352,11 +389,20 @@ async def submit_stage_response(
     if not stage_response:
         raise HTTPException(status_code=404, detail="Stage response not found for this integration")
 
+    if payload.status == StageStatus.NOT_APPLICABLE and not (payload.evidence_notes or "").strip():
+        raise HTTPException(status_code=422,
+            detail="A justification note is required to mark a stage Not Applicable")
+
     stage_response.status = payload.status
     stage_response.evidence_notes = payload.evidence_notes
     stage_response.reviewed_by = current_user["username"]
     stage_response.reviewed_at = _utcnow()
     await db.commit()
+
+    if payload.status == StageStatus.NOT_APPLICABLE:
+        log_security_event(request, "TPRM_STAGE_NOT_APPLICABLE",
+            f"Stage {stage_id} on integration {integration_id} marked N/A by "
+            f"{current_user['username']}: {payload.evidence_notes}")
     return {"status": "updated"}
 
 
@@ -399,7 +445,24 @@ async def create_risk_acceptance(
     db.add(acceptance)
     integration.status = IntegrationStatus.APPROVED_WITH_EXCEPTIONS
     await db.commit()
+    log_security_event(request, "TPRM_RISK_ACCEPTANCE",
+        f"Risk acceptance signed for integration {integration_id}, stage {payload.stage_id}, "
+        f"expires {acceptance.expires_at.isoformat()}")
     return {"status": "risk acceptance recorded", "integration_status": integration.status}
+
+
+@router.get(
+    "/integrations/{integration_id}/risk-acceptances",
+    response_model=List[RiskAcceptanceOut],
+    dependencies=[Depends(authorize(CAP_VIEW))],
+)
+async def list_risk_acceptances(integration_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(RiskAcceptance)
+        .where(RiskAcceptance.integration_id == integration_id)
+        .order_by(RiskAcceptance.accepted_at.desc())
+    )
+    return result.scalars().all()
 
 
 @router.get(
@@ -417,7 +480,7 @@ async def get_integration_summary(integration_id: uuid.UUID, db: AsyncSession = 
     )
     responses = result.scalars().all()
     total = len(responses)
-    completed = sum(1 for r in responses if r.status in (StageStatus.PASS_, StageStatus.GAP))
+    completed = sum(1 for r in responses if r.status in (StageStatus.PASS_, StageStatus.GAP, StageStatus.NOT_APPLICABLE))
     open_gaps = sum(1 for r in responses if r.status == StageStatus.GAP)
 
     # READ ONLY. Approval is an explicit POST /approve (below).
@@ -437,7 +500,7 @@ async def get_integration_summary(integration_id: uuid.UUID, db: AsyncSession = 
     response_model=IntegrationOut,
     dependencies=[Depends(authorize(CAP_SIGNOFF))],
 )
-async def approve_integration(integration_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def approve_integration(integration_id: uuid.UUID, request: Request, db: AsyncSession = Depends(get_db)):
     """Deny-by-default: clean pass -> APPROVED; gaps only if every GAP has a
     live risk acceptance -> APPROVED_WITH_EXCEPTIONS; otherwise 409 BLOCKED."""
     integration = await db.get(Integration, integration_id)
@@ -460,6 +523,8 @@ async def approve_integration(integration_id: uuid.UUID, db: AsyncSession = Depe
         integration.status = IntegrationStatus.APPROVED
         await db.commit()
         await db.refresh(integration)
+        log_security_event(request, "TPRM_APPROVE",
+            f"Integration {integration.id} ('{integration.name}') approved clean")
         return integration
 
     # Every gap must be covered by a non-expired risk acceptance.
@@ -471,6 +536,8 @@ async def approve_integration(integration_id: uuid.UUID, db: AsyncSession = Depe
     if not gap_stage_ids.issubset(covered):
         integration.status = IntegrationStatus.BLOCKED
         await db.commit()
+        log_security_event(request, "TPRM_APPROVE_BLOCKED",
+            f"Integration {integration.id} ('{integration.name}') blocked — open gaps without valid risk acceptance")
         raise HTTPException(
             status_code=409,
             detail="Open gaps without a valid risk acceptance — cannot approve",
@@ -478,6 +545,8 @@ async def approve_integration(integration_id: uuid.UUID, db: AsyncSession = Depe
     integration.status = IntegrationStatus.APPROVED_WITH_EXCEPTIONS
     await db.commit()
     await db.refresh(integration)
+    log_security_event(request, "TPRM_APPROVE_WITH_EXCEPTIONS",
+        f"Integration {integration.id} ('{integration.name}') approved with exceptions")
     return integration
 
 
@@ -495,4 +564,33 @@ async def get_due_reassessments(db: AsyncSession = Depends(get_db)):
             "days_overdue": (now - i.reassessment_due).days,
         }
         for i in result.scalars().all()
+    ]
+
+
+@router.get("/acceptances/expiring", dependencies=[Depends(authorize(CAP_VIEW))])
+async def get_expiring_acceptances(db: AsyncSession = Depends(get_db)):
+    """Read-only: flags APPROVED_WITH_EXCEPTIONS integrations whose covering risk
+    acceptance has lapsed. Computed live, no stored-state mutation — mirrors
+    the reassessments/due pattern."""
+    now = _utcnow()
+    result = await db.execute(
+        select(Integration, RiskAcceptance)
+        .join(RiskAcceptance, RiskAcceptance.integration_id == Integration.id)
+        .where(
+            Integration.status == IntegrationStatus.APPROVED_WITH_EXCEPTIONS,
+            RiskAcceptance.expires_at <= now,
+        )
+    )
+    return [
+        {
+            "integration_id": str(integration.id),
+            "integration_name": integration.name,
+            "vendor_id": str(integration.vendor_id),
+            "stage_id": str(acceptance.stage_id),
+            "acceptance_id": str(acceptance.id),
+            "accepted_by": acceptance.accepted_by,
+            "expired_at": acceptance.expires_at,
+            "days_expired": (now - acceptance.expires_at).days,
+        }
+        for integration, acceptance in result.all()
     ]

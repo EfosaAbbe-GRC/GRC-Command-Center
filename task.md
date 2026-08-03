@@ -53,7 +53,21 @@
 
 - [ ] **Execution Monitor UI**: real-time agent job monitor on the WebSocket telemetry bus (HANDOFF priority #3)
 - [ ] **Agent Registry De-stubbing**: `active-auditor` / `policy-analyzer` handlers in `agent.py` return canned responses — wire them to real RAG/audit logic
-- [ ] **Documentation Drift**: CLAUDE.md claims `text-embedding-004` embeddings + Gemini 2.0 Flash; code actually uses `all-MiniLM-L6-v2` + `gemini-2.5-flash` — sync CLAUDE.md to reality
+- [x] **Documentation Drift**: GOVERNANCE.md/CLAUDE.md cited `fn_prevent_audit_modification`/`fn_prevent_evidence_modification` (real fn is `fn_prevent_immutability_violation`) and a nonexistent `data_fixtures.py`; TPRM module was undocumented in CLAUDE.md's file tree — all fixed *(2026-08-02, commit `2268d2d`)*. ~~CLAUDE.md claims `text-embedding-004`/Gemini 2.0 Flash~~ — re-checked 2026-08-02, CLAUDE.md already correctly says `all-MiniLM-L6-v2`/`gemini-2.5-flash`; this line was stale, leaving struck through rather than deleting silently.
+
+## P4 — TPRM Tier 1 (security & parity gaps)
+
+- [x] **Draft & Review** — `TPRM_Tier1_refactor.md` produced and EXECUTE'd *(2026-08-02)*
+- [x] **1.1 Audit-log privileged TPRM actions** — `approve_integration` (clean/with-exceptions/blocked) and `create_risk_acceptance` now call `log_security_event`
+- [x] **1.2 Read-back for risk acceptances + stage evidence** — new `GET .../risk-acceptances`; `StageOut` widened with `evidence_notes`/`reviewed_by`/`reviewed_at`
+- [x] **1.3 Expired-acceptance detection** — new `GET /tprm/acceptances/expiring`, read-only/computed-live (design call: no persisted status flip — flagged for Tier 3 UI surfacing instead)
+- [x] **1.4 `BEFORE TRUNCATE` triggers** — added to `audit_logs`, `evidence_chain`, `risk_acceptances`, verified live via `pg_trigger`
+- [x] **1.5 Per-tier reassessment cadence** — `REASSESSMENT_DAYS_BY_TIER` (CRITICAL 90d / HIGH 180d / MEDIUM+LOW 365d) replaces flat 365d
+- [x] **Verify** *(2026-08-02)* — 6 new tests added to `test_tprm.py`; **smoke 42/42**, **pytest 21/21** (16 TPRM + 5 IAM regression check)
+- [x] **2.4 Method applicability + `NOT_APPLICABLE` status** *(2026-08-02)* — seed data fixed (egress #4/#6 marked `file`-only; DB reconciled on boot), stage fan-out filter, justification-required N/A with audit logging, summary fix (N/A counts as completed). **Bug found & fixed live:** Postgres `stagestatus` enum needed `ALTER TYPE ... ADD VALUE` — `create_all()` doesn't alter an existing enum type for new Python enum members. 4 new tests; **smoke 42/42**, **pytest 25/25** (20 TPRM + 5 IAM)
+- [x] **2.1 Surface stage guidance in the UI** *(2026-08-02)* — `StageOut` widened with `guidance`/`review_questions`/`evidence_to_collect`; `VendorRiskTerminal.jsx` stage rows expand into a detail panel. No schema risk (additive read-only fields). **smoke 42/42**, **pytest 25/25**, manual API content check passed
+- [x] **2.2 UI risk-acceptance form (admin)** *(2026-08-02)* — frontend-only (`RiskAcceptanceModal`, acceptance status embedded in the GAP stage detail panel). **smoke 42/42**, **pytest 25/25**, manual end-to-end sign→list check passed
+- [ ] Tier 2 next: 2.3 (vendor-level risk rollup) per roadmap's recommended sequence
 
 ---
 

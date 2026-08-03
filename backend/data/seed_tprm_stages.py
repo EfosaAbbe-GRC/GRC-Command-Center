@@ -126,15 +126,30 @@ INGRESS_STAGES = [
 ]
 
 
+# Stages whose content is exclusive to one transfer method. Everything else
+# defaults to "both" — the seed tuples themselves stay untouched.
+METHOD_OVERRIDES = {
+    (Direction.EGRESS, 4): "file",   # SSH-key auth is a file-transfer-specific control
+    (Direction.EGRESS, 6): "file",   # MFT is a file-transfer-specific platform
+}
+
+
 async def seed():
     async with AsyncSessionLocal() as db:
-        existing = await db.execute(select(AssessmentStage.direction, AssessmentStage.stage_number))
-        existing_keys = set(existing.all())
+        existing = await db.execute(select(AssessmentStage))
+        existing_by_key = {(r.direction, r.stage_number): r for r in existing.scalars().all()}
 
         rows_added = 0
+        rows_updated = 0
         for direction, stage_list in ((Direction.EGRESS, EGRESS_STAGES), (Direction.INGRESS, INGRESS_STAGES)):
             for stage_number, title, guidance, questions, evidence in stage_list:
-                if (direction, stage_number) in existing_keys:
+                methods = METHOD_OVERRIDES.get((direction, stage_number), "both")
+                key = (direction, stage_number)
+                if key in existing_by_key:
+                    row = existing_by_key[key]
+                    if row.applies_to_methods != methods:
+                        row.applies_to_methods = methods
+                        rows_updated += 1
                     continue
                 db.add(AssessmentStage(
                     direction=direction,
@@ -143,11 +158,12 @@ async def seed():
                     guidance=guidance,
                     review_questions=questions,
                     evidence_to_collect=evidence,
+                    applies_to_methods=methods,
                 ))
                 rows_added += 1
 
         await db.commit()
-        print(f"Seed complete: {rows_added} stage rows added.")
+        print(f"Seed complete: {rows_added} stage rows added, {rows_updated} updated.")
 
 
 if __name__ == "__main__":

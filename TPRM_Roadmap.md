@@ -10,6 +10,10 @@ Two lenses noted where they diverge — **security-parity** (your stated priorit
 
 ## Tier 1 — Close security & parity gaps (do first; small, high assurance)
 
+**✅ TIER 1 COMPLETE (2026-08-02)** — 1.1 through 1.5 executed per `TPRM_Tier1_refactor.md`
+(now marked EXECUTED). Verified: smoke 42/42, pytest 21/21 (16 TPRM incl. 6 new, 5 IAM regression
+check). Next up per the Recommended sequence below: **2.4**.
+
 **1.1 Audit-log the privileged TPRM actions** — S
 - *What:* emit `log_security_event(...)` on approve and risk-acceptance sign-off (and optionally integration create).
 - *Why:* every other privileged action in the app writes to the security audit trail (`main.py` login/policy/ingest all call `log_security_event`). TPRM sign-off currently does **not** — a gap for a module whose whole point is defensibility. "Who approved this vendor, and when" must be in the immutable trail, not just inferable.
@@ -51,11 +55,24 @@ Two lenses noted where they diverge — **security-parity** (your stated priorit
 
 ## Tier 2 — Complete the workflow & unlock the framework's value (medium)
 
+**✅ 2.1 COMPLETE (2026-08-02)** — executed per `TPRM_Tier2_2.1_refactor.md` (now marked EXECUTED).
+`StageOut` widened with `guidance`/`review_questions`/`evidence_to_collect`; `VendorRiskTerminal.jsx`
+stage rows now expand into a detail panel. No schema risk this time — additive read-only fields
+only. Verified: smoke 42/42, pytest 25/25, plus a manual API check confirming real content flows
+through. Next up per the Recommended sequence: **2.2** (UI risk-acceptance form).
+
 **2.1 Surface stage guidance in the UI** ⭐ *highest user-value item* — M
 - *What:* show each stage's `guidance`, `review_questions`, and `evidence_to_collect` in a stage-detail panel/drawer.
 - *Why:* the seed content is the *product* — the 13-stage methodology's worth is the guidance and evidence checklist. Right now the terminal is just pass/gap/review toggles with the guidance invisible in the DB. This is what turns it from a status board into an actual assessment tool.
 - *Where:* `core/tprm.py` (extend stage read or add `GET .../stages/{stage_id}`), `VendorRiskTerminal.jsx` (expand row → detail).
 - *Depends-on:* 1.2 (widened stage read).
+
+**✅ 2.2 COMPLETE (2026-08-02)** — executed per `TPRM_Tier2_2.2_refactor.md` (now marked EXECUTED).
+Frontend-only (1.1/1.2 already covered the API side): acceptance status embedded in each GAP
+stage's detail panel (from 2.1), with a `RiskAcceptanceModal` for admins to sign one. Verified:
+smoke 42/42, pytest 25/25, plus a manual end-to-end API check of the exact sign→list round-trip
+the modal drives. Not browser-verified (no browser-automation tool this session). Next up per the
+Recommended sequence: **2.3** (vendor-level risk rollup).
 
 **2.2 UI risk-acceptance form (admin)** — M
 - *What:* a modal for admins to sign a risk acceptance against a GAP stage (gap description, compensating control, expiry), + a panel listing existing acceptances.
@@ -68,6 +85,11 @@ Two lenses noted where they diverge — **security-parity** (your stated priorit
 - *Why:* a vendor with three CRITICAL integrations should read CRITICAL at the vendor level; today the field exists but is never populated. Enables a vendor-portfolio view.
 - *Where:* `core/tprm.py` (recompute on integration create/approve), `VendorRiskTerminal.jsx` vendor list.
 - *Depends-on:* nothing.
+
+**✅ 2.4 COMPLETE (2026-08-02)** — executed per `TPRM_Tier2_2.4_refactor.md` (now marked EXECUTED).
+Found & fixed live: the Postgres `stagestatus` enum type needed `ALTER TYPE ... ADD VALUE` to pick
+up `NOT_APPLICABLE` — `create_all()` doesn't retrofit existing enum types. Verified: smoke 42/42,
+pytest 25/25. Next up per the Recommended sequence: **2.1** (stage guidance UI).
 
 **2.4 Method-based stage applicability + "Not Applicable" status** — M · *decision #1*
 - *What:* (a) honor the seeded `applies_to_methods` field so stages that don't fit the transfer method aren't fanned out on create (e.g. SSH-key auth / MFT on an API integration); (b) add a `NOT_APPLICABLE` `StageStatus` requiring a justification note, treated as "resolved, non-gap" in the approval gate.
@@ -86,7 +108,6 @@ Two lenses noted where they diverge — **security-parity** (your stated priorit
 - *Depends-on:* 1.3 (expiry), and reuse of the existing WS manager.
 
 **3.2 TPRM assessment report export** — M
-- *What:* CSV (and later PDF) export of an integration's full assessment — stages, statuses, evidence notes, acceptances, approver, dates.
 - *Why:* auditor-facing evidence; parity with `/compliance/export`. The whole point is producing a defensible artifact.
 - *Where:* `core/tprm.py` streaming CSV (mirror `main.py` `export_compliance_csv`), gated by an export capability.
 - *Depends-on:* 1.2.

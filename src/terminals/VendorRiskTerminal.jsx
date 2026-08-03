@@ -18,6 +18,7 @@ const STAGE_ICON = {
   gap: <AlertTriangle size={14} style={{ color: 'var(--danger)' }} />,
   in_review: <Clock size={14} style={{ color: 'var(--warning)' }} />,
   not_started: <div className="w-3.5 h-3.5 rounded-full border" style={{ borderColor: 'var(--border-emphasis)' }} />,
+  not_applicable: <div className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: 'var(--text-tertiary)' }} />,
 };
 
 // Map backend integration status -> StatusBadge's uppercase config keys.
@@ -48,20 +49,32 @@ export default function VendorRiskTerminal() {
   const [stages, setStages] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [expandedStage, setExpandedStage] = useState(null);
+  const [acceptances, setAcceptances] = useState([]);
+  const [signingStage, setSigningStage] = useState(null);
 
   const openIntegration = async (integ) => {
     setSelected(integ);
     setActionError(null);
-    const [s, st] = await Promise.all([
+    setExpandedStage(null);
+    const [s, st, ra] = await Promise.all([
       api.get(`/tprm/integrations/${integ.id}/summary`),
       api.get(`/tprm/integrations/${integ.id}/stages`),
+      api.get(`/tprm/integrations/${integ.id}/risk-acceptances`),
     ]);
     setSummary(s);
     setStages(st);
+    setAcceptances(ra);
   };
 
   const updateStage = async (stageId, status) => {
-    await api.post(`/tprm/integrations/${selected.id}/stages/${stageId}`, { status });
+    let evidence_notes;
+    if (status === 'not_applicable') {
+      const justification = window.prompt('Justification for marking this stage Not Applicable (required):');
+      if (!justification || !justification.trim()) return;
+      evidence_notes = justification.trim();
+    }
+    await api.post(`/tprm/integrations/${selected.id}/stages/${stageId}`, { status, evidence_notes });
     openIntegration(selected);
   };
 
@@ -168,26 +181,70 @@ export default function VendorRiskTerminal() {
             )}
 
             <div className="flex-1 overflow-y-auto p-6 space-y-1 scrollbar-thin scrollbar-thumb-[var(--layer-4)]">
-              {stages.map((stage) => (
-                <div key={stage.stage_id}
-                  className="flex items-center gap-3 px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--layer-1)]">
-                  <div className="w-6 text-center text-[10px] text-[var(--text-tertiary)] font-mono">{stage.stage_number}</div>
-                  {STAGE_ICON[stage.status]}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[11px] text-[var(--text-secondary)] truncate">{stage.title}</div>
-                  </div>
-                  {canAssess && (
-                    <div className="flex gap-1">
-                      {['pass', 'gap', 'in_review'].map((s) => (
-                        <button key={s} onClick={() => updateStage(stage.stage_id, s)}
-                          className={`px-2 py-0.5 rounded-sm text-[9px] uppercase font-bold font-mono border transition ${stage.status === s ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-subtle)]' : 'border-[var(--border-default)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
-                          {s === 'in_review' ? 'review' : s}
-                        </button>
-                      ))}
+              {stages.map((stage) => {
+                const isExpanded = expandedStage === stage.stage_id;
+                return (
+                  <div key={stage.stage_id}
+                    className="rounded border border-[var(--border-default)] bg-[var(--layer-1)] overflow-hidden">
+                    <div
+                      className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--layer-2)] transition"
+                      onClick={() => setExpandedStage(isExpanded ? null : stage.stage_id)}
+                    >
+                      <ChevronRight size={12} className={`text-[var(--text-tertiary)] transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                      <div className="w-6 text-center text-[10px] text-[var(--text-tertiary)] font-mono">{stage.stage_number}</div>
+                      {STAGE_ICON[stage.status]}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] text-[var(--text-secondary)] truncate">{stage.title}</div>
+                      </div>
+                      {canAssess && (
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          {['pass', 'gap', 'in_review', 'not_applicable'].map((s) => (
+                            <button key={s} onClick={() => updateStage(stage.stage_id, s)}
+                              className={`px-2 py-0.5 rounded-sm text-[9px] uppercase font-bold font-mono border transition ${stage.status === s ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-subtle)]' : 'border-[var(--border-default)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+                              {s === 'in_review' ? 'review' : s === 'not_applicable' ? 'n/a' : s}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                    {isExpanded && (
+                      <div className="px-4 pb-3 pt-1 space-y-2 border-t border-[var(--border-subtle)] bg-[var(--layer-0)]">
+                        <StageDetailField label="Guidance" value={stage.guidance} />
+                        <StageDetailField label="Review Questions" value={stage.review_questions} />
+                        <StageDetailField label="Evidence to Collect" value={stage.evidence_to_collect} />
+                        {stage.evidence_notes && (
+                          <StageDetailField label={`Notes${stage.reviewed_by ? ` — ${stage.reviewed_by}` : ''}`} value={stage.evidence_notes} />
+                        )}
+                        {stage.status === 'gap' && (() => {
+                          const acc = acceptances.find((a) => a.stage_id === stage.stage_id);
+                          if (acc) {
+                            return (
+                              <div className="pt-1 border-t border-[var(--border-subtle)]">
+                                <div className="text-[9px] font-bold text-[var(--warning)] uppercase tracking-widest mb-0.5">Risk Accepted</div>
+                                <div className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                                  {acc.gap_description} — compensating control: {acc.compensating_control}
+                                </div>
+                                <div className="text-[9px] text-[var(--text-tertiary)] font-mono mt-1">
+                                  Accepted by {acc.accepted_by} · expires {new Date(acc.expires_at).toLocaleDateString()}
+                                </div>
+                              </div>
+                            );
+                          }
+                          if (canSignoff) {
+                            return (
+                              <button onClick={() => setSigningStage(stage)}
+                                className="mt-1 px-3 py-1 bg-[var(--warning-subtle)] hover:bg-[var(--warning)] hover:text-black border border-[var(--warning)] text-[var(--warning)] rounded text-[9px] font-bold uppercase tracking-wider transition">
+                                Sign Risk Acceptance
+                              </button>
+                            );
+                          }
+                          return <div className="text-[10px] text-[var(--text-tertiary)]">Gap open — awaiting admin risk acceptance</div>;
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
@@ -200,6 +257,91 @@ export default function VendorRiskTerminal() {
           onCreated={() => { setShowCreate(false); refresh(); }}
         />
       )}
+
+      {signingStage && (
+        <RiskAcceptanceModal
+          integrationId={selected.id}
+          stage={signingStage}
+          onClose={() => setSigningStage(null)}
+          onSigned={async () => { setSigningStage(null); await openIntegration(selected); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function StageDetailField({ label, value }) {
+  return (
+    <div>
+      <div className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest mb-0.5">{label}</div>
+      <div className="text-[11px] text-[var(--text-secondary)] leading-relaxed">{value}</div>
+    </div>
+  );
+}
+
+function RiskAcceptanceModal({ integrationId, stage, onClose, onSigned }) {
+  const [gapDescription, setGapDescription] = useState('');
+  const [compensatingControl, setCompensatingControl] = useState('');
+  const [expiresInDays, setExpiresInDays] = useState(365);
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const submit = async () => {
+    setErr(null);
+    if (!gapDescription.trim() || !compensatingControl.trim()) {
+      setErr('Gap description and compensating control are required');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post(`/tprm/integrations/${integrationId}/risk-acceptances`, {
+        stage_id: stage.stage_id,
+        gap_description: gapDescription,
+        compensating_control: compensatingControl,
+        expires_in_days: Number(expiresInDays) || 365,
+      });
+      onSigned();
+    } catch (e) {
+      setErr(e.message || 'Failed to sign risk acceptance');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const field = "w-full bg-[var(--layer-0)] border border-[var(--border-default)] px-3 py-2 rounded text-[11px] font-mono text-[var(--text-primary)] focus:border-[var(--accent)] outline-none";
+  const label = "text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest mb-1 block";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()}
+        className="w-[480px] max-h-[90vh] overflow-y-auto bg-[var(--layer-1)] border border-[var(--border-emphasis)] rounded-lg shadow-2xl">
+        <div className="h-12 border-b border-[var(--border-default)] flex items-center justify-between px-5 bg-[var(--layer-2)]">
+          <span className="text-[11px] font-bold uppercase tracking-widest font-display">Sign Risk Acceptance — Stage {stage.stage_number}</span>
+          <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"><X size={16} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <span className={label}>Gap description</span>
+            <textarea className={field} rows={3} placeholder="What's the gap?" value={gapDescription} onChange={(e) => setGapDescription(e.target.value)} />
+          </div>
+          <div>
+            <span className={label}>Compensating control</span>
+            <textarea className={field} rows={3} placeholder="What mitigates the risk in the meantime?" value={compensatingControl} onChange={(e) => setCompensatingControl(e.target.value)} />
+          </div>
+          <div>
+            <span className={label}>Expires in (days)</span>
+            <input type="number" className={field} value={expiresInDays} onChange={(e) => setExpiresInDays(e.target.value)} min={1} max={1095} />
+          </div>
+          {err && <div className="text-[10px] text-[var(--danger)] font-mono flex items-center gap-2"><AlertTriangle size={12} /> {err}</div>}
+        </div>
+        <div className="h-14 border-t border-[var(--border-default)] flex items-center justify-end gap-3 px-5 bg-[var(--layer-2)]">
+          <button onClick={onClose} className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">Cancel</button>
+          <button onClick={submit} disabled={submitting}
+            className="px-5 py-1.5 bg-[var(--accent-emphasis)] hover:bg-[var(--accent)] text-white rounded-md text-[10px] font-bold uppercase tracking-wider transition active:scale-95 disabled:opacity-50">
+            {submitting ? 'Signing…' : 'Sign Acceptance'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

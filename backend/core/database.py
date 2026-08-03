@@ -109,6 +109,10 @@ class AuditLogger:
                             CREATE TRIGGER trg_audit_no_delete BEFORE DELETE ON audit_logs
                             FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
                         END IF;
+                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_audit_no_truncate') THEN
+                            CREATE TRIGGER trg_audit_no_truncate BEFORE TRUNCATE ON audit_logs
+                            FOR EACH STATEMENT EXECUTE FUNCTION fn_prevent_immutability_violation();
+                        END IF;
                     END $$;
                 """))
 
@@ -122,6 +126,10 @@ class AuditLogger:
                         IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_evidence_no_delete') THEN
                             CREATE TRIGGER trg_evidence_no_delete BEFORE DELETE ON evidence_chain
                             FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
+                        END IF;
+                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_evidence_no_truncate') THEN
+                            CREATE TRIGGER trg_evidence_no_truncate BEFORE TRUNCATE ON evidence_chain
+                            FOR EACH STATEMENT EXECUTE FUNCTION fn_prevent_immutability_violation();
                         END IF;
                     END $$;
                 """))
@@ -141,9 +149,22 @@ class AuditLogger:
                                 CREATE TRIGGER trg_risk_acc_no_delete BEFORE DELETE ON risk_acceptances
                                 FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
                             END IF;
+                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_risk_acc_no_truncate') THEN
+                                CREATE TRIGGER trg_risk_acc_no_truncate BEFORE TRUNCATE ON risk_acceptances
+                                FOR EACH STATEMENT EXECUTE FUNCTION fn_prevent_immutability_violation();
+                            END IF;
                         END IF;
                     END $$;
                 """))
+
+                # 5. Widen the stagestatus enum for values added after this type was
+                # first created (TPRM 2.4: NOT_APPLICABLE). create_all() only creates
+                # missing enum types, it never ALTERs an existing one to add a new
+                # label -- and ALTER TYPE ... ADD VALUE cannot run inside a DO block
+                # or function body, so this must stay a plain top-level statement.
+                await conn.execute(text(
+                    "ALTER TYPE stagestatus ADD VALUE IF NOT EXISTS 'NOT_APPLICABLE';"
+                ))
 
             logger.info("Database: PostgreSQL initialization and hardening complete.")
         except Exception as e:

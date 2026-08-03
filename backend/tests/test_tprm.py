@@ -16,6 +16,7 @@ without the stack does not produce false red.
 import os
 import uuid
 import subprocess
+from datetime import datetime, timezone
 
 import pytest
 import requests
@@ -249,6 +250,197 @@ def test_tprm_risk_acceptance_immutable():
     combined = probe.stdout + probe.stderr
     assert "ERROR" in combined and "immutable" in combined.lower(), \
         f"UPDATE on risk_acceptances was NOT blocked: {combined[:200]}"
+
+
+# ─── Tier 1: read-back, cadence, audit trail, TRUNCATE hardening ─────────────
+def test_tprm_risk_acceptance_readback():
+    """The acceptances table must be readable, not just write-only."""
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+    gap_stage = stages[0]["stage_id"]
+    _set_stage(h, iid, gap_stage, "gap")
+
+    ra = requests.post(
+        f"{V1}/tprm/integrations/{iid}/risk-acceptances", headers=h,
+        json={"stage_id": gap_stage, "gap_description": "readback probe",
+              "compensating_control": "pytest control", "expires_in_days": 30}, timeout=30)
+    assert ra.status_code == 200, ra.text
+
+    listed = requests.get(f"{V1}/tprm/integrations/{iid}/risk-acceptances", headers=h, timeout=30)
+    assert listed.status_code == 200, listed.text
+    items = listed.json()
+    assert len(items) == 1
+    assert items[0]["stage_id"] == gap_stage
+    assert items[0]["gap_description"] == "readback probe"
+    assert items[0]["accepted_by"] == "admin"
+
+
+def test_tprm_stage_readback_includes_review_metadata():
+    """Widened StageOut must surface evidence_notes/reviewed_by/reviewed_at."""
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+    target = stages[0]["stage_id"]
+
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/stages/{target}", headers=h,
+                      json={"status": "pass", "evidence_notes": "pytest evidence"}, timeout=30)
+    assert r.status_code == 200, r.text
+
+    refreshed = _stages(h, iid)
+    updated = next(s for s in refreshed if s["stage_id"] == target)
+    assert updated["evidence_notes"] == "pytest evidence"
+    assert updated["reviewed_by"] == "admin"
+    assert updated["reviewed_at"] is not None
+
+
+def test_tprm_expiring_acceptances_endpoint_smoke():
+    """Behavioral smoke test only — a real expiry can't elapse inside a test run."""
+    h = _headers("admin")
+    r = requests.get(f"{V1}/tprm/acceptances/expiring", headers=h, timeout=30)
+    assert r.status_code == 200, r.text
+    assert isinstance(r.json(), list)
+
+
+def test_tprm_reassessment_cadence_by_tier():
+    h = _headers("admin")
+    now = datetime.now(timezone.utc)
+
+    critical = _create_integration(h, classification="PHI", regulated="HIPAA")
+    assert critical["computed_risk_tier"] == "critical"
+    due = datetime.fromisoformat(critical["reassessment_due"].replace("Z", "+00:00"))
+    days_out = (due - now).days
+    assert 88 <= days_out <= 91, f"CRITICAL reassessment_due should be ~90 days out, got {days_out}"
+
+    low = _create_integration(h, classification="public")
+    assert low["computed_risk_tier"] == "low"
+    due_low = datetime.fromisoformat(low["reassessment_due"].replace("Z", "+00:00"))
+    days_out_low = (due_low - now).days
+    assert 363 <= days_out_low <= 366, f"LOW reassessment_due should be ~365 days out, got {days_out_low}"
+
+
+def test_tprm_security_events_logged_on_approve():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+    for s in stages:
+        _set_stage(h, iid, s["stage_id"], "pass")
+
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/approve", headers=h, timeout=30)
+    assert r.status_code == 200, r.text
+
+    events = requests.get(f"{V1}/admin/audit/security", headers=h,
+                          params={"event_type": "TPRM_APPROVE", "limit": 20}, timeout=30)
+    assert events.status_code == 200, events.text
+    matches = [e for e in events.json() if iid in (e.get("detail") or "")]
+    assert matches, f"expected a TPRM_APPROVE security event referencing integration {iid}"
+
+
+def test_tprm_risk_acceptance_truncate_blocked():
+    """TRUNCATE must be blocked by the statement-level trigger too, not just UPDATE/DELETE."""
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+    gap_stage = stages[0]["stage_id"]
+    _set_stage(h, iid, gap_stage, "gap")
+
+    ra = requests.post(
+        f"{V1}/tprm/integrations/{iid}/risk-acceptances", headers=h,
+        json={"stage_id": gap_stage, "gap_description": "truncate probe",
+              "compensating_control": "x", "expires_in_days": 30}, timeout=30)
+    assert ra.status_code == 200, ra.text
+
+    try:
+        probe = subprocess.run(
+            ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+             "-c", "TRUNCATE risk_acceptances;"],
+            capture_output=True, text=True, timeout=15)
+    except FileNotFoundError:
+        pytest.skip("docker not on PATH — cannot probe DB trigger directly")
+
+    combined = probe.stdout + probe.stderr
+    assert "ERROR" in combined and "immutable" in combined.lower(), \
+        f"TRUNCATE on risk_acceptances was NOT blocked: {combined[:200]}"
+
+
+# ─── Tier 2 (2.4): method applicability + Not Applicable status ──────────────
+def test_tprm_stage_fanout_by_method():
+    h = _headers("admin")
+    api_integ = _create_integration(h)
+    api_integ_id = api_integ["id"]
+    # _create_integration hardcodes transfer_method="file"; build an API one directly
+    # to exercise the fan-out filter (egress stages #4/#6 are file-only).
+    v = requests.post(f"{V1}/tprm/vendors", headers=h,
+                      json={"name": f"pytest-vendor-{uuid.uuid4().hex[:8]}"}, timeout=30)
+    r = requests.post(f"{V1}/tprm/integrations", headers=h, json={
+        "vendor_id": v.json()["id"], "name": f"pytest-api-integ-{uuid.uuid4().hex[:8]}",
+        "direction": "egress", "transfer_method": "api",
+        "data_classification": "PII", "volume_per_transfer": 0, "involves_regulated_data": "none",
+    }, timeout=30)
+    assert r.status_code == 200, r.text
+    api_stages = _stages(h, r.json()["id"])
+    assert len(api_stages) == 11, f"API egress should exclude the 2 file-only stages, got {len(api_stages)}"
+
+    file_stages = _stages(h, api_integ_id)
+    assert len(file_stages) == 13, f"file egress should include all 13 stages, got {len(file_stages)}"
+
+
+def test_tprm_not_applicable_requires_justification():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+    target = stages[0]["stage_id"]
+
+    no_note = requests.post(f"{V1}/tprm/integrations/{iid}/stages/{target}",
+                            headers=h, json={"status": "not_applicable"}, timeout=30)
+    assert no_note.status_code == 422, no_note.text
+
+    with_note = requests.post(f"{V1}/tprm/integrations/{iid}/stages/{target}", headers=h,
+                              json={"status": "not_applicable", "evidence_notes": "pytest justification"}, timeout=30)
+    assert with_note.status_code == 200, with_note.text
+
+
+def test_tprm_not_applicable_resolves_and_allows_approval():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+
+    na_stage = stages[0]["stage_id"]
+    requests.post(f"{V1}/tprm/integrations/{iid}/stages/{na_stage}", headers=h,
+                 json={"status": "not_applicable", "evidence_notes": "pytest justification"}, timeout=30)
+    for s in stages[1:]:
+        _set_stage(h, iid, s["stage_id"], "pass")
+
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/approve", headers=h, timeout=30)
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "approved"
+
+    sm = requests.get(f"{V1}/tprm/integrations/{iid}/summary", headers=h, timeout=30).json()
+    assert sm["completed_stages"] == sm["total_stages"], "N/A stage should count as completed"
+
+
+def test_tprm_not_applicable_audited():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stages = _stages(h, iid)
+    target = stages[0]["stage_id"]
+
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/stages/{target}", headers=h,
+                      json={"status": "not_applicable", "evidence_notes": "pytest audit probe"}, timeout=30)
+    assert r.status_code == 200, r.text
+
+    events = requests.get(f"{V1}/admin/audit/security", headers=h,
+                          params={"event_type": "TPRM_STAGE_NOT_APPLICABLE", "limit": 20}, timeout=30)
+    assert events.status_code == 200, events.text
+    matches = [e for e in events.json() if iid in (e.get("detail") or "")]
+    assert matches, f"expected a TPRM_STAGE_NOT_APPLICABLE event referencing integration {iid}"
 
 
 if __name__ == "__main__":
