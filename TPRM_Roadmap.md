@@ -112,6 +112,22 @@ pytest 25/25. Next up per the Recommended sequence: **2.1** (stage guidance UI).
 
 ## Tier 3 — Lifecycle & reporting (larger)
 
+**✅ 3.1 COMPLETE (2026-08-03)** — executed per `TPRM_Tier3_3.1_refactor.md` (now marked EXECUTED).
+`_broadcast_reassessment_status` (bare `TPRM_REASSESSMENT_STATUS` signal, no payload — the
+receiving terminal re-fetches the two existing GET routes) hooked into `create_integration`,
+`create_risk_acceptance`, and both `approve_integration` success paths. Event-driven only, no
+backend scheduler (none exists in this codebase; a real, accepted limitation is that a due-date
+lapsing with zero TPRM activity won't push live — refreshes on mount/reconnect/next action).
+`VendorRiskTerminal.jsx` gained a header badge + expandable panel listing real overdue/expiring
+items, wired via `useWebSocket`. **Found and fixed a real pre-existing bug along the way:**
+`OpsTerminal.jsx`'s WebSocket connection was passing `user?.access_token`, a field that doesn't
+exist on the auth-context user object — its telemetry stream had never actually connected. Fixed
+via a new `api.getAccessToken()` export, used correctly in both files. Verified: smoke 42/42,
+pytest 26/26, plus a one-off WS client script confirming the broadcast frame actually arrives after
+`create_integration`. Not browser-verified (no browser tool this session; also no naturally-overdue
+data exists yet to visually check the badge against). Next up: **3.2** (CSV export) per the
+roadmap's recommended sequence.
+
 **3.1 Reassessment surfacing (no polling)** — M/L
 - *What:* a dashboard badge / panel driven by `GET /reassessments/due` and expired-acceptance data, pushed via the **WebSocket event bus** (not `setInterval` — GOVERNANCE §3 bans polling).
 - *Why:* `reassessments/due` exists but nothing consumes it. Stage 13 (both directions) is literally "continuous monitoring and periodic reassessment" — the module should embody it, not just store the date.

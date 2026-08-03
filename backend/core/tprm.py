@@ -34,6 +34,7 @@ from sqlalchemy.orm import relationship
 from core.models import Base                    # Base lives in core.models
 from core.database import get_db
 from core.auth import authorize, get_current_user, log_security_event
+from core.ws import manager
 
 
 def _utcnow() -> datetime:
@@ -199,6 +200,14 @@ async def _recompute_vendor_tier(vendor_id: uuid.UUID, db: AsyncSession) -> None
         await db.commit()
 
 
+async def _broadcast_reassessment_status() -> None:
+    """Nudge connected terminals to re-fetch /reassessments/due and
+    /acceptances/expiring. No payload — GOVERNANCE bans setInterval polling
+    on the frontend, not a WS-triggered single fetch; keeping the broadcast
+    payload-free avoids duplicating those two routes' query logic here."""
+    await manager.broadcast({"type": "TPRM_REASSESSMENT_STATUS"})
+
+
 # ── Schemas ─────────────────────────────────────────────────────────────────
 class VendorCreate(BaseModel):
     name: str
@@ -354,6 +363,7 @@ async def create_integration(
     await db.commit()
 
     await _recompute_vendor_tier(integration.vendor_id, db)
+    await _broadcast_reassessment_status()
     return integration
 
 
@@ -473,6 +483,7 @@ async def create_risk_acceptance(
     log_security_event(request, "TPRM_RISK_ACCEPTANCE",
         f"Risk acceptance signed for integration {integration_id}, stage {payload.stage_id}, "
         f"expires {acceptance.expires_at.isoformat()}")
+    await _broadcast_reassessment_status()
     return {"status": "risk acceptance recorded", "integration_status": integration.status}
 
 
@@ -549,6 +560,7 @@ async def approve_integration(integration_id: uuid.UUID, request: Request, db: A
         await db.commit()
         await db.refresh(integration)
         await _recompute_vendor_tier(integration.vendor_id, db)
+        await _broadcast_reassessment_status()
         log_security_event(request, "TPRM_APPROVE",
             f"Integration {integration.id} ('{integration.name}') approved clean")
         return integration
@@ -572,6 +584,7 @@ async def approve_integration(integration_id: uuid.UUID, request: Request, db: A
     await db.commit()
     await db.refresh(integration)
     await _recompute_vendor_tier(integration.vendor_id, db)
+    await _broadcast_reassessment_status()
     log_security_event(request, "TPRM_APPROVE_WITH_EXCEPTIONS",
         f"Integration {integration.id} ('{integration.name}') approved with exceptions")
     return integration

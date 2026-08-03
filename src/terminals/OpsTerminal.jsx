@@ -54,7 +54,7 @@ export const OpsTerminal = () => {
     });
 
     // Real-time Event Stream
-    const { connected } = useWebSocket(user?.access_token, (message) => {
+    const { connected } = useWebSocket(api.getAccessToken(), (message) => {
         if (message.type === 'INGEST_STATUS') {
             refreshIngest();
         } else if (message.type === 'JOB_STATUS') {

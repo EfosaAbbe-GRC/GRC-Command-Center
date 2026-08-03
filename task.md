@@ -69,9 +69,9 @@
 - [x] **2.2 UI risk-acceptance form (admin)** *(2026-08-02)* — frontend-only (`RiskAcceptanceModal`, acceptance status embedded in the GAP stage detail panel). **smoke 42/42**, **pytest 25/25**, manual end-to-end sign→list check passed
 - [x] **2.3 Vendor-level risk rollup** *(2026-08-03)* — `_recompute_vendor_tier` (max-severity across a vendor's integrations) hooked into `create_integration` + both `approve_integration` success paths; `VendorRiskTerminal.jsx` gained a vendor-portfolio strip + tiered dropdown labels. New `test_tprm_vendor_rollup`. **smoke 42/42**, **pytest 26/26**, live API check confirmed real tier distribution (was 100% `unscored`). Not browser-verified (no browser-automation tool this session). **Tier 2 now fully complete.**
 
-## P5 — TPRM Tier 3 (lifecycle & reporting — not yet started)
+## P5 — TPRM Tier 3 (lifecycle & reporting)
 
-- [ ] **3.1 Reassessment surfacing** — WebSocket-pushed badge/panel from `GET /reassessments/due` + expiring-acceptance data (no polling, per GOVERNANCE §3)
+- [x] **3.1 Reassessment surfacing** *(2026-08-03)* — `_broadcast_reassessment_status` (bare WS signal, no payload) hooked into `create_integration`/`create_risk_acceptance`/both `approve_integration` paths; `VendorRiskTerminal.jsx` header badge + expandable panel. Event-driven only (no backend scheduler exists in this repo — accepted limitation: a due-date lapsing with zero TPRM activity won't push live). **Bonus fix:** `OpsTerminal.jsx`'s WebSocket had never actually connected (`user?.access_token` doesn't exist) — fixed via new `api.getAccessToken()`. **smoke 42/42**, **pytest 26/26**, WS broadcast confirmed live via a one-off client script. Not browser-verified (no browser tool; also no naturally-overdue data yet to check against).
 - [ ] **3.2 TPRM assessment report export** — streaming CSV, parity with `/compliance/export`
 - [ ] **3.3 Evidence linkage to `evidence_chain`** — replace free-text `evidence_notes` with hashed, chain-of-custody evidence
 

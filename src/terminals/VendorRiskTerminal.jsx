@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Shield, AlertTriangle, CheckCircle2, Clock, ChevronRight, Plus, X, ShieldCheck } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle2, Clock, ChevronRight, Plus, X, ShieldCheck, Bell } from 'lucide-react';
 import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/useAuth';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const TIER_STYLE = {
   critical: { color: 'var(--danger)', bg: 'var(--danger-subtle)' },
@@ -43,6 +44,8 @@ export default function VendorRiskTerminal() {
 
   const { data: integrations, loading, refresh } = useApiData('/tprm/integrations');
   const { data: vendors } = useApiData('/tprm/vendors');
+  const { data: dueReassessments, refresh: refreshDue } = useApiData('/tprm/reassessments/due');
+  const { data: expiringAcceptances, refresh: refreshExpiring } = useApiData('/tprm/acceptances/expiring');
 
   const [selected, setSelected] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -52,6 +55,19 @@ export default function VendorRiskTerminal() {
   const [expandedStage, setExpandedStage] = useState(null);
   const [acceptances, setAcceptances] = useState([]);
   const [signingStage, setSigningStage] = useState(null);
+  const [showReassessPanel, setShowReassessPanel] = useState(false);
+
+  // Reassessment/expiring-acceptance status is time-based with no natural
+  // mutation event of its own; GOVERNANCE bans setInterval polling, so this
+  // re-fetches only on a WS nudge from a real TPRM action (see
+  // _broadcast_reassessment_status in tprm.py) plus the initial mount fetch
+  // above. A due date silently lapsing with no TPRM activity won't push live.
+  useWebSocket(api.getAccessToken(), (message) => {
+    if (message.type === 'TPRM_REASSESSMENT_STATUS') {
+      refreshDue();
+      refreshExpiring();
+    }
+  });
 
   const openIntegration = async (integ) => {
     setSelected(integ);
@@ -97,6 +113,17 @@ export default function VendorRiskTerminal() {
           <div className="flex items-center gap-2">
             <Shield size={16} className="text-[var(--accent)]" />
             <h2 className="text-[11px] font-bold tracking-widest uppercase font-display">Vendor Risk Assessments</h2>
+            {(dueReassessments?.length > 0 || expiringAcceptances?.length > 0) && (
+              <button
+                onClick={() => setShowReassessPanel((v) => !v)}
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[9px] font-bold uppercase font-mono"
+                style={{ borderColor: 'var(--warning)', color: 'var(--warning)', backgroundColor: 'var(--warning-subtle)' }}
+                title="Reassessment & risk-acceptance status"
+              >
+                <Bell size={10} />
+                {dueReassessments?.length || 0} overdue · {expiringAcceptances?.length || 0} expiring
+              </button>
+            )}
           </div>
           {canAssess && (
             <button
@@ -108,6 +135,23 @@ export default function VendorRiskTerminal() {
             </button>
           )}
         </div>
+
+        {showReassessPanel && (
+          <div className="px-3 py-2 border-b border-[var(--border-default)] bg-[var(--layer-0)] text-[11px] space-y-2 max-h-48 overflow-y-auto shrink-0">
+            {dueReassessments?.map((r) => (
+              <div key={r.integration_id} className="flex justify-between gap-2">
+                <span className="text-[var(--text-secondary)] truncate">{r.name}</span>
+                <span className="text-[var(--warning)] font-mono shrink-0">{r.days_overdue}d overdue</span>
+              </div>
+            ))}
+            {expiringAcceptances?.map((a) => (
+              <div key={a.acceptance_id} className="flex justify-between gap-2">
+                <span className="text-[var(--text-secondary)] truncate">{a.integration_name}</span>
+                <span className="text-[var(--danger)] font-mono shrink-0">{a.days_expired}d expired</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {vendors?.length > 0 && (
           <div className="flex gap-1.5 px-3 py-2 border-b border-[var(--border-default)] overflow-x-auto shrink-0">

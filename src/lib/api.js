@@ -215,6 +215,8 @@ export const api = {
         mustChangePassword: tokenStore.getResetRequired()
     }),
 
+    getAccessToken: () => tokenStore.getAccess(),
+
     // Agent execution
     runAgent: (agentName, args = {}) =>
         api.post('/run-agent', { agent_name: agentName, args }),
