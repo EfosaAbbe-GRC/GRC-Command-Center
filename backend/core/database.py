@@ -157,7 +157,30 @@ class AuditLogger:
                     END $$;
                 """))
 
-                # 5. Widen the stagestatus enum for values added after this type was
+                # 5. Stage evidence links (TPRM) — block UPDATE and DELETE/TRUNCATE.
+                # Reuses fn_prevent_immutability_violation(); guarded so it is a
+                # no-op until the TPRM models have been registered/created.
+                await conn.execute(text("""
+                    DO $$ BEGIN
+                        IF EXISTS (SELECT 1 FROM information_schema.tables
+                                   WHERE table_name = 'stage_evidence_links') THEN
+                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_stage_evidence_no_update') THEN
+                                CREATE TRIGGER trg_stage_evidence_no_update BEFORE UPDATE ON stage_evidence_links
+                                FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
+                            END IF;
+                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_stage_evidence_no_delete') THEN
+                                CREATE TRIGGER trg_stage_evidence_no_delete BEFORE DELETE ON stage_evidence_links
+                                FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
+                            END IF;
+                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_stage_evidence_no_truncate') THEN
+                                CREATE TRIGGER trg_stage_evidence_no_truncate BEFORE TRUNCATE ON stage_evidence_links
+                                FOR EACH STATEMENT EXECUTE FUNCTION fn_prevent_immutability_violation();
+                            END IF;
+                        END IF;
+                    END $$;
+                """))
+
+                # 6. Widen the stagestatus enum for values added after this type was
                 # first created (TPRM 2.4: NOT_APPLICABLE). create_all() only creates
                 # missing enum types, it never ALTERs an existing one to add a new
                 # label -- and ALTER TYPE ... ADD VALUE cannot run inside a DO block
@@ -197,36 +220,38 @@ class AuditLogger:
 
     # ─── Evidence Chain ───────────────────────────────────────────────────────
 
-    async def _log_evidence_async(self, filename: str, file_hash: str, file_size: int, source_path: str, ingested_by: str = "system"):
-        try:
-            async with AsyncSessionLocal() as session:
-                # Dedup check
-                result = await session.execute(
-                    select(EvidenceChain).where(
-                        EvidenceChain.filename == filename,
-                        EvidenceChain.file_hash == file_hash,
-                    )
+    async def _log_evidence_async(self, filename: str, file_hash: str, file_size: int, source_path: str, ingested_by: str = "system") -> int:
+        async with AsyncSessionLocal() as session:
+            # Dedup check
+            result = await session.execute(
+                select(EvidenceChain).where(
+                    EvidenceChain.filename == filename,
+                    EvidenceChain.file_hash == file_hash,
                 )
-                if result.scalar_one_or_none():
-                    logger.info("Evidence: File already recorded", filename=filename, hash=file_hash[:16])
-                    return
+            )
+            existing = result.scalar_one_or_none()
+            if existing:
+                logger.info("Evidence: File already recorded", filename=filename, hash=file_hash[:16])
+                return existing.id
 
-                entry = EvidenceChain(
-                    filename=filename,
-                    file_hash=file_hash,
-                    file_size_bytes=file_size,
-                    source_path=source_path,
-                    ingested_by=ingested_by,
-                )
-                session.add(entry)
-                await session.commit()
-            logger.info("Evidence: Chain-of-custody recorded", filename=filename, hash=file_hash[:16])
-        except Exception as e:
-            logger.error("Evidence logging failed", filename=filename, error=str(e))
+            entry = EvidenceChain(
+                filename=filename,
+                file_hash=file_hash,
+                file_size_bytes=file_size,
+                source_path=source_path,
+                ingested_by=ingested_by,
+            )
+            session.add(entry)
+            await session.commit()
+            await session.refresh(entry)
+        logger.info("Evidence: Chain-of-custody recorded", filename=filename, hash=file_hash[:16])
+        return entry.id
 
-    def log_evidence(self, filename: str, file_hash: str, file_size: int, source_path: str, ingested_by: str = "system"):
-        """Sync bridge: called from RAG ingestion loop."""
-        _run_async(self._log_evidence_async(filename, file_hash, file_size, source_path, ingested_by))
+    def log_evidence(self, filename: str, file_hash: str, file_size: int, source_path: str, ingested_by: str = "system") -> int:
+        """Sync bridge: called from RAG ingestion loop and TPRM stage evidence upload.
+        Returns the evidence_chain row id (new or, on dedup hit, existing) so callers
+        can link a foreign-key reference to it."""
+        return _run_async(self._log_evidence_async(filename, file_hash, file_size, source_path, ingested_by))
 
     async def _get_evidence_records_async(self):
         try:

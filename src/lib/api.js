@@ -217,6 +217,22 @@ export const api = {
 
     getAccessToken: () => tokenStore.getAccess(),
 
+    uploadFile: async (endpoint, file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
+            method: 'POST',
+            headers: { ...getAuthHeaders() },  // no Content-Type — browser sets the multipart boundary
+            body: formData,
+        });
+        if (!response.ok) {
+            let errorData = {};
+            try { errorData = await response.json(); } catch { /* ignore parse error */ }
+            throw new Error(errorData.detail || `Upload failed (${response.status})`);
+        }
+        return await response.json();
+    },
+
     downloadFile: async (endpoint, filename) => {
         const response = await fetch(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
             headers: { ...getAuthHeaders() }

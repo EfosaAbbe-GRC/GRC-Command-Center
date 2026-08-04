@@ -152,6 +152,18 @@ linkage to `evidence_chain`) per the roadmap's recommended sequence.
 - *Where:* `core/tprm.py` streaming CSV (mirror `main.py` `export_compliance_csv`), gated by an export capability.
 - *Depends-on:* 1.2.
 
+**✅ 3.3 COMPLETE (2026-08-04)** — executed per `TPRM_Tier3_3.3_refactor.md` (now marked EXECUTED).
+Full file-upload architecture (confirmed over a lighter hash-reference alternative): new
+`StageEvidenceLink` append-only table, `POST/GET .../stages/{stage_id}/evidence`, `AuditLogger.
+log_evidence` widened to return the row id and propagate exceptions instead of swallowing them.
+**Real infra bug found and fixed:** the new evidence Docker volume mounted root-owned on first
+creation (unlike `faiss_index`, `data/tprm_evidence` wasn't pre-created+chowned in the Dockerfile),
+so uploads 500'd under the non-root container user — fixed in `Dockerfile.backend`, volume
+recreated, durability re-verified with an upload-then-rebuild round trip. Verified: smoke 42/42,
+pytest 32/32. Not browser-verified. **Tier 3 is now fully complete (3.1/3.2/3.3 all ✅) — the
+entire TPRM roadmap (Tier 1 + Tier 2 + Tier 3) is done.** Remaining backlog: Tier 4 (opportunistic
+hardening/housekeeping — test-data hygiene, frontend tests) whenever revisited.
+
 **3.3 Evidence linkage to `evidence_chain`** — L
 - *What:* let a stage attach real evidence (file hash / chain-of-custody) into the existing immutable `evidence_chain`, instead of free-text `evidence_notes` only.
 - *Why:* elevates "evidence" from a note to a tamper-evident, hashed artifact — consistent with how RAG-ingested docs are already chained.

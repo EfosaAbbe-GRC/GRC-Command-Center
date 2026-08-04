@@ -18,12 +18,14 @@ from __future__ import annotations
 
 import csv
 import enum
+import hashlib
 import io
+import os
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import (
@@ -34,10 +36,15 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import relationship
 
-from core.models import Base                    # Base lives in core.models
-from core.database import get_db
+from core.models import Base, EvidenceChain      # Base lives in core.models
+from core.database import get_db, audit_logger
 from core.auth import authorize, get_current_user, log_security_event
 from core.ws import manager
+
+
+MAX_EVIDENCE_UPLOAD_BYTES = 25 * 1024 * 1024  # 25MB
+TPRM_EVIDENCE_DIR = os.path.join("data", "tprm_evidence")
+os.makedirs(TPRM_EVIDENCE_DIR, exist_ok=True)
 
 
 def _utcnow() -> datetime:
@@ -151,6 +158,17 @@ class RiskAcceptance(Base):
     accepted_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     integration = relationship("Integration", back_populates="risk_acceptances")
+
+
+class StageEvidenceLink(Base):
+    """Append-only. init_db() installs UPDATE/DELETE/TRUNCATE-blocking triggers."""
+    __tablename__ = "stage_evidence_links"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    integration_id = Column(UUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False)
+    stage_id = Column(UUID(as_uuid=True), ForeignKey("assessment_stages.id"), nullable=False)
+    evidence_chain_id = Column(Integer, ForeignKey("evidence_chain.id"), nullable=False)
+    linked_by = Column(String(255), nullable=False)
+    linked_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
 
 # ── Risk tiering ────────────────────────────────────────────────────────────
@@ -442,6 +460,84 @@ async def submit_stage_response(
             f"Stage {stage_id} on integration {integration_id} marked N/A by "
             f"{current_user['username']}: {payload.evidence_notes}")
     return {"status": "updated"}
+
+
+@router.post(
+    "/integrations/{integration_id}/stages/{stage_id}/evidence",
+    dependencies=[Depends(authorize(CAP_ASSESS))],
+)
+async def upload_stage_evidence(
+    integration_id: uuid.UUID,
+    stage_id: uuid.UUID,
+    request: Request,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+):
+    current_user = get_current_user(request)
+    result = await db.execute(
+        select(StageResponse).where(
+            StageResponse.integration_id == integration_id,
+            StageResponse.stage_id == stage_id,
+        )
+    )
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Stage response not found for this integration")
+
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=422, detail="Empty file")
+    if len(contents) > MAX_EVIDENCE_UPLOAD_BYTES:
+        raise HTTPException(status_code=413,
+            detail=f"File exceeds {MAX_EVIDENCE_UPLOAD_BYTES // (1024*1024)}MB limit")
+
+    file_hash = hashlib.sha256(contents).hexdigest()
+    disk_path = os.path.join(TPRM_EVIDENCE_DIR, uuid.uuid4().hex)  # server-generated name only
+    with open(disk_path, "wb") as fh:
+        fh.write(contents)
+
+    evidence_id = audit_logger.log_evidence(
+        filename=file.filename or "unnamed",
+        file_hash=file_hash,
+        file_size=len(contents),
+        source_path=disk_path,
+        ingested_by=current_user["username"],
+    )
+
+    link = StageEvidenceLink(
+        integration_id=integration_id, stage_id=stage_id,
+        evidence_chain_id=evidence_id, linked_by=current_user["username"],
+    )
+    db.add(link)
+    await db.commit()
+
+    log_security_event(request, "TPRM_EVIDENCE_LINKED",
+        f"Evidence '{file.filename}' (sha256:{file_hash[:16]}...) linked to stage {stage_id} "
+        f"on integration {integration_id} by {current_user['username']}")
+    return {"status": "evidence linked", "evidence_chain_id": evidence_id, "file_hash": file_hash}
+
+
+@router.get(
+    "/integrations/{integration_id}/stages/{stage_id}/evidence",
+    dependencies=[Depends(authorize(CAP_VIEW))],
+)
+async def list_stage_evidence(integration_id: uuid.UUID, stage_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(StageEvidenceLink, EvidenceChain)
+        .join(EvidenceChain, EvidenceChain.id == StageEvidenceLink.evidence_chain_id)
+        .where(
+            StageEvidenceLink.integration_id == integration_id,
+            StageEvidenceLink.stage_id == stage_id,
+        )
+        .order_by(StageEvidenceLink.linked_at.desc())
+    )
+    return [
+        {
+            "link_id": str(link.id), "evidence_chain_id": ev.id, "filename": ev.filename,
+            "file_hash": ev.file_hash, "file_size_bytes": ev.file_size_bytes,
+            "linked_by": link.linked_by, "linked_at": link.linked_at,
+        }
+        for link, ev in result.all()
+    ]
 
 
 @router.post(

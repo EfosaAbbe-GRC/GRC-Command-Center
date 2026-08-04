@@ -73,10 +73,13 @@
 
 - [x] **3.1 Reassessment surfacing** *(2026-08-03)* — `_broadcast_reassessment_status` (bare WS signal, no payload) hooked into `create_integration`/`create_risk_acceptance`/both `approve_integration` paths; `VendorRiskTerminal.jsx` header badge + expandable panel. Event-driven only (no backend scheduler exists in this repo — accepted limitation: a due-date lapsing with zero TPRM activity won't push live). **Bonus fix:** `OpsTerminal.jsx`'s WebSocket had never actually connected (`user?.access_token` doesn't exist) — fixed via new `api.getAccessToken()`. **smoke 42/42**, **pytest 26/26**, WS broadcast confirmed live via a one-off client script. Not browser-verified (no browser tool; also no naturally-overdue data yet to check against).
 - [x] **3.2 TPRM assessment report export** *(2026-08-03)* — `GET /tprm/export`, three-section CSV (Integrations/Stage Assessments/Risk Acceptances), gated by existing `EVIDENCE_EXPORT` capability. **Bonus fix:** `ComplianceTerminal.jsx`'s export button was silently 401ing (`window.location.href` sends no auth header) — fixed via new shared `api.downloadFile()` helper, used by both buttons. **smoke 42/42**, **pytest 28/28**, manual curl check confirmed headers/data/RBAC. Not browser-verified.
-- [ ] **3.3 Evidence linkage to `evidence_chain`** — replace free-text `evidence_notes` with hashed, chain-of-custody evidence
+- [x] **3.3 Evidence linkage to `evidence_chain`** *(2026-08-04)* — full file-upload architecture: new `StageEvidenceLink` append-only table + `POST/GET .../stages/{stage_id}/evidence`, `log_evidence` widened to return the row id. **Real infra bug found & fixed:** new Docker volume mounted root-owned (uploads 500'd under non-root `grcuser`) — fixed in `Dockerfile.backend` (matched the proven `faiss_index` chown pattern), volume recreated, durability re-verified via upload-then-rebuild round trip. **smoke 42/42**, **pytest 32/32**. Not browser-verified. **TPRM roadmap (Tier 1+2+3) now fully complete.**
 
 ---
 
 **Active item:** RETRIEVAL SPRINT COMPLETE *(2026-07-18)* — trajectory **44% → 72% → 78% → 82% → 86%** (+42 pts, zero errors across 250 queries). Corpus expanded to 158 docs; cross-encoder re-ranker A/B'd (+4 net, +0.94s latency) and **kept**. See `RAG_Benchmark_Report_v5.md`.
 Remaining 7 failures need *different* levers: EU AI Act clause structure → Golden Mapping (P2); CSF tiers table → structured extraction; CISA booklet → missing source; 2 jitter queries → judge calibration (P2).
-**Next session:** TPRM Tier 3 (3.1 reassessment surfacing next per roadmap sequence), or pivot to RAG P2 Judge Calibration + Golden Mapping. Refresh HANDOFF.md at session close.
+**TPRM roadmap complete as of 2026-08-04** (Tier 1 + Tier 2 + Tier 3, all items). **Next session:**
+pivot to RAG P2 Judge Calibration + Golden Mapping, P3 Execution Monitor UI, or TPRM Tier 4
+(opportunistic hardening — test-data hygiene, frontend tests) if TPRM stays the focus. Refresh
+HANDOFF.md at session close.

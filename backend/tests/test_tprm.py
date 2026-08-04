@@ -347,6 +347,78 @@ def test_tprm_export_csv_requires_evidence_export_capability():
     assert r.status_code == 403, f"analyst export should be 403, got {r.status_code}"
 
 
+# ─── Stage evidence linkage (Tier 3.3) ───────────────────────────────────────
+def test_tprm_evidence_upload_and_readback():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stage_id = _stages(h, iid)[0]["stage_id"]
+
+    r = requests.post(
+        f"{V1}/tprm/integrations/{iid}/stages/{stage_id}/evidence", headers=h,
+        files={"file": ("evidence.txt", b"pytest evidence contents", "text/plain")}, timeout=30)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["status"] == "evidence linked"
+    assert "file_hash" in body and len(body["file_hash"]) == 64  # sha256 hex digest
+
+    listing = requests.get(f"{V1}/tprm/integrations/{iid}/stages/{stage_id}/evidence", headers=h, timeout=30)
+    assert listing.status_code == 200, listing.text
+    entries = listing.json()
+    assert len(entries) == 1
+    assert entries[0]["filename"] == "evidence.txt"
+    assert entries[0]["file_hash"] == body["file_hash"]
+    assert entries[0]["linked_by"] == "admin"
+
+
+def test_tprm_evidence_upload_requires_assess():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stage_id = _stages(h, iid)[0]["stage_id"]
+
+    r = requests.post(
+        f"{V1}/tprm/integrations/{iid}/stages/{stage_id}/evidence", headers=_headers("viewer"),
+        files={"file": ("x.txt", b"content", "text/plain")}, timeout=30)
+    assert r.status_code == 403, f"viewer upload should be 403, got {r.status_code}"
+
+
+def test_tprm_evidence_upload_rejects_empty_file():
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stage_id = _stages(h, iid)[0]["stage_id"]
+
+    r = requests.post(
+        f"{V1}/tprm/integrations/{iid}/stages/{stage_id}/evidence", headers=h,
+        files={"file": ("empty.txt", b"", "text/plain")}, timeout=30)
+    assert r.status_code == 422, f"empty file should be 422, got {r.status_code}"
+
+
+def test_tprm_evidence_link_immutable():
+    """UPDATE must be blocked by the row-level trigger, same guarantee as risk_acceptances."""
+    h = _headers("admin")
+    integ = _create_integration(h)
+    iid = integ["id"]
+    stage_id = _stages(h, iid)[0]["stage_id"]
+    r = requests.post(
+        f"{V1}/tprm/integrations/{iid}/stages/{stage_id}/evidence", headers=h,
+        files={"file": ("immutable_probe.txt", b"immutability probe", "text/plain")}, timeout=30)
+    assert r.status_code == 200, r.text
+
+    try:
+        probe = subprocess.run(
+            ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+             "-c", "UPDATE stage_evidence_links SET linked_by = 'tampered';"],
+            capture_output=True, text=True, timeout=15)
+    except FileNotFoundError:
+        pytest.skip("docker not on PATH — cannot probe DB trigger directly")
+
+    combined = probe.stdout + probe.stderr
+    assert "ERROR" in combined and "immutable" in combined.lower(), \
+        f"UPDATE on stage_evidence_links was NOT blocked: {combined[:200]}"
+
+
 def test_tprm_reassessment_cadence_by_tier():
     h = _headers("admin")
     now = datetime.now(timezone.utc)

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, AlertTriangle, CheckCircle2, Clock, ChevronRight, Plus, X, ShieldCheck, Bell, Download } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle2, Clock, ChevronRight, Plus, X, ShieldCheck, Bell, Download, Paperclip } from 'lucide-react';
 import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
 import { api } from '../lib/api';
@@ -56,6 +56,8 @@ export default function VendorRiskTerminal() {
   const [acceptances, setAcceptances] = useState([]);
   const [signingStage, setSigningStage] = useState(null);
   const [showReassessPanel, setShowReassessPanel] = useState(false);
+  const [stageEvidence, setStageEvidence] = useState({});
+  const [uploadingEvidence, setUploadingEvidence] = useState(null);
 
   // Reassessment/expiring-acceptance status is time-based with no natural
   // mutation event of its own; GOVERNANCE bans setInterval polling, so this
@@ -73,6 +75,7 @@ export default function VendorRiskTerminal() {
     setSelected(integ);
     setActionError(null);
     setExpandedStage(null);
+    setStageEvidence({});
     const [s, st, ra] = await Promise.all([
       api.get(`/tprm/integrations/${integ.id}/summary`),
       api.get(`/tprm/integrations/${integ.id}/stages`),
@@ -81,6 +84,30 @@ export default function VendorRiskTerminal() {
     setSummary(s);
     setStages(st);
     setAcceptances(ra);
+  };
+
+  const toggleStage = (stageId) => {
+    const next = expandedStage === stageId ? null : stageId;
+    setExpandedStage(next);
+    if (next && !stageEvidence[next]) {
+      api.get(`/tprm/integrations/${selected.id}/stages/${next}/evidence`)
+        .then((ev) => setStageEvidence((prev) => ({ ...prev, [next]: ev })))
+        .catch(() => {});
+    }
+  };
+
+  const uploadEvidence = async (stageId, file) => {
+    setUploadingEvidence(stageId);
+    setActionError(null);
+    try {
+      await api.uploadFile(`/tprm/integrations/${selected.id}/stages/${stageId}/evidence`, file);
+      const ev = await api.get(`/tprm/integrations/${selected.id}/stages/${stageId}/evidence`);
+      setStageEvidence((prev) => ({ ...prev, [stageId]: ev }));
+    } catch (err) {
+      setActionError(err.message || 'Evidence upload failed');
+    } finally {
+      setUploadingEvidence(null);
+    }
   };
 
   const updateStage = async (stageId, status) => {
@@ -263,7 +290,7 @@ export default function VendorRiskTerminal() {
                     className="rounded border border-[var(--border-default)] bg-[var(--layer-1)] overflow-hidden">
                     <div
                       className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--layer-2)] transition"
-                      onClick={() => setExpandedStage(isExpanded ? null : stage.stage_id)}
+                      onClick={() => toggleStage(stage.stage_id)}
                     >
                       <ChevronRight size={12} className={`text-[var(--text-tertiary)] transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                       <div className="w-6 text-center text-[10px] text-[var(--text-tertiary)] font-mono">{stage.stage_number}</div>
@@ -290,6 +317,31 @@ export default function VendorRiskTerminal() {
                         {stage.evidence_notes && (
                           <StageDetailField label={`Notes${stage.reviewed_by ? ` — ${stage.reviewed_by}` : ''}`} value={stage.evidence_notes} />
                         )}
+                        <div className="pt-1 border-t border-[var(--border-subtle)]">
+                          <div className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest mb-1">
+                            Evidence ({(stageEvidence[stage.stage_id] || []).length})
+                          </div>
+                          {(stageEvidence[stage.stage_id] || []).map((ev) => (
+                            <div key={ev.link_id} className="flex justify-between gap-2 text-[10px] text-[var(--text-secondary)] py-0.5">
+                              <span className="truncate">{ev.filename}</span>
+                              <span className="font-mono text-[var(--text-tertiary)] shrink-0">
+                                {(ev.file_size_bytes / 1024).toFixed(1)}KB · {ev.file_hash.slice(0, 12)}… · {ev.linked_by}
+                              </span>
+                            </div>
+                          ))}
+                          {canAssess && (
+                            <label className="mt-1 inline-flex items-center gap-1.5 px-2 py-1 bg-[var(--layer-2)] hover:bg-[var(--layer-3)] border border-[var(--border-default)] rounded text-[9px] font-bold uppercase tracking-wider cursor-pointer transition">
+                              <Paperclip size={10} />
+                              {uploadingEvidence === stage.stage_id ? 'Uploading…' : 'Attach Evidence'}
+                              <input type="file" className="hidden" disabled={uploadingEvidence === stage.stage_id}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) uploadEvidence(stage.stage_id, file);
+                                  e.target.value = '';
+                                }} />
+                            </label>
+                          )}
+                        </div>
                         {stage.status === 'gap' && (() => {
                           const acc = acceptances.find((a) => a.stage_id === stage.stage_id);
                           if (acc) {

@@ -65,6 +65,7 @@ services:
       - AUTH_ENABLED=true
     volumes:
       - grc-faiss:/app/faiss_index
+      - grc-tprm-evidence:/app/data/tprm_evidence
       - "${DOCUMENTS_PATH}:/app/GRC_Analyst:ro"
     networks:
       - grc-net
@@ -103,6 +104,8 @@ volumes:
     driver: local
   grc-faiss:
     driver: local # Adjusted for local deployment sync
+  grc-tprm-evidence:
+    driver: local
 
 networks:
   grc-net:
