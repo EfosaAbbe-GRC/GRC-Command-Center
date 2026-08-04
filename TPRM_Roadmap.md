@@ -134,6 +134,19 @@ roadmap's recommended sequence.
 - *Where:* `core/ws.py` broadcast, `VendorRiskTerminal.jsx` or a small header badge.
 - *Depends-on:* 1.3 (expiry), and reuse of the existing WS manager.
 
+**✅ 3.2 COMPLETE (2026-08-03)** — executed per `TPRM_Tier3_3.2_refactor.md` (now marked EXECUTED).
+`GET /tprm/export` streams a three-section CSV (Integrations, Stage Assessments, Risk Acceptances)
+mirroring `/compliance/export`'s pattern, gated by the existing `EVIDENCE_EXPORT` capability (no
+new capability added). **Found and fixed a second real pre-existing bug along the way:**
+`ComplianceTerminal.jsx`'s "Export CSV Report" button used `window.location.href`, which sends no
+`Authorization` header — since `/compliance/export` isn't a public route, that button was silently
+401ing instead of downloading. Fixed via a new shared `api.downloadFile()` helper (authenticated
+fetch → blob → client-side download), used by both the fixed compliance button and the new TPRM
+export button in `VendorRiskTerminal.jsx`. Verified: smoke 42/42, pytest 28/28 (26 + 2 new,
+including an RBAC check), plus a manual `curl` check confirming correct headers, real data, and
+403 for non-admin. Not browser-verified. **Tier 3 now 2/3 done.** Next up: **3.3** (evidence
+linkage to `evidence_chain`) per the roadmap's recommended sequence.
+
 **3.2 TPRM assessment report export** — M
 - *Why:* auditor-facing evidence; parity with `/compliance/export`. The whole point is producing a defensible artifact.
 - *Where:* `core/tprm.py` streaming CSV (mirror `main.py` `export_compliance_csv`), gated by an export capability.

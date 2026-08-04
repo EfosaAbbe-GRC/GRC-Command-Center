@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, AlertTriangle, CheckCircle2, Clock, ChevronRight, Plus, X, ShieldCheck, Bell } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle2, Clock, ChevronRight, Plus, X, ShieldCheck, Bell, Download } from 'lucide-react';
 import { useApiData } from '../hooks/useApiData';
 import { StatusBadge } from '../components/StatusBadge';
 import { api } from '../lib/api';
@@ -125,15 +125,26 @@ export default function VendorRiskTerminal() {
               </button>
             )}
           </div>
-          {canAssess && (
-            <button
-              onClick={() => { setShowCreate(true); setActionError(null); }}
-              className="p-1.5 bg-[var(--layer-2)] hover:bg-[var(--layer-3)] border border-[var(--border-default)] rounded transition"
-              title="New Integration"
-            >
-              <Plus size={14} />
-            </button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {canSignoff && (
+              <button
+                onClick={() => api.downloadFile('/tprm/export', 'tprm_assessment_report.csv')}
+                className="p-1.5 bg-[var(--layer-2)] hover:bg-[var(--layer-3)] border border-[var(--border-default)] rounded transition"
+                title="Export TPRM Assessment Report (CSV)"
+              >
+                <Download size={14} />
+              </button>
+            )}
+            {canAssess && (
+              <button
+                onClick={() => { setShowCreate(true); setActionError(null); }}
+                className="p-1.5 bg-[var(--layer-2)] hover:bg-[var(--layer-3)] border border-[var(--border-default)] rounded transition"
+                title="New Integration"
+              >
+                <Plus size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         {showReassessPanel && (

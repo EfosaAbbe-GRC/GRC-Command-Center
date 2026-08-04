@@ -16,12 +16,15 @@ Integration notes (reconciled to real code):
 
 from __future__ import annotations
 
+import csv
 import enum
+import io
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import (
     Column, String, Integer, Text, ForeignKey, DateTime, Enum as SAEnum,
@@ -634,3 +637,76 @@ async def get_expiring_acceptances(db: AsyncSession = Depends(get_db)):
         }
         for integration, acceptance in result.all()
     ]
+
+
+@router.get("/export", dependencies=[Depends(authorize("EVIDENCE_EXPORT"))])
+async def export_tprm_csv(db: AsyncSession = Depends(get_db)):
+    """Streaming CSV export of the full TPRM assessment register: integrations,
+    stage-level assessment detail, and risk acceptances. Mirrors main.py's
+    export_compliance_csv (multi-section CSV, StreamingResponse)."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(["--- INTEGRATIONS ---"])
+    writer.writerow(["Vendor", "Integration", "Direction", "Transfer Method", "Risk Tier",
+                      "Status", "Reassessment Due", "Created By", "Created At"])
+    result = await db.execute(
+        select(Integration, Vendor.name)
+        .join(Vendor, Vendor.id == Integration.vendor_id)
+        .order_by(Vendor.name, Integration.name)
+    )
+    for integration, vendor_name in result.all():
+        writer.writerow([
+            vendor_name, integration.name, integration.direction.value,
+            integration.transfer_method.value, integration.computed_risk_tier.value,
+            integration.status.value,
+            integration.reassessment_due.isoformat() if integration.reassessment_due else "",
+            integration.created_by, integration.created_at.isoformat(),
+        ])
+
+    writer.writerow([])
+    writer.writerow(["--- STAGE ASSESSMENTS ---"])
+    writer.writerow(["Vendor", "Integration", "Stage #", "Stage Title", "Status",
+                      "Evidence Notes", "Reviewed By", "Reviewed At"])
+    result = await db.execute(
+        select(Vendor.name, Integration.name, AssessmentStage.stage_number,
+               AssessmentStage.title, StageResponse.status, StageResponse.evidence_notes,
+               StageResponse.reviewed_by, StageResponse.reviewed_at)
+        .select_from(StageResponse)
+        .join(Integration, Integration.id == StageResponse.integration_id)
+        .join(Vendor, Vendor.id == Integration.vendor_id)
+        .join(AssessmentStage, AssessmentStage.id == StageResponse.stage_id)
+        .order_by(Vendor.name, Integration.name, AssessmentStage.stage_number)
+    )
+    for vendor_name, integ_name, stage_num, title, status, notes, reviewer, reviewed_at in result.all():
+        writer.writerow([
+            vendor_name, integ_name, stage_num, title, status.value, notes or "",
+            reviewer or "", reviewed_at.isoformat() if reviewed_at else "",
+        ])
+
+    writer.writerow([])
+    writer.writerow(["--- RISK ACCEPTANCES ---"])
+    writer.writerow(["Vendor", "Integration", "Stage #", "Stage Title", "Gap Description",
+                      "Compensating Control", "Accepted By", "Accepted At", "Expires At"])
+    result = await db.execute(
+        select(Vendor.name, Integration.name, AssessmentStage.stage_number, AssessmentStage.title,
+               RiskAcceptance.gap_description, RiskAcceptance.compensating_control,
+               RiskAcceptance.accepted_by, RiskAcceptance.accepted_at, RiskAcceptance.expires_at)
+        .select_from(RiskAcceptance)
+        .join(Integration, Integration.id == RiskAcceptance.integration_id)
+        .join(Vendor, Vendor.id == Integration.vendor_id)
+        .join(AssessmentStage, AssessmentStage.id == RiskAcceptance.stage_id)
+        .order_by(Vendor.name, Integration.name, RiskAcceptance.accepted_at)
+    )
+    for vendor_name, integ_name, stage_num, title, gap, control, accepted_by, accepted_at, expires_at in result.all():
+        writer.writerow([
+            vendor_name, integ_name, stage_num, title, gap, control, accepted_by,
+            accepted_at.isoformat(), expires_at.isoformat(),
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=tprm_assessment_report.csv"},
+    )

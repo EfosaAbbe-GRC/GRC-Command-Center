@@ -130,11 +130,8 @@ export const ComplianceTerminal = () => {
                         <span>Filter Configuration</span>
                     </button>
                     {isAdmin && (
-                        <button 
-                            onClick={() => {
-                                const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api/v1/compliance/export`;
-                                window.location.href = url;
-                            }}
+                        <button
+                            onClick={() => api.downloadFile('/compliance/export', 'grc_compliance_report.csv')}
                             className="flex items-center gap-2.5 px-6 py-2 bg-[var(--accent-emphasis)] hover:bg-[var(--accent)] text-white rounded-md font-bold transition-all shadow-[0_0_15px_var(--accent-glow)] active:scale-95 group relative overflow-hidden"
                         >
                             <Download size={13} strokeWidth={2.5} />

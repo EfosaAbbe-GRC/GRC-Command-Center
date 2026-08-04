@@ -328,6 +328,25 @@ def test_tprm_expiring_acceptances_endpoint_smoke():
     assert isinstance(r.json(), list)
 
 
+# ─── CSV export (Tier 3.2) ───────────────────────────────────────────────────
+def test_tprm_export_csv():
+    h = _headers("admin")
+    _create_integration(h, classification="PII")  # ensure at least one row exists
+    r = requests.get(f"{V1}/tprm/export", headers=h, timeout=30)
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"].startswith("text/csv")
+    body = r.text
+    assert "--- INTEGRATIONS ---" in body
+    assert "--- STAGE ASSESSMENTS ---" in body
+    assert "--- RISK ACCEPTANCES ---" in body
+
+
+def test_tprm_export_csv_requires_evidence_export_capability():
+    # EVIDENCE_EXPORT is admin-only; analyst (TPRM_VIEW/ASSESS) must not have it.
+    r = requests.get(f"{V1}/tprm/export", headers=_headers("analyst"), timeout=30)
+    assert r.status_code == 403, f"analyst export should be 403, got {r.status_code}"
+
+
 def test_tprm_reassessment_cadence_by_tier():
     h = _headers("admin")
     now = datetime.now(timezone.utc)

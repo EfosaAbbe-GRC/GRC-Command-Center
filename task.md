@@ -72,7 +72,7 @@
 ## P5 — TPRM Tier 3 (lifecycle & reporting)
 
 - [x] **3.1 Reassessment surfacing** *(2026-08-03)* — `_broadcast_reassessment_status` (bare WS signal, no payload) hooked into `create_integration`/`create_risk_acceptance`/both `approve_integration` paths; `VendorRiskTerminal.jsx` header badge + expandable panel. Event-driven only (no backend scheduler exists in this repo — accepted limitation: a due-date lapsing with zero TPRM activity won't push live). **Bonus fix:** `OpsTerminal.jsx`'s WebSocket had never actually connected (`user?.access_token` doesn't exist) — fixed via new `api.getAccessToken()`. **smoke 42/42**, **pytest 26/26**, WS broadcast confirmed live via a one-off client script. Not browser-verified (no browser tool; also no naturally-overdue data yet to check against).
-- [ ] **3.2 TPRM assessment report export** — streaming CSV, parity with `/compliance/export`
+- [x] **3.2 TPRM assessment report export** *(2026-08-03)* — `GET /tprm/export`, three-section CSV (Integrations/Stage Assessments/Risk Acceptances), gated by existing `EVIDENCE_EXPORT` capability. **Bonus fix:** `ComplianceTerminal.jsx`'s export button was silently 401ing (`window.location.href` sends no auth header) — fixed via new shared `api.downloadFile()` helper, used by both buttons. **smoke 42/42**, **pytest 28/28**, manual curl check confirmed headers/data/RBAC. Not browser-verified.
 - [ ] **3.3 Evidence linkage to `evidence_chain`** — replace free-text `evidence_notes` with hashed, chain-of-custody evidence
 
 ---

@@ -217,6 +217,24 @@ export const api = {
 
     getAccessToken: () => tokenStore.getAccess(),
 
+    downloadFile: async (endpoint, filename) => {
+        const response = await fetch(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
+            headers: { ...getAuthHeaders() }
+        });
+        if (!response.ok) {
+            throw new Error(`Download failed (${response.status})`);
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    },
+
     // Agent execution
     runAgent: (agentName, args = {}) =>
         api.post('/run-agent', { agent_name: agentName, args }),
