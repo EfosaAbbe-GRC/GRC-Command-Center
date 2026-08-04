@@ -1,63 +1,83 @@
-# Session Log — 2026-07-21/22 ("TPRM Module + the Bug It Was Sitting On")
+# Session Log — 2026-08-03/04 ("Closing Out the TPRM Roadmap: Tier 2 → Tier 3, Start to Finish")
 
-**Outcome:** Shipped a full **Third-Party Risk Management** module (13-stage egress/ingress vendor
-assessment) — security-hardened to system parity, auto-seeding, test-covered. Then, verifying it,
-uncovered and fixed a **pre-existing production bug** (`change-password` broken by tz-aware datetimes,
-which had silently broken forced-reset recovery). Full suite **15/15, stable across reruns**.
+**Outcome:** Pushed the prior session's held-back commit, then executed and shipped the entire
+remaining TPRM backlog in one continuous push — Tier 2's last item (2.3) and all three Tier 3
+items (3.1, 3.2, 3.3). **The full TPRM roadmap (Tier 1 + Tier 2 + Tier 3) is now complete.** Found
+and fixed three real, previously-undiscovered bugs along the way, none of them things this session
+set out to look for.
 
 ## What happened, in order
 
-1. **TPRM integration** (draft-first → EXECUTE): delivered drop-in was written against the *docs*,
-   which had drifted from the *code*. Reconciled: `authorize("TPRM_*")` capability RBAC (no
-   `require_role`), real trigger fn `fn_prevent_immutability_violation` (not the doc's name),
-   token-derived `accepted_by`, explicit `POST /approve` with deny-by-default, two missing GET
-   endpoints added, frontend tokenized to `var(--layer-*)`. Files: `backend/core/tprm.py`,
-   `seed_tprm_stages.py`, `migrations/tprm_migration.sql`, `src/terminals/VendorRiskTerminal.jsx`,
-   wired into `main.py` + `App.jsx` + `TerminalSwitcher.jsx`. Plan: `TPRM_Integration_refactor.md`.
-2. **Security parity**: 3 capabilities seeded (`TPRM_VIEW`/`ASSESS` analyst, `TPRM_SIGNOFF` admin);
-   `risk_acceptances` immutability trigger folded into `init_db()`; smoke +15 TPRM checks (→ 42/42),
-   new `backend/tests/test_tprm.py` (10 pytest cases).
-3. **Auto-seed enhancement**: stage seeding moved into `main.py` lifespan (idempotent, like
-   users/policies) — no manual `docker exec ... seed` step, even on a fresh volume.
-4. **Roadmap curated** (`TPRM_Roadmap.md`): tiered backlog, 4 decisions locked — all-13-stages
-   mandatory per tier (proportionality via `applies_to_methods` + a new `NOT_APPLICABLE` status, not
-   tier-skipping); per-tier reassessment cadence (CRITICAL 90 / HIGH 180 / MEDIUM 365 / LOW 365);
-   CSV export first then PDF; lead with security-parity (shift-left).
-5. **Second-opinion (claude.ai) flagged** a pytest run contradicting the doc's "10/10". Investigated
-   with reproduce-first discipline: the 10/10 was real (env regressed after), a single root cause
-   (admin locked, `must_change_password`) cascaded into `11 failed/4 passed`. Corrected two
-   misdiagnoses in the second opinion with evidence (reset endpoint not broken = gate by design;
-   iam_09/10 same cascade, not a separate dict/list bug).
-6. **The real bug, found by observing not guessing**: `change-password` 500'd because `database.py`
-   wrote tz-aware `datetime.now(timezone.utc)` into naive `TIMESTAMP` `User`/`Policy` columns →
-   asyncpg `DataError`. SQLite tolerated it; Postgres does not. **Forced-reset recovery was broken in
-   prod.** Fixed via `_naive_utcnow()` (4 sites). Added `conftest.py` isolation guard + `--unlock` to
-   `force_reset_util.py`. Verified live post-rebuild: locked admin self-recovers (200), suite 15/15.
+1. **Pushed `f0bff91`** (Tier 1 + 2.4/2.1/2.2, held back at prior session's close).
+2. **2.3 — Vendor-level risk rollup:** `_recompute_vendor_tier` (max-severity across a vendor's
+   integrations) hooked into `create_integration` + both `approve_integration` paths. Frontend
+   vendor-portfolio strip. Closes Tier 2.
+3. **3.1 — Reassessment surfacing:** event-driven WebSocket broadcast (no backend scheduler exists
+   in this repo, and none was added — confirmed with the user rather than assumed) nudges
+   connected terminals to re-fetch `/reassessments/due` + `/acceptances/expiring`. Header badge +
+   expandable panel. **Bug found:** `OpsTerminal.jsx`'s WebSocket had never actually connected —
+   `user?.access_token` doesn't exist on the auth context; the real token lives in `api.js`'s
+   private `tokenStore`. Fixed via a new `api.getAccessToken()`.
+4. **3.2 — CSV assessment export:** `GET /tprm/export`, three-section CSV mirroring
+   `/compliance/export`'s pattern. **Bug found:** that same `/compliance/export`'s existing
+   "Export CSV Report" button used `window.location.href`, which sends no auth header — it had
+   been silently 401ing. Fixed via a new shared `api.downloadFile()` helper.
+5. **3.3 — Evidence linkage to `evidence_chain`:** the largest item. Real architecture decision
+   (confirmed with the user before drafting): full file upload, not a lighter hash-reference
+   alternative — this codebase had zero prior upload endpoints anywhere. New append-only
+   `StageEvidenceLink` table, `POST/GET .../stages/{stage_id}/evidence`, `AuditLogger.log_evidence`
+   widened to return the row id and propagate exceptions instead of swallowing them. **Bug found:**
+   the new Docker volume for evidence storage mounted root-owned on first creation (Windows/WSL2
+   Docker Desktop inherits ownership into a fresh named volume only from a path that already
+   exists, chowned, in the image — `data/tprm_evidence` wasn't in `Dockerfile.backend`'s `mkdir`
+   line, unlike `faiss_index`, which is why that one already worked). Fixed the Dockerfile,
+   recreated the volume, and specifically proved durability (upload → rebuild → file and DB row
+   both survived) rather than just trusting the fix.
+
+Every item followed the same loop: draft artifact → confirm design calls via targeted questions →
+apply → rebuild → smoke + pytest → close out docs/memory → commit → push (all explicitly confirmed
+by the user each time, per GOVERNANCE §4.A).
+
+## The three bugs, as a pattern
+
+All three were variants of the same root cause: **a frontend action that bypassed `api.js`'s
+central auth-header plumbing** (a raw `window.location.href`, a WebSocket built with the wrong
+token source) or **an infra assumption that didn't hold under the non-root container user** (a
+volume mount that needed the image to already own the path). None were things any Tier item asked
+for — all three surfaced from reading the code adjacent to what was actually being built, then
+verifying rather than assuming it worked. Worth the same scrutiny next time new frontend
+download/upload/telemetry code — or a new Docker volume — gets added.
+
+## One process correction worth remembering
+
+Running `pytest backend/tests/ -v` from the repo root (instead of `cd backend && pytest -v`)
+silently skips `backend/pyproject.toml`'s `--ignore=tests/smoke_test.py` rule (that ignore path is
+relative to `backend/` as pytest's rootdir). This produced a false-alarm regression signal once
+this session (2 `ReadTimeout`s that looked exactly like a code-caused failure) before being traced
+to the invocation, not the change. Always run pytest from inside `backend/` in this repo.
 
 ## Current deployed state
 
-- Backend rebuilt; all fixes live. TPRM routes under `/api/v1/tprm`; 26 stages auto-seeded on boot.
-- `database.py`: user/policy timestamp writes now **naive UTC** via `_naive_utcnow()`.
-- Tests: `pytest -v` **15/15** (5 IAM + 10 TPRM), stable + admin ends unlocked; `smoke_test.py` 42/42.
+- All TPRM roadmap work is live and pushed: `f0bff91`, `5f4e59c` (2.3), `21c3c3b` (3.1), `3abce53`
+  (3.2), `70d5e84` (3.3). Repo fully in sync with `origin/main`.
+- Smoke test: **42/42**. Pytest: **32/32** (5 IAM + 27 TPRM), run from `backend/`.
+- New Docker volume `grc-tprm-evidence` (evidence file storage), correctly owned by `grcuser`.
+- **Not browser-verified this session at all** — no browser-automation tool was available. Every
+  new UI surface (2.3's vendor strip, 3.1's reassessment badge, 3.2's export button, 3.3's evidence
+  upload/list panel) was verified via API/curl/WS-client checks only. Worth an actual browser pass
+  next time one's available, even though nothing here is expected to be broken.
 
-## Gotchas learned this session
+## Next session menu
 
-- **tz-aware → naive `DateTime` column = asyncpg `DataError`** (SQLite→PG migration residue). TPRM's
-  own tables use `DateTime(timezone=True)`, so tz-aware is correct *there* — check the column first.
-- **Shared mutable `admin` + IAM tests** (`test_iam_05`/`_07` set the reset flag, didn't self-clean)
-  poison the whole suite; `conftest.py` now clears the flag around every test. A green count is a
-  point-in-time fact about a shared-state env — re-run before trusting it.
-- **The agent can't `docker compose up --build` / `volume rm`** (auto-mode classifier blocks them) —
-  user runs rebuilds; agent verifies via `docker exec` reads + tests.
-- Seed must run **in-container** if done manually (`DATABASE_URL` → `db` host). Now automatic anyway.
-- Windows console is cp1252 — UTF-8 reconfigure added to `smoke_test.py` / `test_auth.py`.
+TPRM's roadmap is exhausted — this is an open pivot point, not a "next item per the plan" like
+every prior session this arc.
 
-## Next session menu (see `TPRM_Roadmap.md` — decisions already locked)
-
-1. **Tier 1 (security-parity first, per shift-left):** audit-log TPRM sign-off/approve; read-back for
-   risk acceptances + stage evidence; expired-acceptance detection; `BEFORE TRUNCATE` triggers on the
-   immutable tables; per-tier reassessment cadence.
-2. **2.4** method-based stage applicability + `NOT_APPLICABLE` status (resolves decision #1).
-3. **2.1** surface stage guidance in the UI (highest day-to-day value; unblocks 2.2, 3.3).
-4. Optional debt: migrate user/policy timestamp cols to `TIMESTAMPTZ`; investigate the occasional
-   single-test `ReadTimeout` under back-to-back load (single-worker/`NullPool`).
+1. **RAG backlog** (parked behind TPRM since 2026-08-02, never actually abandoned): P2 Judge
+   Calibration (results still flagged `v1_uncalibrated`), P2 Golden Mapping (the expected path from
+   86% into the 90s, targets the EU AI Act cluster), or P3 Execution Monitor UI (deferred since
+   April, frontend/WS bus both ready). Any of the three is a reasonable default to raise
+   proactively, since there's no more TPRM backlog to fall back on.
+2. **TPRM Tier 4** (opportunistic, explicitly low-priority): test-data hygiene (smoke/pytest have
+   been accumulating vendors/integrations across many runs — hundreds by now), frontend component
+   tests (none exist project-wide).
+3. **Browser-verify the four TPRM UI surfaces** above, once a browser-automation tool is available.
