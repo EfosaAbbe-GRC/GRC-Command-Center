@@ -46,7 +46,7 @@
     - NIST SP 800-37r2 RMF + SP 800-53r5 Controls Catalog → net-new GRC framework depth
     - (GRC_Cybersecurity_Guidebook / GRC_MBA retired without substitute — zero load-bearing queries)
   - [x] Re-ingest (150 valid PDFs, 12,548 splits, **first zero-error ingest**) + re-benchmark → **v3: 78.0% (39/50)**, +6 pts over v2; OWASP queries #22/#23/#46 flipped as predicted (`RAG_Benchmark_Report_v3.md`)
-- [ ] **Judge Calibration**: results file is flagged `v1_uncalibrated` — build a small human-labeled set (~15 queries) and validate the locked judge prompt against it; promote results to `v2_calibrated`
+- [x] **Judge Calibration** *(2026-08-05)* — old `v1_uncalibrated` data (May 24) was stale, predating the whole retrieval-tuning sprint and Golden Mapping; re-ran the diagnostic pipeline fresh, found only 4 current C1/C2 candidates (down from 28), human-labeled all 4 (full population, not a sample), got **4/4 agreement with the "locked" second-stage judge** (`validate_diagnostic.py`'s ANSWERED/REFUSED/HALLUCINATED classifier) — **promoted to v2_calibrated**. Separate finding: the first-pass discriminator (`diagnose_rag.py`) shares the exact `.startswith("INSUFFICIENT_DATA")` bug fixed in the benchmark scorer above — wrong on 3/4 cases — flagged, not fixed (low urgency, real decisions should use the calibrated second-stage judge). See `JUDGE_CALIBRATION_v2.md`.
 - [x] **Golden Mapping Metadata** *(2026-08-05)* — 3 hand-curated, source-cited entries (`backend/data/golden_mappings.json`) covering the EU AI Act risk-tiers/GPAI-generative/open-source cluster (#16/#19/#49), matched at query time via cosine similarity against the already-loaded `all-MiniLM-L6-v2` embeddings (`rag.py`'s new `_match_golden_mappings`) — no new ML dependency, no re-ingestion. Benchmark went from a corrected 84.0% baseline to **92.0%** (see next item — the 86%/94% numbers originally cited here were later found to be off by one query each; corrected across the whole historical trajectory). Zero regressions. **smoke 42/42**, **pytest 32/32**.
 - [x] **Benchmark scorer bug fix + historical correction** *(2026-08-05)* — found while reviewing Golden Mapping's results: `rag_benchmark.py`'s `.startswith("INSUFFICIENT_DATA")` check missed inline refusals not in the first token, and had done so in **every prior run** (v1 #31, v2 #6, v3/v4/v5 #35, v6 #6) — every historical topline (44/72/78/82/86/94%) was inflated by exactly one query. Fixed the scorer (substring check), corrected every archived `rag_benchmark_results.v*.json` (with an audit-trail `_correction_note` field, nothing silently overwritten) and the `RAG_Benchmark_Report.md`/`_v2`/`_v3`/`_v5` files (correction callouts + true numbers: 42/70/76/80/84/92%). Trend and every inter-run delta unchanged. **Also found and fixed** (separate from the scorer bug, traced and resolved same session): v1's report's category-breakdown table didn't match its own raw archive on 6/7 rows — confirmed isolated to v1 only (v2 matched exactly; v3/v5 don't have this table format), errors summed to zero (estimated-to-total, not computed) — corrected by direct computation from the archive. Still parked: `EU AI ACT 2024_Doc.pdf`'s text-mangling defect (isolated to that one file, confirmed — no other corpus PDF shares its producer).
 
@@ -78,14 +78,16 @@
 
 ---
 
-**Active item:** GOLDEN MAPPING COMPLETE *(2026-08-05)* — corrected trajectory **42% → 70% → 76% →
-80% → 84% → 92%** (EU AI Act cluster #16/#19/#49 closed via query-time metadata match, zero
-re-ingestion, zero regressions; numbers corrected same day after a scorer bug was found affecting
-every prior run — see `RAG_Benchmark_Report_v6.md` §3a, and MEMORY.md's "Key numbers" section).
-Remaining 4 failures: CISA booklet (#50, missing source — no lever fixes this short of acquiring
-access), CSF tiers table (#6) and Three Lines of Defense (#35) — same shape, a multi-part
-enumeration where only the first part is in the corpus — 2 jitter queries (#36/#45 → judge
-calibration, P2, still open).
+**Active item:** GOLDEN MAPPING + JUDGE CALIBRATION COMPLETE *(2026-08-05)* — corrected trajectory
+**42% → 70% → 76% → 80% → 84% → 92%** (EU AI Act cluster #16/#19/#49 closed via query-time metadata
+match, zero re-ingestion, zero regressions; numbers corrected same day after a scorer bug was found
+affecting every prior run — see `RAG_Benchmark_Report_v6.md` §3a, and MEMORY.md's "Key numbers"
+section). Judge calibration promoted the locked judge prompt to `v2_calibrated` (4/4 human agreement
+on the full current C1/C2 population) — see `JUDGE_CALIBRATION_v2.md`. Remaining 4 open benchmark
+failures, all confirmed genuine (not diagnostic artifacts) via this session's calibration exercise:
+CISA booklet (#50, missing source), CSF tiers table (#6, structured-extraction gap), gap-assessment
+methodology (#36, was misdiagnosed "prompt too strict" — actually hallucination), AI-agent benefits
+(#45, genuinely a too-strict-prompt case, the one true C1).
 **TPRM roadmap complete as of 2026-08-04** (Tier 1 + Tier 2 + Tier 3, all items), unchanged this
 session. **Next session:** RAG P2 Judge Calibration or P3 Execution Monitor UI (the other two
 post-TPRM pivot options), TPRM Tier 4 (opportunistic hardening), or the browser-verification gap on

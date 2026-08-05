@@ -118,9 +118,19 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
   re-ingestion, no FAISS rebuild; that change touches the query path only.
 - Smoke test: 42 checks (grew from 27 pre-TPRM), includes live DB-trigger immutability probes via
   `docker exec`. Pytest: 32 checks (5 IAM + 27 TPRM) — run from `backend/`, not the repo root.
-- 4 open benchmark failures (post-correction): #50 (CISA booklet missing — no lever fixes an absent
-  source), #6 (CSF tiers table) and #35 (Three Lines of Defense) — same failure shape, a multi-part
-  enumeration where only the first part is in the corpus, not yet assigned a fix, #36/#45 (jitter →
-  judge calibration, unchanged). #16/#19/#49 (EU AI Act cluster) fixed by Golden Mapping
-  (`backend/data/golden_mappings.json`, 3 entries) — confirmed via verbatim reproduction of the
-  curated context in the LLM's answers, not just a score-flip coincidence.
+- 4 open benchmark failures (post-correction), **all confirmed genuine via the 2026-08-05 judge
+  calibration exercise** (not diagnostic artifacts): #50 (CISA booklet — source absent from corpus
+  entirely), #6 (CSF tiers table — structured-content extraction gap, names the tiers but never
+  defines them), #36 (NIST CSF↔ISO 27001 gap assessment — confirmed **hallucination**, not a
+  prompt-strictness issue as first suspected), #45 (AI-agent compliance benefits — the one genuine
+  true-C1 case, strict prompt really was too conservative here). #16/#19/#49 (EU AI Act cluster)
+  fixed by Golden Mapping (`backend/data/golden_mappings.json`, 3 entries) — confirmed via verbatim
+  reproduction of the curated context in the LLM's answers, not just a score-flip coincidence.
+- **Judge calibration (2026-08-05):** the "locked judge prompt" (`validate_diagnostic.py`'s
+  ANSWERED/REFUSED/HALLUCINATED classifier) is now `v2_calibrated` — 4/4 human agreement against the
+  full current population of C1/C2 candidates (not a sample; only 4 exist today). Old
+  `v1_uncalibrated` data was from May 24, predating the whole retrieval-tuning sprint — archived, not
+  used. Separate finding: `diagnose_rag.py`'s first-pass discriminator shares the exact
+  `.startswith("INSUFFICIENT_DATA")` bug already fixed in `rag_benchmark.py` the same session — wrong
+  on 3/4 real cases, flagged not fixed (low urgency, real decisions should use the calibrated
+  second-stage judge, not the first-pass label). See `JUDGE_CALIBRATION_v2.md`.

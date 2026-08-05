@@ -85,32 +85,90 @@ itself changed).
     actually `INSUFFICIENT_DATA`, and the target-human-transparency EU AI Act query called a failure
     when it was actually `ANSWERED` (backwards).
 
+## Judge Calibration (same session, picked up right after the above was committed)
+
+Asked which RAG backlog item to pick up next; recommended Judge Calibration over Execution Monitor
+UI, reasoning that this session's whole storyline was discovering the benchmark's own scoring layer
+couldn't be trusted at face value — validating the LLM-judge layer was the natural continuation of
+that same measurement-integrity thread. User agreed.
+
+11. **Found the existing calibration data was badly stale before touching anything:**
+    `diagnostic_results.v1_uncalibrated.json` / `validation_results.json` were both dated **May
+    24** — from the original 44%-baseline diagnostic sprint, predating the entire July 18
+    retrieval-tuning sprint and today's Golden Mapping work. That old file still called #16
+    `HALLUCINATED` and #19 `REFUSED`, both now correctly `ANSWERED`. Only 4 queries are currently
+    C1/C2 (down from 28) — asked the user whether to re-run the diagnostic pipeline fresh first
+    (cost: several hundred LLM calls, real time) or just archive the stale data and stop. **User
+    chose to re-run fresh.**
+12. Archived the stale files via `git mv` (dated names, not deleted). `diagnose_rag.py` and
+    `validate_diagnostic.py` import the RAG stack directly (not via HTTP) and need the full backend
+    dependency set — neither the host Python nor the container has both the deps AND the test files
+    together (`.dockerignore` excludes `backend/tests/` from the image by design, since
+    smoke/benchmark tests hit the API over HTTP instead). Copied both scripts + the current
+    `rag_benchmark_results.json` into the running `grc-backend` container to execute them where the
+    dependencies actually live (same technique as the Golden Mapping threshold probe earlier).
+13. **First `diagnose_rag.py` run died silently after 40/50 queries**, no error captured — likely
+    the "Windows/WSL2 Docker Desktop network turbulence" pattern already in MEMORY.md. The script has
+    no resume logic (confirmed by reading it) — patched a minimal checkpoint-resume into the
+    container's working copy only (not the committed source), plus added `flush=True` /
+    unbuffered mode after realizing the first attempt's apparent "silence" for 40 minutes was
+    actually just Python's full-buffering-when-piped, not a hang — a poll-based Monitor reading the
+    checkpoint JSON directly (bypassing stdout entirely) is what actually confirmed real progress.
+    Resumed successfully from the checkpoint rather than repeating ~40 minutes of already-done work.
+14. **Final diagnostic: 46 SUCCESS, 4 C1, 0 C2, 0 A, 0 B** — all 4 current failures (#6, #36, #45,
+    #50) got the first-pass "C1" label. Ran `validate_diagnostic.py`'s second-stage judge on all 4,
+    then pulled full evidence (retrieved chunks + relaxed-prompt responses) and formed an
+    independent read before asking the user to render the actual human verdict per query (real
+    calibration needs a human label, not another LLM's opinion standing in for one). **Found the
+    first-pass discriminator has the exact same `.startswith("INSUFFICIENT_DATA")` bug already fixed
+    in `rag_benchmark.py`'s scorer earlier this session** — same session, same bug class, second
+    occurrence. It was wrong on #6, #36, and #50 (all mislabeled C1 when they're really A/B-gap or
+    hallucination), right only on #45.
+15. **User's human labels: 4/4 agreement with the second-stage "locked" judge, 1/4 with the
+    first-pass discriminator.** Promoted the locked judge prompt to `v2_calibrated`. Published
+    `JUDGE_CALIBRATION_v2.md` and `judge_calibration_v2.json` (the actual human-labeled set with
+    full evidence/reasoning per query). Confirmed 4 queries is the *complete* current population for
+    this judge, not an artificially small sample — it only ever runs on C1/C2 candidates in
+    production, and there are only 4 of those today (down from 28 in May), because the retrieval
+    work already fixed the rest.
+
 ## Things found and deliberately left unfixed (documented, not silently dropped)
 
 - The PDF text-mangling defect (`"Ar ticle 9"`) — confirmed isolated to one corpus file, but fixing
   properly needs a new extraction dependency (`pdfplumber`/`PyMuPDF`, neither currently installed)
   plus re-ingestion. User chose to park this.
+- `diagnose_rag.py`'s first-pass `.startswith()` discriminator bug (item 14 above) — same bug class
+  as the already-fixed scorer, but low urgency since the calibrated second-stage judge is what real
+  decisions should use.
+- `diagnose_rag.py`'s missing resume-from-checkpoint logic — the fix used this session was ad-hoc
+  (container-only, not committed to the tracked source).
 
 ## Current deployed state
 
 - RAG accuracy: **92%** (corrected; up from a corrected 84% baseline — see MEMORY.md's "Key
-  numbers" for the full before/after table), TPRM unchanged (still fully complete per 2026-08-04).
-  Smoke 42/42, pytest 32/32.
-- New file: `backend/data/golden_mappings.json`. Modified: `backend/core/rag.py`,
+  numbers" for the full before/after table). Judge Calibration: **v2_calibrated**, 4/4 human
+  agreement. TPRM unchanged (still fully complete per 2026-08-04). Smoke 42/42, pytest 32/32.
+- New files: `backend/data/golden_mappings.json`, `judge_calibration_v2.json`,
+  `JUDGE_CALIBRATION_v2.md`, `diagnostic_results.v2_calibrated.json`,
+  `validation_results.v2_calibrated.json`. Modified: `backend/core/rag.py`,
   `backend/requirements.txt` (numpy declared), `backend/tests/rag_benchmark.py` (scorer fix), all
-  6 `rag_benchmark_results.v*.json` archives + the live one, and 5 `RAG_Benchmark_Report*.md` files.
-- **Not browser-verified** — this change has no UI surface (query-path only), so N/A this time,
-  unlike the outstanding TPRM UI-surface browser-verification gap (still open from 2026-08-04).
+  6 `rag_benchmark_results.v*.json` archives + the live one, 5 `RAG_Benchmark_Report*.md` files.
+  Archived (renamed via `git mv`, not deleted): the stale May-24 diagnostic/validation files.
+- **Not browser-verified** — neither change this session has a UI surface (query-path and
+  offline-diagnostic only), so N/A this time, unlike the outstanding TPRM UI-surface
+  browser-verification gap (still open from 2026-08-04).
 
 ## Next session menu
 
-1. **RAG P2 Judge Calibration** or **RAG P3 Execution Monitor UI** — the other two items from the
-   post-TPRM pivot menu, still both live options.
+1. **RAG P3 Execution Monitor UI** — the remaining RAG backlog item now that Judge Calibration is
+   also done.
 2. **TPRM Tier 4** (opportunistic, still low-priority) / **browser-verify TPRM's UI surfaces**
    (still outstanding from 2026-08-04) — unchanged, not touched this session.
 3. The EU AI Act PDF extraction defect — parked, not blocking; raise only if corpus/harness hygiene
    becomes a priority.
-4. The frontend Docker-healthcheck false-"unhealthy" (IPv6/IPv4 mismatch) — cosmetic only, fix is
+4. `diagnose_rag.py`'s first-pass discriminator bug + missing resume logic (items 14/13 above) —
+   both real, both low-urgency, both easy fixes if anyone's back in that file.
+5. The frontend Docker-healthcheck false-"unhealthy" (IPv6/IPv4 mismatch) — cosmetic only, fix is
    a one-line `HEALTHCHECK` change to `wget http://127.0.0.1:3006/` if ever worth doing.
 
 ---

@@ -1,0 +1,58 @@
+{
+  "methodology": "Human-labeled calibration set for the 'locked judge prompt' (validate_diagnostic.py's ANSWERED/REFUSED/HALLUCINATED classifier). Population = ALL current C1/C2-diagnosed queries from a fresh diagnose_rag.py run against the 2026-08-05 92%-accuracy benchmark state (not a sampled subset -- only 4 such queries exist today, down from 28 in the stale 2026-05-24 diagnostic, because the retrieval-tuning sprint and Golden Mapping already resolved most of what used to fail). This is the correct and complete population for this judge specifically: it only ever runs on C1/C2 candidates in production, never on clean SUCCESS or Category-A queries, so a 4-query set covering 100% of today's live C1/C2 cases is not an artificially small sample -- it is the full domain.",
+  "date": "2026-08-05",
+  "source_files": {
+    "diagnostic": "diagnostic_results.v2_calibrated.json",
+    "validation": "validation_results.v2_calibrated.json"
+  },
+  "entries": [
+    {
+      "query_id": 6,
+      "query_text": "What are the Tier 1 thru Tier 4 implementation levels in NIST CSF 2.0?",
+      "first_pass_diagnosis": "C1",
+      "first_pass_method": "relaxed_response.strip().startswith(\"INSUFFICIENT_DATA\") -- same brittle pattern as the rag_benchmark.py scorer bug fixed earlier the same session",
+      "second_judge_verdict": "REFUSED (True A/B Gap)",
+      "human_label": "REFUSED / true gap",
+      "human_agrees_with_second_judge": true,
+      "human_agrees_with_first_pass": false,
+      "evidence_summary": "Retrieved chunks name the tiers (\"Determine if you're Tier 1, 2, 3, or 4 in each function\") and a differently-scoped NIST risk-categorization table, but never define what distinguishes one tier from another. Relaxed response honestly says so. Confirms the v5 benchmark report's prior diagnosis: a structured-content-extraction gap, not a prompt-strictness issue."
+    },
+    {
+      "query_id": 36,
+      "query_text": "How do you perform a gap assessment between NIST CSF and ISO 27001?",
+      "first_pass_diagnosis": "C1",
+      "first_pass_method": "relaxed_response.strip().startswith(\"INSUFFICIENT_DATA\")",
+      "second_judge_verdict": "HALLUCINATED (True A/B or C2)",
+      "human_label": "HALLUCINATED",
+      "human_agrees_with_second_judge": true,
+      "human_agrees_with_first_pass": false,
+      "evidence_summary": "Retrieved chunks contain generic gap-assessment methodology plus one passing mention that NIST CSF 'can be integrated with... ISO 27001' for enterprises. The relaxed response presents a specific 4-step methodology as if grounded, when only the generic framing is actually supported by the context -- synthesis beyond what the retrieved material shows."
+    },
+    {
+      "query_id": 45,
+      "query_text": "What are the benefits of using AI agents for compliance monitoring?",
+      "first_pass_diagnosis": "C1",
+      "first_pass_method": "relaxed_response.strip().startswith(\"INSUFFICIENT_DATA\")",
+      "second_judge_verdict": "ANSWERED (True C1)",
+      "human_label": "ANSWERED / true C1",
+      "human_agrees_with_second_judge": true,
+      "human_agrees_with_first_pass": true,
+      "evidence_summary": "Retrieved chunk directly states 'AI ensures adherence to regulatory frameworks by continuously monitoring...'. Relaxed response's two stated benefits are genuinely grounded. The strict production prompt really was just too conservative here -- a legitimate C1 case."
+    },
+    {
+      "query_id": 50,
+      "query_text": "What is the significance of the AI Audit Booklet for CISA auditors?",
+      "first_pass_diagnosis": "C1",
+      "first_pass_method": "relaxed_response.strip().startswith(\"INSUFFICIENT_DATA\")",
+      "second_judge_verdict": "REFUSED (True A/B Gap)",
+      "human_label": "REFUSED / true gap",
+      "human_agrees_with_second_judge": true,
+      "human_agrees_with_first_pass": false,
+      "evidence_summary": "Retrieved chunks are all generic CISA exam-prep content (audit charter, risk-based auditing, sampling); none reference an 'AI Audit Booklet'. Relaxed response explicitly says so. Confirmed separately: this specific document is absent from the corpus entirely (ISACA/CISA membership-gated), a genuine Category-A gap."
+    }
+  ],
+  "agreement_summary": {
+    "second_judge_vs_human": "4/4 (100%)",
+    "first_pass_vs_human": "1/4 (25%)"
+  }
+}

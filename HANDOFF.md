@@ -24,28 +24,34 @@ Current state: RAG accuracy is at **92%** (Golden Mapping metadata closed the EU
 queries #16, #19, #49 — on top of a corrected 84% baseline: a benchmark-scorer bug found the same
 day had been inflating every historical number since v1 by exactly one query; both the scorer and
 every past report/archive were corrected in place, see `RAG_Benchmark_Report_v6.md` §3a and
-MEMORY.md before quoting any of the old 44/72/78/82/86% figures). The TPRM module's entire roadmap — Tier 1,
-Tier 2, and Tier 3 — remains complete (unchanged since 2026-08-04). This is again an open pivot
-point — pick one:
+MEMORY.md before quoting any of the old 44/72/78/82/86% figures). **Judge Calibration is also done**
+(same day) — the locked judge prompt (`validate_diagnostic.py`'s ANSWERED/REFUSED/HALLUCINATED
+classifier) is now `v2_calibrated`, 4/4 human agreement on the full current population of ambiguous
+cases (see `JUDGE_CALIBRATION_v2.md`). The 4 remaining open benchmark failures are now all confirmed
+genuine, not diagnostic artifacts. The TPRM module's entire roadmap — Tier 1, Tier 2, and Tier 3 —
+remains complete (unchanged since 2026-08-04). This is again an open pivot point — pick one:
 
-1. **RAG P2 Judge Calibration** — benchmark results are still flagged `v1_uncalibrated`; build a
-   ~15-query human-labeled set to validate the locked judge prompt.
-2. **RAG P3 Execution Monitor UI** — real-time agent monitor on the WebSocket bus (frontend healthy,
-   bus ready; deferred since April).
-3. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene (smoke/pytest have accumulated
+1. **RAG P3 Execution Monitor UI** — real-time agent monitor on the WebSocket bus (frontend healthy,
+   bus ready; deferred since April). The other RAG P2 backlog item (Judge Calibration) is now done,
+   so this is the natural remaining RAG item.
+2. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene (smoke/pytest have accumulated
    hundreds of vendors/integrations across runs), or frontend component tests (none exist
    project-wide).
-4. **Browser-verify TPRM's UI surfaces** — 2.3/3.1/3.2/3.3 were all built and verified via
+3. **Browser-verify TPRM's UI surfaces** — 2.3/3.1/3.2/3.3 were all built and verified via
    API/curl/WS-client checks only, still no browser-automation tool used on them as of this session.
-5. ~~The v1 benchmark report's category-breakdown table doesn't match its own raw archive~~ —
-   **resolved 2026-08-05.** Traced (not a category-scheme mismatch; isolated to v1 only, v2's table
-   matched its archive exactly) and fixed by direct computation from the archive — see
-   `RAG_Benchmark_Report.md` §2/§3 and MEMORY.md.
-6. **`EU AI ACT 2024_Doc.pdf` has a systematic text-extraction defect** (spaces injected mid-word,
+4. **`EU AI ACT 2024_Doc.pdf` has a systematic text-extraction defect** (spaces injected mid-word,
    e.g. `"Ar ticle 9"`) — confirmed isolated to this one file in the 158-doc corpus (no other file
    shares its PDF producer). Would need re-extraction (new dependency — neither `pdfplumber` nor
    `PyMuPDF` is currently installed) and re-ingestion to fix properly. Parked, not urgent — Golden
    Mapping already hand-patches the three queries that were actually affected.
+5. **`diagnose_rag.py`'s first-pass discriminator has the same `.startswith("INSUFFICIENT_DATA")`
+   bug already fixed in `rag_benchmark.py`** — wrong on 3 of 4 real cases in this session's
+   calibration run (see `JUDGE_CALIBRATION_v2.md` §4). Low urgency (the calibrated second-stage
+   judge is what real decisions should use), but a clean small fix if anyone's in that file.
+6. **`diagnose_rag.py` has no resume-from-checkpoint logic** — a ~40-minute run died silently mid-way
+   this session (no error captured, likely transient network turbulence) and had to be patched
+   ad-hoc (not committed) to resume from its own checkpoint file rather than restart from scratch.
+   Worth adding permanently if this script gets run again — see `JUDGE_CALIBRATION_v2.md` §1.
 
 ---
 
