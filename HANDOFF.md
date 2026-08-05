@@ -31,9 +31,16 @@ cases (see `JUDGE_CALIBRATION_v2.md`). The 4 remaining open benchmark failures a
 genuine, not diagnostic artifacts. The TPRM module's entire roadmap — Tier 1, Tier 2, and Tier 3 —
 remains complete (unchanged since 2026-08-04). This is again an open pivot point — pick one:
 
-1. **RAG P3 Execution Monitor UI** — real-time agent monitor on the WebSocket bus (frontend healthy,
-   bus ready; deferred since April). The other RAG P2 backlog item (Judge Calibration) is now done,
-   so this is the natural remaining RAG item.
+1. **RAG P3 Execution Monitor UI** — **read `Execution_Monitor_UI_Roadmap.md` first, cold, before
+   assuming anything about scope.** The "frontend healthy, bus ready" framing this carried for
+   months turned out to be wrong once actually investigated 2026-08-05: `OpsTerminal.jsx`'s job grid
+   is a static fixture that never updates, the WS message type it listens for (`JOB_STATUS`) is
+   never broadcast by the backend, agent execution has zero persisted lifecycle (no job table
+   exists anywhere), and the "Run Agent" button is currently broken end-to-end (three independent
+   bugs). This is real, mostly-net-new work — a persistence layer + broadcast wiring + frontend
+   rewire, roughly TPRM-Tier-2-sized, not a small polish item. The roadmap has three open decisions
+   to confirm with the user before drafting the actual diff (sequencing vs. Agent Registry
+   De-stubbing; sync vs async execution; whether agent runs need audit-trail rigor).
 2. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene (smoke/pytest have accumulated
    hundreds of vendors/integrations across runs), or frontend component tests (none exist
    project-wide).

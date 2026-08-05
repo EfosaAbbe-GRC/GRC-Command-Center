@@ -143,6 +143,32 @@ that same measurement-integrity thread. User agreed.
 - `diagnose_rag.py`'s missing resume-from-checkpoint logic — the fix used this session was ad-hoc
   (container-only, not committed to the tracked source).
 
+## Execution Monitor UI — scoped cold, not implemented (same session, after agreeing to stop coding)
+
+Asked whether to keep going or stop; agreed this was a natural stopping point for the RAG-quality
+thread (Golden Mapping → scorer fix → historical correction → Judge Calibration is a complete arc).
+User then asked for the next item to be scoped into a curated implementation plan so a future
+session can start cold, rather than left as the one-line HANDOFF/task.md description it's had for
+months.
+
+Investigated the actual code fresh (agent registry, WS bus, DB models, `OpsTerminal.jsx`,
+`useWebSocket.js`, `api.js`) instead of trusting the existing "frontend healthy, bus ready" framing
+— which turned out to be wrong: the job grid is a static fixture that never updates, the
+`JOB_STATUS` WS type it listens for is never broadcast anywhere in the backend, agent execution has
+no persisted lifecycle at all (`execute_agent()` runs synchronously in-request, no job/run table
+exists in `models.py`), and the "Run Agent" button has three independent bugs (bad URL, wrong field
+name, references an unregistered agent id) making it non-functional today regardless of monitoring
+scope. Published `Execution_Monitor_UI_Roadmap.md` — a TPRM-Tier-Roadmap-style scoping document
+(tiers, what/why/where/depends-on, effort sizing) rather than a ready-to-EXECUTE diff, since real
+design decisions need the user's input first: build the monitor before or after "Agent Registry
+De-stubbing" (the other unchecked P3 item — building first means monitoring two hardcoded stub
+responses faithfully in real time); keep execution synchronous or move to a real queue; whether
+agent runs need audit-trail rigor like TPRM's immutable trail. Corrected `task.md`/`HANDOFF.md` to
+point at this roadmap instead of repeating the stale "frontend healthy, bus ready" line.
+
+**No code touched this part of the session** — investigation and planning only, per the user's
+explicit request to prep for a cold start next time, not to start implementing now.
+
 ## Current deployed state
 
 - RAG accuracy: **92%** (corrected; up from a corrected 84% baseline — see MEMORY.md's "Key
@@ -160,8 +186,9 @@ that same measurement-integrity thread. User agreed.
 
 ## Next session menu
 
-1. **RAG P3 Execution Monitor UI** — the remaining RAG backlog item now that Judge Calibration is
-   also done.
+1. **RAG P3 Execution Monitor UI** — **start with `Execution_Monitor_UI_Roadmap.md`**, not from
+   scratch. Confirm the 3 open decisions with the user (sequencing vs. De-stubbing; sync vs async;
+   audit-trail rigor), then draft the actual `_refactor.md` diff per GOVERNANCE §4.A.
 2. **TPRM Tier 4** (opportunistic, still low-priority) / **browser-verify TPRM's UI surfaces**
    (still outstanding from 2026-08-04) — unchanged, not touched this session.
 3. The EU AI Act PDF extraction defect — parked, not blocking; raise only if corpus/harness hygiene
