@@ -1,12 +1,13 @@
 {
     "summary": {
         "total": 50,
-        "answered": 22,
-        "insufficient_data": 28,
+        "answered": 21,
+        "insufficient_data": 29,
         "error": 0,
         "total_latency": 162.03000000000003,
-        "accuracy_percentage": 44.0,
-        "avg_latency": 3.24
+        "accuracy_percentage": 42.0,
+        "avg_latency": 3.24,
+        "_corrected_2026-08-05": "Was 22/50 (44.0%) under the old .startswith() scorer bug."
     },
     "results": [
         {
@@ -252,10 +253,11 @@
         {
             "id": 31,
             "query": "What is a SOC 2 Type II report and why is it important for TPRM?",
-            "outcome": "ANSWERED",
+            "outcome": "INSUFFICIENT_DATA",
             "latency": 4.69,
             "sources_count": 2,
-            "answer": "A SOC 2 Type II report assesses the ongoing effectiveness of the security architecture over a period of time, typically 3 to 12 months, evaluating both control design and effectiveness.\n\nINSUFFICIENT_DATA: The provided compliance frameworks do not contain information explicitly detailing why a SOC 2 Type II report is important for TPRM."
+            "answer": "A SOC 2 Type II report assesses the ongoing effectiveness of the security architecture over a period of time, typically 3 to 12 months, evaluating both control design and effectiveness.\n\nINSUFFICIENT_DATA: The provided compliance frameworks do not contain information explicitly detailing why a SOC 2 Type II report is important for TPRM.",
+            "_correction_note": "Reclassified 2026-08-05: contains an inline INSUFFICIENT_DATA refusal for part of the question; original scorer only checked answer.startswith(), missing it. See RAG_Benchmark_Report_v6.md."
         },
         {
             "id": 32,

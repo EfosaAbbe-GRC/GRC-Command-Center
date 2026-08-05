@@ -1,12 +1,13 @@
 {
     "summary": {
         "total": 50,
-        "answered": 43,
-        "insufficient_data": 7,
+        "answered": 42,
+        "insufficient_data": 8,
         "error": 0,
         "total_latency": 296.90000000000003,
-        "accuracy_percentage": 86.0,
-        "avg_latency": 5.94
+        "accuracy_percentage": 84.0,
+        "avg_latency": 5.94,
+        "_corrected_2026-08-05": "Was 43/50 (86.0%) under the old .startswith() scorer bug."
     },
     "results": [
         {
@@ -284,10 +285,11 @@
         {
             "id": 35,
             "query": "Explain the 'Three Lines of Defense' model in GRC.",
-            "outcome": "ANSWERED",
+            "outcome": "INSUFFICIENT_DATA",
             "latency": 10.31,
             "sources_count": 4,
-            "answer": "The Three Lines of Defense (3LoD) model is a governance framework that defines roles and responsibilities in managing risk and ensuring compliance. This model can be expanded in many organizations to Four or even Five Lines.\n\nBased on the provided context, here is a breakdown of the lines:\n\n*   **1st Line: Business & Operational Management**\n    *   **Who:** Department managers, frontline employees, IT operations, HR, etc.\n    *   **Role:** Own and manage risk; implement controls as part of daily operations.\n    *   **Example:** A system admin enforces access control policies; a billing team follows coding accuracy protocols.\n\n*   **2nd Line: Risk Management & Compliance Functions**\n    The provided context names the 2nd Line as \"Risk Management & Compliance Functions\" but does not provide further details regarding its specific roles, responsibilities, or examples.\n\n*   **3rd Line:**\n    INSUFFICIENT_DATA: The provided compliance frameworks do not contain information regarding the 3rd Line of Defense."
+            "answer": "The Three Lines of Defense (3LoD) model is a governance framework that defines roles and responsibilities in managing risk and ensuring compliance. This model can be expanded in many organizations to Four or even Five Lines.\n\nBased on the provided context, here is a breakdown of the lines:\n\n*   **1st Line: Business & Operational Management**\n    *   **Who:** Department managers, frontline employees, IT operations, HR, etc.\n    *   **Role:** Own and manage risk; implement controls as part of daily operations.\n    *   **Example:** A system admin enforces access control policies; a billing team follows coding accuracy protocols.\n\n*   **2nd Line: Risk Management & Compliance Functions**\n    The provided context names the 2nd Line as \"Risk Management & Compliance Functions\" but does not provide further details regarding its specific roles, responsibilities, or examples.\n\n*   **3rd Line:**\n    INSUFFICIENT_DATA: The provided compliance frameworks do not contain information regarding the 3rd Line of Defense.",
+            "_correction_note": "Reclassified 2026-08-05: contains an inline INSUFFICIENT_DATA refusal for part of the question; original scorer only checked answer.startswith(), missing it. See RAG_Benchmark_Report_v6.md."
         },
         {
             "id": 36,

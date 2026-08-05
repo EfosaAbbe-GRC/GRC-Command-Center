@@ -28,6 +28,7 @@ greenlet>=3.0.0
 
 # --- Vector Store ---
 faiss-cpu==1.13.2
+numpy>=1.26.0
 
 # --- PDF Parsing ---
 pypdf==4.0.1

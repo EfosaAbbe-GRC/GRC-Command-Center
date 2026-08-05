@@ -7,12 +7,14 @@ For the live task board, read `task.md`. For governance rules, read `GOVERNANCE.
 
 GRC.OS / GRC Command Center — agentic GRC platform. FastAPI backend (:8001) + React 19 frontend
 (:3006, Nginx) + PostgreSQL 16 + FAISS RAG over the `../GRC_Analyst/` PDF corpus. 4 containers via
-`docker compose -f docker-compose-v2.yml`. Current accuracy baseline: **86%** on the 50-query suite
-(2026-07-18). **TPRM (Third-Party Risk Management) module — Tier 1, 2, and 3 all complete as of
-2026-08-04**: 13-stage vendor egress/ingress assessment, risk acceptances, vendor-level risk
-rollup, WebSocket-pushed reassessment surfacing, CSV export, and file-upload evidence linkage into
-`evidence_chain`. See `TPRM_Roadmap.md` for the full item-by-item history; only opportunistic Tier
-4 hardening remains, unscheduled.
+`docker compose -f docker-compose-v2.yml`. Current accuracy baseline: **92%** on the 50-query suite
+(2026-08-05, Golden Mapping metadata + a scorer-bug fix — see `RAG_Benchmark_Report_v6.md` §3/§3a;
+**this is now the scorer's actual output**, not a manual footnote — the whole historical trajectory
+was corrected the same day, see "Key numbers" below). **TPRM (Third-Party Risk Management) module —
+Tier 1, 2, and 3 all complete as of 2026-08-04**: 13-stage vendor egress/ingress assessment, risk
+acceptances, vendor-level risk rollup, WebSocket-pushed reassessment surfacing, CSV export, and
+file-upload evidence linkage into `evidence_chain`. See `TPRM_Roadmap.md` for the full item-by-item
+history; only opportunistic Tier 4 hardening remains, unscheduled.
 
 ## Boot & verify (the ritual)
 
@@ -24,6 +26,8 @@ cd backend; python -m pytest -v; cd ..                 # expect 32/32 — MUST r
                                                          # smoke_test.py --ignore only applies
                                                          # from that rootdir)
 Invoke-RestMethod http://localhost:8001/api/v1/readiness  # expect all "ready"
+$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py  # expect 46/50 (92%) -- scorer fixed
+                                                            # 2026-08-05, also needs PYTHONUTF8=1
 ```
 
 Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
@@ -64,13 +68,53 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
   Windows/WSL2 Docker Desktop setup — expect transient network turbulence (spurious 401s,
   connection resets) right after, and re-verify with a solo test run before trusting a red result
   that immediately follows a `down`.
+- **`rag_benchmark.py` also needs `PYTHONUTF8=1`** (same emoji-in-print issue as `smoke_test.py`) —
+  fails with `UnicodeEncodeError` on a bare 🚀 print otherwise, on this Windows/cp1252 console.
+- **Frontend container shows Docker-healthcheck "unhealthy" permanently, harmlessly** (found
+  2026-08-05): `wget http://localhost:3006/` inside `grc-frontend` resolves `localhost` to `::1`
+  first (per its `/etc/hosts`), and this Docker network has no IPv6 route, so the healthcheck
+  connection-refuses on IPv6 and never retries IPv4 — nginx only binds `0.0.0.0:3006` (IPv4). The
+  app itself is fine (`curl localhost:3006` from the host, or `wget http://127.0.0.1:3006/` from
+  inside the container, both return 200). Not fixed — nothing currently depends on this health
+  status — but don't mistake `docker ps`'s "unhealthy" for a real outage on this container.
+- **On this Windows/Git-Bash setup, `docker cp`/`docker exec` args starting with `/` get silently
+  mangled into Windows paths** (MSYS path conversion) — e.g. `docker exec grc-backend ls /tmp/`
+  fails looking for a Windows `C:/...` path. Fix: `export MSYS_NO_PATHCONV=1` before the docker
+  command (or prefix inline: `MSYS_NO_PATHCONV=1 docker exec ...`).
+- **`EU AI ACT 2024_Doc.pdf`'s text extraction systematically injects spaces inside words**
+  (`"Ar ticle 9"`, `"r isk"`, `"A ct"` — 576+ occurrences of "Article" alone, found 2026-08-05
+  investigating Golden Mapping). Article numbers/legal terms survive but a literal string search
+  for `"Article 9"` finds nothing in this file — likely a producer-specific artifact
+  (`PDFlib+PDI 9.0.7p3`). Not fixed (would mean re-extracting/re-chunking/re-embedding this file, a
+  bigger separate lever) — worth checking whether other PDFs from the same producer have it too,
+  next time retrieval quality on this file is in question.
 
 ## Key numbers to not re-derive
 
-- Benchmark trajectory: 44 (v1, Apr 11) → 72 → 78 → 82 → 86 (v5, Jul 18). Archives in
-  `rag_benchmark_results.v*.json`; query list lives inside `backend/tests/rag_benchmark.py`.
-- Corpus: 158 valid PDFs, 17,088 splits @ 1000/100 chars.
+- Benchmark trajectory (**corrected 2026-08-05** — see below): 42 (v1, Apr 11) → 70 → 76 → 80 → 84
+  (v5, Jul 18) → **92** (v6, Aug 5 — Golden Mapping). Archives in `rag_benchmark_results.v*.json`;
+  query list lives inside `backend/tests/rag_benchmark.py`.
+- **A scorer bug (`answer.startswith("INSUFFICIENT_DATA")` instead of a substring check) inflated
+  every single one of these numbers by exactly 1 query/2pts** — the model would answer part of a
+  multi-part question and state `INSUFFICIENT_DATA` inline for the rest, which the strict prefix
+  check missed. Originally reported: 44/72/78/82/86/94. Fixed in `rag_benchmark.py` 2026-08-05;
+  every archived JSON and the v1/v2/v3/v5 report `.md` files were corrected in place (with a
+  `_correction_note` field in the JSON and a callout in each `.md`), not silently overwritten. Trend
+  and every inter-run delta (+28pts, re-ranker's +4 net, etc.) are unchanged — only absolute values
+  moved. Full detail: `RAG_Benchmark_Report_v6.md` §3a.
+- **Separate, still-unresolved finding from the same correction pass:** v1's report has a
+  category-breakdown table (NIST/ISO/EU AI Act/GDPR/etc. answered-counts) that doesn't match its own
+  raw per-query archive, independent of the scorer bug above (e.g. NIST row says 3/8, archive says
+  5/8) — flagged in `RAG_Benchmark_Report.md`'s correction note, not audited further, not fixed.
+  Worth a dedicated pass if these category tables are ever cited somewhere that matters (interview
+  prep, resume-adjacent material).
+- Corpus: 158 valid PDFs, 17,088 splits @ 1000/100 chars. Unchanged by Golden Mapping — no
+  re-ingestion, no FAISS rebuild; that change touches the query path only.
 - Smoke test: 42 checks (grew from 27 pre-TPRM), includes live DB-trigger immutability probes via
   `docker exec`. Pytest: 32 checks (5 IAM + 27 TPRM) — run from `backend/`, not the repo root.
-- 7 open benchmark failures: #16/#19/#49 (EU AI Act→Golden Mapping), #6 (CSF tiers table),
-  #50 (CISA booklet missing), #36/#45 (jitter→judge calibration).
+- 4 open benchmark failures (post-correction): #50 (CISA booklet missing — no lever fixes an absent
+  source), #6 (CSF tiers table) and #35 (Three Lines of Defense) — same failure shape, a multi-part
+  enumeration where only the first part is in the corpus, not yet assigned a fix, #36/#45 (jitter →
+  judge calibration, unchanged). #16/#19/#49 (EU AI Act cluster) fixed by Golden Mapping
+  (`backend/data/golden_mappings.json`, 3 entries) — confirmed via verbatim reproduction of the
+  curated context in the LLM's answers, not just a score-flip coincidence.

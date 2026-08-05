@@ -1,12 +1,13 @@
 {
     "summary": {
         "total": 50,
-        "answered": 36,
-        "insufficient_data": 14,
+        "answered": 35,
+        "insufficient_data": 15,
         "error": 0,
         "total_latency": 202.56,
-        "accuracy_percentage": 72.0,
-        "avg_latency": 4.05
+        "accuracy_percentage": 70.0,
+        "avg_latency": 4.05,
+        "_corrected_2026-08-05": "Was 36/50 (72.0%) under the old .startswith() scorer bug."
     },
     "results": [
         {
@@ -52,10 +53,11 @@
         {
             "id": 6,
             "query": "What are the Tier 1 thru Tier 4 implementation levels in NIST CSF 2.0?",
-            "outcome": "ANSWERED",
+            "outcome": "INSUFFICIENT_DATA",
             "latency": 2.87,
             "sources_count": 5,
-            "answer": "Based on the provided context, the NIST Cybersecurity Framework implementation tiers are described as follows:\n\n**Tier 1: Partial**\n*   **Risk management process:** Organizational cybersecurity risk management practices are not formalized, and risk is managed in an ad hoc and sometimes reactive manner.\n*   **Integrated risk management program:** There is limited awareness of cybersecurity risk at the organizational level. The organization implements cybersecurity risk management on an irregular, case-by-case basis due to varied experience or information gained from outside sources.\n*   **External participation:** The organization does not understand its role in the larger ecosystem with respect to either its dependencies or dependents.\n\nINSUFFICIENT_DATA: The provided compliance frameworks do not contain information for Tier 2, Tier 3, or Tier 4 implementation levels in NIST CSF 2.0."
+            "answer": "Based on the provided context, the NIST Cybersecurity Framework implementation tiers are described as follows:\n\n**Tier 1: Partial**\n*   **Risk management process:** Organizational cybersecurity risk management practices are not formalized, and risk is managed in an ad hoc and sometimes reactive manner.\n*   **Integrated risk management program:** There is limited awareness of cybersecurity risk at the organizational level. The organization implements cybersecurity risk management on an irregular, case-by-case basis due to varied experience or information gained from outside sources.\n*   **External participation:** The organization does not understand its role in the larger ecosystem with respect to either its dependencies or dependents.\n\nINSUFFICIENT_DATA: The provided compliance frameworks do not contain information for Tier 2, Tier 3, or Tier 4 implementation levels in NIST CSF 2.0.",
+            "_correction_note": "Reclassified 2026-08-05: contains an inline INSUFFICIENT_DATA refusal for part of the question; original scorer only checked answer.startswith(), missing it. See RAG_Benchmark_Report_v6.md."
         },
         {
             "id": 7,

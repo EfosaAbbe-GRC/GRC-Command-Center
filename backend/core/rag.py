@@ -1,6 +1,8 @@
 import os
+import json
 import hashlib
 import time
+import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional
 from core.config import settings
@@ -27,6 +29,9 @@ Context:
 Question: {question}
 
 Auditor Response:"""
+
+GOLDEN_MAPPINGS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "golden_mappings.json")
+GOLDEN_MATCH_THRESHOLD = 0.70  # empirically derived, see Golden_Mapping_refactor.md
 
 
 @dataclass
@@ -72,6 +77,9 @@ class RAGEngine:
         self.api_key = settings.GOOGLE_API_KEY
         self.ingestion_state = IngestionState()
         self.reranker = None  # lazy-loaded cross-encoder (Change 3)
+        self.embeddings = None  # lazy-loaded, cached HuggingFaceEmbeddings for golden-mapping matching
+        self.golden_mappings = None       # lazy-loaded list of golden mapping entries
+        self.golden_trigger_vecs = None   # list[np.ndarray], one L2-normalized matrix per entry
         if not self.api_key:
             logger.warn("GOOGLE_API_KEY not found. RAG will not work until set.")
 
@@ -264,6 +272,47 @@ class RAGEngine:
         logger.info("FAISS integrity: Verified OK")
         return True
 
+    def _get_embeddings(self):
+        """Lazily instantiate and cache the shared embedding model."""
+        if self.embeddings is None:
+            self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        return self.embeddings
+
+    def _load_golden_mappings(self):
+        """Load and embed the hand-curated Golden Mapping entries (see
+        Golden_Mapping_refactor.md). Each entry's trigger_phrases are embedded
+        once and cached; matched at query time against the live question."""
+        with open(GOLDEN_MAPPINGS_PATH, "r", encoding="utf-8") as f:
+            self.golden_mappings = json.load(f)
+
+        embeddings = self._get_embeddings()
+        self.golden_trigger_vecs = []
+        for entry in self.golden_mappings:
+            vecs = np.array(embeddings.embed_documents(entry["trigger_phrases"]))
+            vecs = vecs / np.linalg.norm(vecs, axis=1, keepdims=True)
+            self.golden_trigger_vecs.append(vecs)
+
+    def _match_golden_mappings(self, text: str) -> list:
+        """Return golden mapping entries whose trigger phrases are close
+        enough (cosine similarity) to the incoming question to bypass fuzzy
+        vector retrieval for known compliance identifiers/topics."""
+        if self.golden_mappings is None:
+            self._load_golden_mappings()
+        if not self.golden_mappings:
+            return []
+
+        embeddings = self._get_embeddings()
+        q_vec = np.array(embeddings.embed_query(text))
+        q_vec = q_vec / np.linalg.norm(q_vec)
+
+        hits = []
+        for entry, trig_vecs in zip(self.golden_mappings, self.golden_trigger_vecs):
+            sim = float((trig_vecs @ q_vec).max())
+            if sim >= GOLDEN_MATCH_THRESHOLD:
+                hits.append((sim, entry))
+        hits.sort(key=lambda p: -p[0])
+        return [entry for _, entry in hits]
+
     def _init_chain(self):
         """
         Initializes the LCEL Chain (Prompt | LLM | Parser).
@@ -297,6 +346,10 @@ class RAGEngine:
         
         # 1. Explicit Retrieval (wide bi-encoder recall, cross-encoder precision)
         try:
+            # 0. Golden Mapping check — known compliance identifiers/topics that
+            # bypass fuzzy retrieval via a hand-curated, source-cited context block
+            golden_hits = self._match_golden_mappings(text)
+
             # Similarity search is currently synchronous in FAISS-cpu
             candidates = self.vector_store.similarity_search(text, k=20)
             if self.reranker is None:
@@ -306,10 +359,20 @@ class RAGEngine:
             ranked = sorted(zip(scores, candidates), key=lambda p: p[0], reverse=True)
             docs = [d for _, d in ranked[:10]]
             context_text = "\n\n".join([d.page_content for d in docs])
-            
+
+            if golden_hits:
+                golden_block = "\n\n".join(
+                    f"[{h['framework']} — verified reference] {h['canonical_context']}"
+                    for h in golden_hits
+                )
+                context_text = golden_block + "\n\n" + context_text
+
             # 2. Extract Sources
             sources = list(set([os.path.basename(d.metadata.get('source', 'unknown')) for d in docs]))
-            
+            for h in golden_hits:
+                if h["source_file"] not in sources:
+                    sources.append(h["source_file"])
+
             # 3. Generate Answer
             answer = await self.qa_chain.ainvoke({"context": context_text, "question": text})
             

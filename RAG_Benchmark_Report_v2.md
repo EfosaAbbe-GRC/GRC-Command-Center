@@ -6,16 +6,31 @@
 **Change under test:** `k` 5 → 10, chunk size 600/60 → 1000/100 (Retrieval_Tuning_refactor.md, Changes 1–2)
 **Index:** 11,884 splits from 149 PDFs (corpus coverage identical to baseline — same 7 dehydrated files skipped)
 
+> [!NOTE]
+> **Correction (2026-08-05):** scorer bug (`.startswith("INSUFFICIENT_DATA")` missed inline
+> refusals not in the first token) misclassified query #6 (CSF tiers — Tier 1 answered, Tiers 2-4
+> explicitly `INSUFFICIENT_DATA`) as ANSWERED here. True corrected figures below (was 72.0% /
+> 36/50 / 14 insufficient). Full finding: `RAG_Benchmark_Report_v6.md`. **The category scorecard in
+> §2 has not been re-audited against the raw archive and may contain further, unrelated
+> inaccuracies (a v1 category-count discrepancy was found separately while doing this correction) —
+> read those numbers with caution**, including the "8/8 perfect score" claim below, which no longer
+> holds once #6 is corrected (7/8).
+
 ---
 
 ## 1. Executive Summary
 
 | Metric | v1 Baseline | v2 (this run) | Δ |
 | :--- | :--- | :--- | :--- |
-| **Substantive-answer rate** | 44.0% (22/50) | **72.0% (36/50)** | **+28.0 pts** |
-| Insufficient Data rate | 56.0% (28/50) | 28.0% (14/50) | −28.0 pts |
+| **Substantive-answer rate** | 42.0% (21/50)¹ | **70.0% (35/50)**¹ | **+28.0 pts** |
+| Insufficient Data rate | 58.0% (29/50)¹ | 30.0% (15/50)¹ | −28.0 pts |
 | System errors | 0 | 0 | — |
 | Avg latency | 3.67s | 4.05s | +0.38s |
+
+¹ Corrected 2026-08-05 (see note above). Originally reported: v1 44.0% (22/50) / 56.0% (28/50); v2
+72.0% (36/50) / 28.0% (14/50). The **+28.0 pt delta is unchanged** either way — the scorer bug
+affected both runs by exactly one query each, so the improvement this sprint measured is real and
+intact.
 
 The v1 diagnostic's C1 hypothesis is **confirmed**: the corpus contained the answers all along, and
 they were being lost below the k=5 cutoff in over-fragmented 600-char chunks. Doubling retrieval
@@ -24,9 +39,12 @@ The ≥70% sprint gate is **met**.
 
 ## 2. Category Scorecard (before → after)
 
+*Not re-verified against the raw per-query archive as part of the 2026-08-05 correction — see note
+above. NIST's "8/8" in particular is now known wrong (#6 corrected to INSUFFICIENT_DATA → 7/8).*
+
 | Category | v1 Answered | v2 Answered | Δ | v2 Avg Latency |
 | :--- | :--- | :--- | :--- | :--- |
-| NIST AI RMF / CSF 2.0 | 3/8 | **8/8** | +5 | 7.23s |
+| NIST AI RMF / CSF 2.0 | 3/8 | ~~8/8~~ 7/8 | +4 | 7.23s |
 | ISO 27001 / 42001 | 4/7 | **7/7** | +3 | 3.84s |
 | EU AI Act / OWASP | 3/8 | 3/8 | ±0 | 3.51s |
 | GDPR / Privacy | 2/5 | **4/5** | +2 | 3.95s |
@@ -35,9 +53,9 @@ The ≥70% sprint gate is **met**.
 | Emerging AI Risks | 4/10 | **6/10** | +2 | 2.88s |
 
 Framework-heavy categories (NIST, ISO) — where 600-char chunks were shredding clause definitions —
-went to **perfect scores**. The former worst category (TPRM, 1/5) quadrupled.
+went to (NIST: near-)**perfect scores**. The former worst category (TPRM, 1/5) quadrupled.
 
-## 3. Analysis of the 14 Remaining Failures
+## 3. Analysis of the 14 Remaining Failures (15, corrected — #6 rejoins this list)
 
 The residual failures are **not** the v1 failure mode. They cluster into three explainable groups:
 

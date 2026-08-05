@@ -1,0 +1,51 @@
+[
+  {
+    "id": "EU_AI_ACT_RISK_TIERS",
+    "framework": "EU AI Act",
+    "trigger_phrases": [
+      "What are the four risk categories defined in the EU AI Act?",
+      "What are the risk tiers under the EU AI Act?",
+      "How does the EU AI Act classify AI systems by risk level?",
+      "unacceptable risk high risk limited risk minimal risk EU AI Act"
+    ],
+    "canonical_context": "The EU AI Act (Regulation (EU) 2024/1689) does not state a single enumerated 'four risk categories' list in one place; it is a risk-based framework assembled across four separate provisions: (1) Unacceptable risk — Article 5, 'Prohibited AI practices' (Title II): AI practices banned outright, e.g. subliminal manipulation, social scoring. (2) High risk — Article 6, 'Classification rules for high-risk AI systems' (plus Annex III triggers): subject to conformity assessment, risk management, and human oversight obligations. (3) Limited risk — Article 50, transparency obligations for systems like chatbots and deepfakes, and tasks of a 'narrow and limited nature' posing only limited risk. (4) Minimal/no risk — Article 95, voluntary Codes of Conduct: the residual tier, encouraged rather than mandated compliance.",
+    "citations": [
+      {"article": "Article 5", "title": "Prohibited AI practices", "tier": "Unacceptable risk"},
+      {"article": "Article 6 / Annex III", "title": "Classification rules for high-risk AI systems", "tier": "High risk"},
+      {"article": "Article 50", "title": "Transparency obligations for certain AI systems", "tier": "Limited risk"},
+      {"article": "Article 95", "title": "Codes of conduct", "tier": "Minimal risk"}
+    ],
+    "source_file": "EU AI ACT 2024_Doc.pdf"
+  },
+  {
+    "id": "EU_AI_ACT_GPAI_GENERATIVE",
+    "framework": "EU AI Act",
+    "trigger_phrases": [
+      "How does the EU AI Act handle generative AI like ChatGPT?",
+      "What obligations apply to general-purpose AI models under the EU AI Act?",
+      "How does the EU AI Act regulate foundation models?",
+      "EU AI Act ChatGPT GPT-4 generative AI regulation"
+    ],
+    "canonical_context": "The EU AI Act does not name 'ChatGPT' or 'generative AI' directly; it regulates this category as 'general-purpose AI models' (GPAI) under Chapter V, Articles 51-56. Article 51 classifies a GPAI model as carrying 'systemic risk' if it meets defined conditions (e.g. cumulative compute used for training). Providers of GPAI models with systemic risk face additional obligations: model evaluation, adversarial testing, incident reporting to the Commission, and cybersecurity safeguards, on top of the baseline GPAI obligations (technical documentation, copyright-compliance policy, training-content summaries) that apply to all general-purpose models, including those underlying consumer chatbots like ChatGPT.",
+    "citations": [
+      {"article": "Article 51", "title": "Classification of general-purpose AI models with systemic risk", "tier": "GPAI / systemic risk"},
+      {"article": "Articles 52-56", "title": "GPAI provider obligations", "tier": "GPAI"}
+    ],
+    "source_file": "EU AI ACT 2024_Doc.pdf"
+  },
+  {
+    "id": "EU_AI_ACT_OPEN_SOURCE",
+    "framework": "EU AI Act",
+    "trigger_phrases": [
+      "How does the EU AI Act impact open-source AI development?",
+      "Are open-source AI models exempt from the EU AI Act?",
+      "EU AI Act open source licence exemption"
+    ],
+    "canonical_context": "The EU AI Act provides a conditional exemption for free and open-source AI: tools, services, processes, or components made accessible under a free and open-source licence fall outside several of the Act's obligations, unless they are placed on the market or put into service as a high-risk AI system, or as a general-purpose AI model with systemic risk (Article 51) -- both of those categories remain fully in scope regardless of licensing model. Developers of free and open-source components outside those categories are encouraged, not mandated, to adopt documentation practices like model cards and datasheets.",
+    "citations": [
+      {"article": "Recital (whitepaper preamble)", "title": "Free and open-source AI components", "tier": "Conditional exemption"},
+      {"article": "Article 51", "title": "GPAI systemic-risk carve-out from the exemption", "tier": "GPAI / systemic risk"}
+    ],
+    "source_file": "EU AI ACT 2024_Doc.pdf"
+  }
+]

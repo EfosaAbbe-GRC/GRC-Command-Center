@@ -5,15 +5,29 @@
 **Dataset:** 50 Targeted GRC Queries  
 **Knowledge Base:** 174 PDF documents (PostgreSQL Evidence Chain)
 
+> [!NOTE]
+> **Correction (2026-08-05):** the scorer used `answer.startswith("INSUFFICIENT_DATA")`, which
+> missed cases where the model answered part of a multi-part question and stated
+> `INSUFFICIENT_DATA` inline for the rest rather than as the literal first token. Query #31 (SOC 2
+> Type II) was misclassified this way. True corrected figures below (was 44.0% / 22/50 / 28
+> insufficient). Same bug found in every subsequent run through v6 — see
+> `RAG_Benchmark_Report_v6.md` for the full finding. **The category breakdown table below (§2) has
+> not been re-audited against the raw per-query archive and may contain independent, unrelated
+> inaccuracies — found while correcting this, not yet resolved.** Treat table cell counts there
+> with caution until that's separately verified.
+
 ---
 
 ## 1. Executive Summary: The Quality Baseline
 
-The GRC Command Center has established a **44.0% RAG Accuracy Baseline**. While the infrastructure is 100% stable (zero system errors), the retrieval layer for complex framework mappings (NIST AI RMF, ISO 27001 Clauses) currently results in high "Insufficient Data" rates.
+The GRC Command Center has established a **42.0% RAG Accuracy Baseline** (corrected; originally
+reported as 44.0% — see correction note above). While the infrastructure is 100% stable (zero
+system errors), the retrieval layer for complex framework mappings (NIST AI RMF, ISO 27001 Clauses)
+currently results in high "Insufficient Data" rates.
 
 ### **Key Metrics**
-- **RAG Accuracy Percentage:** **44.0%** (22/50 Substantive Answers)
-- **Insufficient Data Rate:** **56.0%** (28/50 Responses)
+- **RAG Accuracy Percentage:** **42.0%** (21/50 Substantive Answers) — corrected, was 44.0% (22/50)
+- **Insufficient Data Rate:** **58.0%** (29/50 Responses) — corrected, was 56.0% (28/50)
 - **Average Response Latency:** **3.67s**
 - **System Reliability:** **100.0%** (0 Errors)
 

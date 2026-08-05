@@ -137,7 +137,13 @@ def run_benchmark():
                 sources = data.get("sources", [])
                 sources_count = len(sources)
                 
-                if answer.startswith("INSUFFICIENT_DATA"):
+                # Substring check, not startswith: the model sometimes leads with a
+                # preamble ("Based on the provided context:") and states
+                # INSUFFICIENT_DATA later for only part of a multi-part question --
+                # a strict prefix check let those slip through as false ANSWERED
+                # (found 2026-08-05, present in every prior run, see
+                # RAG_Benchmark_Report_v6.md and MEMORY.md).
+                if "INSUFFICIENT_DATA" in answer:
                     outcome = "INSUFFICIENT_DATA"
                     summary["insufficient_data"] += 1
                 elif len(answer) > 20:
