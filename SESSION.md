@@ -69,21 +69,27 @@ itself changed).
    and `_v6.md` with correction callouts and the true numbers: **42/70/76/80/84/92%**. The trend and
    every inter-run delta (+28pts, re-ranker's +4 net) are exactly unchanged — only absolute values
    moved, each by one query.
-10. **Found, but explicitly did NOT fix (separate, unauthorized scope):** re-checking v1's report
-    against its own raw archive to correct the scorer bug's specific effect surfaced an unrelated
-    problem — the report's category-breakdown table (NIST/ISO/EU AI Act/GDPR/etc.) doesn't match the
-    archive at all, independent of the startswith bug (e.g. NIST row says 3/8 answered, archive says
-    5/8). Flagged in the report's correction note and in MEMORY.md; not audited further, not
-    resolved — a bigger, separate task than what was asked.
+10. **Found, initially left unfixed pending review:** re-checking v1's report against its own raw
+    archive to correct the scorer bug's specific effect surfaced an unrelated problem — the report's
+    category-breakdown table (NIST/ISO/EU AI Act/GDPR/etc.) didn't match the archive at all,
+    independent of the startswith bug. Committed everything else first, then traced this
+    specifically: confirmed it's not a category-scheme mismatch (`diagnose_rag.py`'s
+    `get_expected_category()` uses identical id ranges to `rag_benchmark.py`'s comment blocks), and
+    confirmed it's isolated to v1 only — v2's category table matches its own archive exactly on all
+    7 rows; v3/v5 don't carry this table format at all. The errors in v1's table summed to exactly
+    zero (which is why the grand total was still right despite 6 of 7 rows being wrong) — the
+    signature of a table that was estimated to match a known total rather than computed. **User
+    approved fixing it.** Corrected `RAG_Benchmark_Report.md` §2's table and §3's prose by direct
+    computation from the archive (struck-through, not silently overwritten) — also caught two
+    specific wrong claims in §3 along the way: Annex A.5.7 called a retrieval success when it was
+    actually `INSUFFICIENT_DATA`, and the target-human-transparency EU AI Act query called a failure
+    when it was actually `ANSWERED` (backwards).
 
-## Two things found and deliberately left unfixed (documented, not silently dropped)
+## Things found and deliberately left unfixed (documented, not silently dropped)
 
 - The PDF text-mangling defect (`"Ar ticle 9"`) — confirmed isolated to one corpus file, but fixing
   properly needs a new extraction dependency (`pdfplumber`/`PyMuPDF`, neither currently installed)
   plus re-ingestion. User chose to park this.
-- The v1 report's category-breakdown-table discrepancy (found in step 10 above) — a different,
-  unaudited issue from the scorer bug that was actually fixed. Not yet checked whether v2/v3/v5's
-  category tables have the same problem.
 
 ## Current deployed state
 
@@ -102,12 +108,9 @@ itself changed).
    post-TPRM pivot menu, still both live options.
 2. **TPRM Tier 4** (opportunistic, still low-priority) / **browser-verify TPRM's UI surfaces**
    (still outstanding from 2026-08-04) — unchanged, not touched this session.
-3. The v1 category-breakdown-table discrepancy (step 10 above) — worth a dedicated audit pass if
-   these numbers are ever cited somewhere that matters (interview prep, resume-adjacent material).
-   Check whether v2/v3/v5 have the same issue while at it.
-4. The EU AI Act PDF extraction defect — parked, not blocking; raise only if corpus/harness hygiene
+3. The EU AI Act PDF extraction defect — parked, not blocking; raise only if corpus/harness hygiene
    becomes a priority.
-5. The frontend Docker-healthcheck false-"unhealthy" (IPv6/IPv4 mismatch) — cosmetic only, fix is
+4. The frontend Docker-healthcheck false-"unhealthy" (IPv6/IPv4 mismatch) — cosmetic only, fix is
    a one-line `HEALTHCHECK` change to `wget http://127.0.0.1:3006/` if ever worth doing.
 
 ---

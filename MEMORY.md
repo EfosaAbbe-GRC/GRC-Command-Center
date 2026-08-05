@@ -102,12 +102,18 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
   `_correction_note` field in the JSON and a callout in each `.md`), not silently overwritten. Trend
   and every inter-run delta (+28pts, re-ranker's +4 net, etc.) are unchanged — only absolute values
   moved. Full detail: `RAG_Benchmark_Report_v6.md` §3a.
-- **Separate, still-unresolved finding from the same correction pass:** v1's report has a
-  category-breakdown table (NIST/ISO/EU AI Act/GDPR/etc. answered-counts) that doesn't match its own
-  raw per-query archive, independent of the scorer bug above (e.g. NIST row says 3/8, archive says
-  5/8) — flagged in `RAG_Benchmark_Report.md`'s correction note, not audited further, not fixed.
-  Worth a dedicated pass if these category tables are ever cited somewhere that matters (interview
-  prep, resume-adjacent material).
+- **Separate issue from the same correction pass, since traced and fixed:** v1's report had a
+  category-breakdown table (NIST/ISO/EU AI Act/GDPR/etc.) that didn't match its own raw per-query
+  archive on 6 of 7 rows, independent of the scorer bug above — confirmed NOT a category-scheme
+  mismatch (`diagnose_rag.py`'s `get_expected_category()` uses identical id ranges), confirmed
+  isolated to v1 only (v2's table matches its archive exactly on all 7 rows; v3/v5 don't carry this
+  table format at all). The errors summed to exactly zero, which is why the report's grand total
+  (22/50) was still right despite the per-category breakdown being wrong — the signature of a table
+  that was estimated to match a known total rather than computed. Corrected 2026-08-05 by direct
+  computation from the archive (`RAG_Benchmark_Report.md` §2/§3, struck-through not silently
+  overwritten); also caught two specific wrong claims in §3's prose along the way (Annex A.5.7
+  called a retrieval success when it was actually `INSUFFICIENT_DATA`; the target-human-transparency
+  EU AI Act query called a failure when it was actually `ANSWERED`).
 - Corpus: 158 valid PDFs, 17,088 splits @ 1000/100 chars. Unchanged by Golden Mapping — no
   re-ingestion, no FAISS rebuild; that change touches the query path only.
 - Smoke test: 42 checks (grew from 27 pre-TPRM), includes live DB-trigger immutability probes via

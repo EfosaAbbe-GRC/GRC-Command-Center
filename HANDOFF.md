@@ -37,11 +37,10 @@ point — pick one:
    project-wide).
 4. **Browser-verify TPRM's UI surfaces** — 2.3/3.1/3.2/3.3 were all built and verified via
    API/curl/WS-client checks only, still no browser-automation tool used on them as of this session.
-5. **The v1 benchmark report's category-breakdown table doesn't match its own raw archive**
-   (found 2026-08-05 while correcting the scorer bug above, but a separate, unaudited issue — e.g.
-   its NIST row says 3/8 answered, the raw per-query archive says 5/8). Not yet checked whether this
-   affects v2/v3/v5's category tables too. Worth a dedicated pass if these numbers are ever cited
-   somewhere that matters (interview prep, resume-adjacent material).
+5. ~~The v1 benchmark report's category-breakdown table doesn't match its own raw archive~~ —
+   **resolved 2026-08-05.** Traced (not a category-scheme mismatch; isolated to v1 only, v2's table
+   matched its archive exactly) and fixed by direct computation from the archive — see
+   `RAG_Benchmark_Report.md` §2/§3 and MEMORY.md.
 6. **`EU AI ACT 2024_Doc.pdf` has a systematic text-extraction defect** (spaces injected mid-word,
    e.g. `"Ar ticle 9"`) — confirmed isolated to this one file in the 158-doc corpus (no other file
    shares its PDF producer). Would need re-extraction (new dependency — neither `pdfplumber` nor
