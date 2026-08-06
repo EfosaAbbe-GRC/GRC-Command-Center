@@ -38,6 +38,26 @@ with an honest static note. See `ComplianceGrid_Honesty_refactor.md`. `Framework
 (`get_framework_mappings`) has the same underlying fixture-fake issue, a separate data source, not
 touched in this pass.
 
+## Project direction (durable — read before proposing what's next)
+
+This is a **progressive** project. The eventual goal is shipping to production, but **not soon** —
+no deadline pressure to close gaps fast. A full professional assessment against real market GRC
+tools was given 2026-08-06 (see that session's closing exchange in `SESSION.md` for the full text)
+— the user is already aware of every gap it surfaced (no live infrastructure integration behind
+`ComplianceTerminal`'s grid, no multi-tenancy/SSO, single-process architecture with the
+FAISS/reranker full-backend-blocking issue, zero frontend tests). **Don't re-raise these as new
+findings in a future session** — they're known and accepted as expected for where this project is.
+
+**Before any real production push, the explicit ask is a genuine hands-on, rigorous personal-use
+pass** — actual end-to-end workflows across terminals as a real user would run them (log in per
+role, run a vendor through the full TPRM lifecycle, trigger both real agents, export reports, work
+the compliance grid), not the feature-by-feature build-then-verify-in-isolation pattern this project
+has mostly used so far. That isolated pattern is good at catching "does this one thing work" but
+misses friction and gaps that only surface when features are used together over a realistic
+session. **This is the right thing to propose once the backlog runs dry of clear next builds, or
+whenever production-readiness comes up as a live question** — not something to wait to be asked for
+explicitly, and not a checklist of the known gaps to start silently closing.
+
 ## Boot & verify (the ritual)
 
 ```powershell

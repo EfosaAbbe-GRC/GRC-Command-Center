@@ -127,12 +127,19 @@ the post-TPRM pivot menu since 2026-08-05 is now closed. **`ComplianceTerminal.j
 "live scanning" buttons and fake incident log were also fixed the same day** (see task line above)
 — real cloud scanning wasn't achievable (no infrastructure to back it), so the fix was honesty: a
 `REFERENCE_CATALOG` label and removing the two buttons that silently did something unrelated to what
-they claimed. **Next session:** TPRM Tier 4 (opportunistic hardening — test-data hygiene has three
-independent data points favoring it, though note the real fix likely needs a dedicated test
-schema/DB, not a simple cleanup script — `RiskAcceptance` rows and any `Integration` that has one are
-protected by a DB-level immutability trigger, so retroactive deletion isn't straightforwardly safe;
-found scoping this, not yet fully investigated), `Framework_Mappings`' own separate fixture-fake data
-source (same underlying issue as the policy grid just fixed, not folded into this pass), or revisit
-`active-auditor`'s synchronous execution now that its real cost is known precisely (optional —
-Decision #3 was confirmed knowingly, not a defect, but worth a fresh look with accurate numbers if it
-starts to feel worse in practice than it did on paper). Refresh HANDOFF.md at session close.
+they claimed.
+
+**Session closed with a full professional assessment of the system against real market GRC tools**
+(user asked, got an honest one — strong on TPRM domain modeling and process discipline, behind
+category leaders on infrastructure integration/multi-tenancy/scale, none of which is news to the
+user). **Durable outcome, also in `MEMORY.md`:** this is a progressive project, production is the
+eventual goal but not imminent, and the known gaps are already priced in. Before any real production
+push, the ask is a genuine hands-on, rigorous personal-use pass — real end-to-end workflows, not
+isolated feature verification. **Next session:** that dogfooding pass is the standing recommendation
+whenever there's no strong pull toward a specific build; otherwise, TPRM Tier 4 (test-data hygiene —
+real fix likely needs a dedicated test schema/DB, not a simple cleanup script, since
+`RiskAcceptance` rows and any `Integration` that has one are protected by a DB-level immutability
+trigger; found scoping this, not yet fully investigated), `Framework_Mappings`' own separate
+fixture-fake data source (same underlying issue as the policy grid just fixed), or revisit
+`active-auditor`'s synchronous execution now that its real cost is known precisely (optional, not a
+defect). HANDOFF.md refreshed at session close.

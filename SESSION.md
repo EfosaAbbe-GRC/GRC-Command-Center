@@ -260,6 +260,30 @@ grid just fixed), or **revisiting `active-auditor`'s sync execution** with the n
 number in hand (optional — not a defect, just worth a fresh look if it feels worse in practice than
 it did on paper).
 
+## Session close: a full assessment, and the durable direction it produced
+
+After the four builds above, the user asked for a full professional assessment of the whole system
+against real market GRC tools (Vanta/Drata/OneTrust-style continuous compliance automation,
+ServiceNow/Archer-class enterprise GRC suites, ProcessUnity/Prevalent-class TPRM tools). Gave an
+honest one: strong on domain modeling (TPRM's 13-stage lifecycle, DB-level immutability enforcement)
+and on process discipline (draft-first governance, a doc trail that survives context resets, a
+demonstrated pattern this session of finding and correcting real problems — including three of its
+own draft estimates — rather than declaring victory on green tests); genuinely behind category
+leaders on exactly the things that can't be fixed by writing better code alone (no real
+infrastructure integration, no multi-tenancy/SSO, single-process architecture with the
+full-backend-blocking issue found tonight, zero frontend tests). Also flagged that calling the two
+registered agents "agentic" is a stretch against what that term now usually implies, though the
+constrained zero-trust dispatch model is arguably the more defensible design choice for a
+regulated-industry context regardless.
+
+**User's response, now the durable framing for this project (also recorded in `MEMORY.md`):** this
+is explicitly a progressive project — production is the eventual goal, not an imminent one, and the
+gap list is already fully priced in, not new information. What the user wants before any real
+production push is a genuine hands-on, rigorous personal-use pass — actual end-to-end workflows, not
+the isolated feature-verification pattern used all session. That's the right thing to propose next
+time the backlog runs dry or production comes up as a live topic, not a checklist to start closing
+unprompted.
+
 ---
 
 # Session Log — 2026-08-05 ("Golden Mapping Closes the EU AI Act Cluster; a Scorer Bug Traced Back Through Every Prior Run")
