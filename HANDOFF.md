@@ -4,7 +4,8 @@
 
 **Date:** August 6, 2026
 **Version:** 1.4.0 (Retrieval-Tuned & Re-Ranked + Golden Mapping; TPRM module fully built out AND
-browser-verified; Execution Monitor UI also built AND browser-verified)
+browser-verified; Execution Monitor UI and Agent Registry De-stubbing also both built AND
+browser-verified)
 **Baselines:** **92% RAG accuracy** (v6 benchmark — this is the scorer's actual, corrected output;
 a benchmark-scorer bug found the same day was inflating every historical number by one query, see
 `RAG_Benchmark_Report_v6.md` §3a) · smoke test **43/43** (grew from 42 with a real `/run-agent`
@@ -49,35 +50,54 @@ audit-trail entries) + broadcasts `JOB_STATUS`, `GET /ops/jobs` reads the real t
 hardcoded fixture, and the console panel renders real `result`/`error` instead of fabricated
 "SCANNING_RESOURCE" text. Verified with a two-tab Playwright regression proving the actual
 real-time claim: triggering a run in tab 1 populates tab 2's grid via WebSocket push with zero
-manual interaction on tab 2 (5/5 checks, zero console errors). Agent Registry De-stubbing
-(`active-auditor`/`policy-analyzer` still return two hardcoded canned responses, not real RAG/audit
-logic) was deliberately deferred, per the roadmap's Decision #1 — the monitor infrastructure was
-judged valuable regardless of what the handlers actually compute.
+manual interaction on tab 2 (5/5 checks, zero console errors).
 
-This is again an open pivot point — pick one:
+**Agent Registry De-stubbing is also now built and browser-verified (2026-08-06, same day)** —
+`active-auditor`/`policy-analyzer` in `core/agent.py` do real work now instead of returning canned
+responses. Read `AgentRegistry_DeStubbing_Roadmap.md` for the cold scoping (four decisions, all
+confirmed with the recommended option) and `AgentRegistry_DeStubbing_refactor.md` for the executed
+diff. Summary: `active-auditor` runs 4 canonical NIST AI RMF questions through the real
+`rag_engine.query()` pipeline (the same one behind `/chat`, 92% benchmark accuracy) and returns real
+per-question answers, real source citations, and severity computed from actual corpus coverage.
+`policy-analyzer` inspects the real RBAC `Policy` table and reports the genuine gap sitting there —
+all 13 seeded policies missing `source_doc`. **Important correction found only after measuring, not
+during scoping:** `active-auditor`'s real duration is **~43s, not the ~16s originally estimated**
+(steady-state, confirmed cold and warm), and — more significant — **it blocks the entire backend for
+every user during that window, not just the triggering request** (FAISS similarity search and the
+cross-encoder reranker run synchronously on the single event loop, no executor offload; pre-existing
+`/chat` behavior, now exercised at ~10x normal duration via a button). Decision #3 ("stay
+synchronous") wasn't reversed — it was explicitly confirmed and the code works correctly — but the
+original framing undersold both the real cost and its blast radius. See MEMORY.md gotchas for the
+full detail. **Separately flagged while scoping, deliberately not folded in:**
+`ComplianceTerminal.jsx`'s entire policy grid (`get_compliance_policies`) turns out to *also* be
+100% static fixture data, unrelated to the real RBAC `Policy` table — a previously-unknown finding,
+its own separate scoping question for later.
 
-1. **Agent Registry De-stubbing** — `active-auditor`/`policy-analyzer` in `core/agent.py` still
-   return canned, constant responses regardless of input. The Execution Monitor UI now gives this
-   real infrastructure to show its results in, making this a more natural next step than before
-   (previously it would've been a real-time monitor of fake data with no visible payoff; now
-   there's an actual UI surface that benefits from real handler output). Needs its own scoping pass
-   — this repo's own established pattern is investigate-cold-first before assuming scope, same as
-   both TPRM and Execution Monitor UI got.
-2. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene has three independent data
+This is again an open pivot point — every item on the post-TPRM menu since 2026-08-05 is now closed
+(Execution Monitor UI, Agent Registry De-stubbing). Pick one:
+
+1. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene has three independent data
    points now favoring doing it sooner: a transient pytest `ReadTimeout` on 2026-08-06 (reproduced
    clean on rerun), and pytest's wall-clock time growing from ~2min to ~4m45s across the same 32
    tests in the same session. 435+ vendors / 429+ integrations accumulated from repeated
    smoke/pytest/verification runs. Also: frontend component tests (none exist project-wide).
-3. **`EU AI ACT 2024_Doc.pdf` has a systematic text-extraction defect** (spaces injected mid-word,
+2. **`ComplianceTerminal.jsx`'s fixture-fake policy grid** (found 2026-08-06 scoping De-stubbing,
+   see above) — needs its own cold scoping pass to figure out what "real" compliance scanning would
+   even mean for that grid before anything can be drafted.
+3. **Revisit `active-auditor`'s synchronous execution now that its real cost is known precisely**
+   (optional, not urgent) — ~43s of full-backend blocking per run is a materially different number
+   than the ~16s originally discussed when Decision #3 was confirmed. Worth a fresh look with
+   accurate numbers if it starts to feel worse in practice than it did on paper; not a defect as-is.
+4. **`EU AI ACT 2024_Doc.pdf` has a systematic text-extraction defect** (spaces injected mid-word,
    e.g. `"Ar ticle 9"`) — confirmed isolated to this one file in the 158-doc corpus (no other file
    shares its PDF producer). Would need re-extraction (new dependency — neither `pdfplumber` nor
    `PyMuPDF` is currently installed) and re-ingestion to fix properly. Parked, not urgent — Golden
    Mapping already hand-patches the three queries that were actually affected.
-4. **`diagnose_rag.py`'s first-pass discriminator has the same `.startswith("INSUFFICIENT_DATA")`
+5. **`diagnose_rag.py`'s first-pass discriminator has the same `.startswith("INSUFFICIENT_DATA")`
    bug already fixed in `rag_benchmark.py`** — wrong on 3 of 4 real cases in the 2026-08-05
    calibration run (see `JUDGE_CALIBRATION_v2.md` §4). Low urgency (the calibrated second-stage
    judge is what real decisions should use), but a clean small fix if anyone's in that file.
-5. **`diagnose_rag.py` has no resume-from-checkpoint logic** — a ~40-minute run died silently mid-way
+6. **`diagnose_rag.py` has no resume-from-checkpoint logic** — a ~40-minute run died silently mid-way
    on 2026-08-05 (no error captured, likely transient network turbulence) and had to be patched
    ad-hoc (not committed) to resume from its own checkpoint file rather than restart from scratch.
    Worth adding permanently if this script gets run again — see `JUDGE_CALIBRATION_v2.md` §1.

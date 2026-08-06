@@ -1,4 +1,4 @@
-# Session Log — 2026-08-06 ("TPRM Verified & Fixed, Then Execution Monitor UI Built & Verified")
+# Session Log — 2026-08-06 ("TPRM Verified & Fixed, Then Execution Monitor UI and Agent Registry De-stubbing Both Built & Verified")
 
 **Outcome:** Picked "browser-verify TPRM's UI" off the post-TPRM pivot-point menu (recommended over
 Execution Monitor UI, which needs design decisions before any code can be drafted). TPRM's four
@@ -14,7 +14,12 @@ it same day (see step 9 below). Then, same session, moved on to Execution Monito
 open scope decisions confirmed with the user, a full diff drafted and EXECUTED covering a new
 `AgentRun` persistence layer, real audit logging, real WebSocket broadcasting, and a frontend
 rewire — verified with smoke/pytest plus a two-tab Playwright regression proving genuine real-time
-cross-tab updates (see steps 10-16 below).
+cross-tab updates (see steps 10-16 below). **Then, same session again**, moved on to a third item —
+Agent Registry De-stubbing — scoped it cold (four decisions, all confirmed), drafted and EXECUTED
+real logic for both stub handlers, and in the process of verifying it, caught and corrected two of
+its own draft's estimates that turned out to be meaningfully wrong once actually measured (see
+steps 17-24 below) — consistent with this whole session's pattern of not taking an estimate on
+faith once the real system can just be asked.
 
 ## What happened, in order
 
@@ -138,17 +143,81 @@ cross-tab updates (see steps 10-16 below).
 16. **Updated `Execution_Monitor_UI_Roadmap.md`, `task.md`, `MEMORY.md`, `HANDOFF.md`, and this
     file** with the build results.
 
+17. **User asked what to do next; recommended Agent Registry De-stubbing over TPRM Tier 4** — the
+    Execution Monitor UI just built gives real infrastructure to show agent output in, but that
+    output was still two hardcoded stub functions; wiring real logic in was judged the more
+    compounding next step versus low-priority cleanup. User agreed, asked to start the scope.
+18. **Investigated `core/agent.py` cold.** Found `rag_engine.query()` (the real pipeline behind
+    `/chat`, 92% benchmark accuracy) as a natural substrate for `active-auditor` — but noted it's
+    `async` while the handler/runner chain is sync, reopening Execution Monitor UI's own
+    just-confirmed Decision #2 ("stay synchronous... handlers return in milliseconds"). Checked the
+    real RBAC `Policy` table for `policy-analyzer` and found a genuine, immediately-defensible gap
+    already sitting there: all 13 seeded policies have `source_doc: null`. **Separate discovery,
+    explicitly flagged and not folded in:** `ComplianceTerminal.jsx`'s entire policy grid
+    (`get_compliance_policies`) turned out to *also* be 100% static fixture data — same shape of
+    problem `/ops/jobs` had before Execution Monitor UI, but on the primary compliance dashboard.
+19. **Presented four scoping decisions** (what should each handler really do; sync-vs-async given
+    RAG's real latency; whether new frontend input was needed) with recommendations on each,
+    matching the pattern that worked for Execution Monitor UI. **All four recommended options
+    confirmed:** fixed NIST AI RMF question set; real `Policy`-table gap analysis; stay synchronous;
+    no new frontend input.
+20. **Drafted `AgentRegistry_DeStubbing_refactor.md`.** Resolved the sync/async bridging question
+    while drafting (not left as an open decision): converting `execute_agent` and both handlers to
+    `async def` is safe, confirmed by checking `_run_async` (dedicated thread + fresh event loop —
+    the same mechanism already proven this session by `create_agent_run`/`finish_agent_run`). Found
+    a second caller the roadmap hadn't checked — `tests/security_audit.py`, a standalone diagnostic
+    script that would have silently broken — and included its fix too.
+21. **User said to EXECUTE if the timing trade-off still seemed worth it.** Judged sequential
+    execution (not `asyncio.gather`) still correct — FAISS similarity search is documented in this
+    codebase's own code as synchronous/CPU-bound, so concurrency would only partially help while
+    adding shared-state risk to the lazy-loaded reranker, for a rate-limited admin-only action.
+    Applied the diff across `core/agent.py`, `main.py`, and `tests/security_audit.py`. Rebuilt
+    `grc-backend` (container took longer than usual to become responsive post-rebuild — confirmed
+    via `docker stats` it was actively CPU-bound, not deadlocked; resolved on its own, logs were
+    clean once startup actually began).
+22. **First verification pass produced a real false alarm, traced honestly rather than shrugged
+    off:** the smoke test's own `active-auditor` check failed with a 180s read timeout. Rather than
+    assume a defect, isolated the variable — the failure coincided with a manual `curl` check run
+    concurrently against the same backend. Re-ran the smoke test with nothing else hitting the
+    backend: clean **43/43**. This also surfaced a real, worth-keeping architectural fact (not
+    unique to the false alarm): `rag_engine.query()`'s FAISS/reranker work blocks the single event
+    loop for its full duration, so *any* concurrent request queues behind an in-flight RAG-chaining
+    call — confirmed directly by watching a login request stall behind an in-flight `active-auditor`
+    run.
+23. **Measured `active-auditor`'s real duration twice, isolated, to settle it precisely: ~43s both
+    times (cold and warm).** The draft's ~16s estimate (based on the RAG benchmark's cited ~4s
+    average latency) was simply too optimistic — this is the genuine steady-state cost of 4
+    sequential real queries against this corpus, not a one-time model-load tax. Corrected the
+    record in `AgentRegistry_DeStubbing_refactor.md`, `task.md`, `MEMORY.md`, and `HANDOFF.md` with
+    the real number and the fuller blocking-scope finding, rather than letting the original,
+    too-optimistic figure stand. Decision #3 ("stay synchronous") wasn't reversed — it was
+    explicitly confirmed by the user and the code works correctly — but the number it was confirmed
+    against was wrong, and that's now on the record accurately.
+24. **Full verification, once run cleanly in isolation:** smoke 43/43, pytest 32/32 (back to its
+    normal ~2min, confirming the earlier ~4m45s this session was dataset-growth variance, not
+    related to this change), manual curl round-trips against both real agents plus a
+    deliberately-unregistered id, `tests/security_audit.py` re-verified working inside the container
+    (host Python lacks the RAG dependency stack; `backend/tests/` also isn't baked into the image —
+    both now-documented gotchas, worked around with `docker cp` + `MSYS_NO_PATHCONV=1`; 3/4 cases
+    pass, the 1 fail is a pre-existing stale test-case id unrelated to this change), and a Playwright
+    browser pass triggering both real agents from the actual UI picker (7/7 checks, zero console
+    errors) — confirming the real, high-quality NIST AI RMF findings (accurate answers, real source
+    citations, correctly-computed severity) and real policy-gap output both render correctly.
+
 ## Where this leaves things
 
 TPRM's entire roadmap (Tier 1+2+3) is now **fully built, browser-verified, and the one bug found in
 that verification is fixed and regression-tested**. **RAG P3 Execution Monitor UI is now also fully
 built and browser-verified**, the same session — all three of its open decisions confirmed, real
-persistence + real audit logging + real cross-tab WebSocket updates proven live. Both of
-2026-08-05's post-TPRM pivot options are now closed. Next session's menu: **Agent Registry
-De-stubbing** (`active-auditor`/`policy-analyzer` still return canned responses — now has real
-infrastructure to show its output in, making this the more natural next step), or **TPRM Tier 4**
-(test-data hygiene now has three independent data points favoring it, including this session's
-pytest wall-clock growth).
+persistence + real audit logging + real cross-tab WebSocket updates proven live. **Agent Registry
+De-stubbing is now also fully built and browser-verified, the same session again** — both handlers
+do real work, with one important correction on the record: `active-auditor` genuinely costs ~43s of
+full-backend blocking per run, not the ~16s/single-request framing its own draft estimated. Every
+item on the post-TPRM pivot menu since 2026-08-05 is now closed. Next session's menu: **TPRM Tier 4**
+(test-data hygiene now has three independent data points favoring it), the newly-flagged
+**`ComplianceTerminal.jsx` fixture-fake policy grid** (its own separate scoping question), or
+**revisiting `active-auditor`'s sync execution** with the now-accurate ~43s number in hand (optional
+— not a defect, just worth a fresh look if it feels worse in practice than it did on paper).
 
 ---
 

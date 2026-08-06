@@ -19,8 +19,16 @@ same day — see gotchas). See `TPRM_Roadmap.md` for the full item-by-item histo
 Tier 4 hardening remains, unscheduled. **Execution Monitor UI also built and browser-verified
 2026-08-06**: `OpsTerminal.jsx` now shows real agent-run data (new `AgentRun` table, real
 PENDING/RUNNING/COMPLETED/FAILED lifecycle, real `JOB_STATUS` WebSocket push confirmed live across
-two browser tabs) instead of a static fixture — see `ExecutionMonitor_refactor.md`. Agent Registry
-De-stubbing (the two registered agents still return canned responses) remains unscoped.
+two browser tabs) instead of a static fixture — see `ExecutionMonitor_refactor.md`. **Agent Registry
+De-stubbing also built and browser-verified 2026-08-06**: `active-auditor` runs 4 canonical NIST AI
+RMF questions through the real `rag_engine.query()` pipeline (same one behind `/chat`) and returns
+real source-cited findings; `policy-analyzer` inspects the real RBAC `Policy` table and reports the
+genuine gap sitting there (all 13 seeded policies missing `source_doc`). Real cost: `active-auditor`
+takes **~43s and blocks the entire backend for everyone** during that window, not just the triggering
+request — see gotchas. See `AgentRegistry_DeStubbing_refactor.md` for the executed diff. Separately
+flagged, not yet scoped: `ComplianceTerminal.jsx`'s policy grid (`get_compliance_policies`) is *also*
+100% static fixture data, unrelated to the real RBAC `Policy` table — found while scoping
+De-stubbing, deliberately not folded into it.
 
 ## Boot & verify (the ritual)
 
@@ -119,6 +127,32 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
   count)** on the same dataset-growth trend already noted for the `test_tprm_export_csv` transient
   timeout — a third data point that Tier 4 test-data hygiene (435+ vendors, 429+ integrations from
   accumulated smoke/pytest/verification runs) is worth doing sooner rather than later.
+- **`rag_engine.query()`'s FAISS `similarity_search` and cross-encoder `.predict()` are both
+  synchronous, CPU-bound calls made directly inside an `async def`, with no executor offload — they
+  block the entire single-threaded event loop, not just the calling request.** Known and accepted
+  for a single `/chat` query (~4s per the benchmark's average latency) but easy to underestimate
+  once something chains several queries together: `active-auditor` (Agent Registry De-stubbing,
+  2026-08-06) runs 4 sequential queries and takes **~43s measured** (steady-state, confirmed cold
+  and warm — not a one-time model-load tax), during which **the whole backend is unresponsive to
+  every user**, confirmed by a concurrent login request queuing behind an in-flight run. If
+  something else on this backend seems to hang for tens of seconds with no error, check whether a
+  RAG-chaining call (like `active-auditor`) is mid-flight before assuming a real bug — and don't run
+  concurrent manual curl/API checks against this backend while timing something RAG-related, it'll
+  contaminate the measurement (confirmed: an artificially-inflated 180s+ smoke-test failure turned
+  out to be exactly this, not a defect — re-ran clean in isolation).
+- **When a Python script needs to run inside `grc-backend` for verification** (e.g. one that imports
+  `core.agent`/`core.rag` directly rather than going through the HTTP API), the local host Python
+  environment does NOT have the full `requirements.txt` stack installed (confirmed:
+  `ModuleNotFoundError: No module named 'langchain_huggingface'` running locally) — it has to run
+  inside the container. `docker exec`/`docker cp` both work fine on this setup (with
+  `MSYS_NO_PATHCONV=1`, per the existing path-mangling gotcha) — no need to assume they're
+  unavailable. Note also: `backend/tests/` is **not** copied into the image (`smoke_test.py`/pytest
+  are designed to run from the host against the container's exposed HTTP port, not via
+  `docker exec`) — a script meaning to run in-process inside the container needs `docker cp`'d in
+  first, and needs to land at the *same relative path* it expects at runtime if it does its own
+  relative-path logic (found copying `security_audit.py` to the wrong depth first, which broke its
+  unrelated `../agents` dummy-script bootstrap — fixed by copying to `/app/tests/` instead of
+  `/app/`).
 
 ## Key numbers to not re-derive
 

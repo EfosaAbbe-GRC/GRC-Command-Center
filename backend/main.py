@@ -435,7 +435,7 @@ async def run_agent_endpoint(request: Request, payload: AgentRunRequest):
     run_id = audit_logger.create_agent_run(payload.agent_id, payload.args, user["username"])
 
     # Internal execution via the Zero-Trust Registry
-    result = agent_runner.execute_agent(payload.agent_id, payload.args)
+    result = await agent_runner.execute_agent(payload.agent_id, payload.args)
 
     status = "success" if "error" not in result else "failed"
     final_status = "COMPLETED" if status == "success" else "FAILED"

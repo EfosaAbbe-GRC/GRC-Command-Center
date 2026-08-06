@@ -1,5 +1,6 @@
 import sys
 import os
+import asyncio
 
 # Add backend directory to path so we can import core modules
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -7,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from core.agent import agent_runner
 from core.logger import logger
 
-def run_security_audit():
+async def run_security_audit():
     logger.info("AUDIT: Starting AgentRunner Security Stress Test")
     
     test_cases = [
@@ -37,7 +38,7 @@ def run_security_audit():
     
     for case in test_cases:
         logger.info(f"AUDIT RUN: Testing {case['name']}...")
-        result = agent_runner.execute_agent(case['agent'])
+        result = await agent_runner.execute_agent(case['agent'])
         
         actual_success = "error" not in result
         
@@ -70,4 +71,4 @@ if __name__ == "__main__":
         with open(dummy_script, "w") as f:
             f.write("print('Compliance Check: SUCCESS')")
             
-    run_security_audit()
+    asyncio.run(run_security_audit())
