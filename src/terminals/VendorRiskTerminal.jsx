@@ -71,11 +71,13 @@ export default function VendorRiskTerminal() {
     }
   });
 
-  const openIntegration = async (integ) => {
+  const openIntegration = async (integ, { resetExpanded = true } = {}) => {
     setSelected(integ);
     setActionError(null);
-    setExpandedStage(null);
-    setStageEvidence({});
+    if (resetExpanded) {
+      setExpandedStage(null);
+      setStageEvidence({});
+    }
     const [s, st, ra] = await Promise.all([
       api.get(`/tprm/integrations/${integ.id}/summary`),
       api.get(`/tprm/integrations/${integ.id}/stages`),
@@ -118,7 +120,7 @@ export default function VendorRiskTerminal() {
       evidence_notes = justification.trim();
     }
     await api.post(`/tprm/integrations/${selected.id}/stages/${stageId}`, { status, evidence_notes });
-    openIntegration(selected);
+    openIntegration(selected, { resetExpanded: false });
   };
 
   const approve = async () => {
@@ -390,7 +392,7 @@ export default function VendorRiskTerminal() {
           integrationId={selected.id}
           stage={signingStage}
           onClose={() => setSigningStage(null)}
-          onSigned={async () => { setSigningStage(null); await openIntegration(selected); }}
+          onSigned={async () => { setSigningStage(null); await openIntegration(selected, { resetExpanded: false }); }}
         />
       )}
     </div>

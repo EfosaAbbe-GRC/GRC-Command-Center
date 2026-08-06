@@ -1,4 +1,4 @@
-# Session Log — 2026-08-06 ("Browser-Verifying TPRM: All Four Surfaces Work, One Real UX Bug Found")
+# Session Log — 2026-08-06 ("Browser-Verifying TPRM, Then Fixing the One Bug It Found")
 
 **Outcome:** Picked "browser-verify TPRM's UI" off the post-TPRM pivot-point menu (recommended over
 Execution Monitor UI, which needs design decisions before any code can be drafted). TPRM's four
@@ -7,7 +7,10 @@ upload) had only ever been checked via API/curl/WS-client — never actually cli
 real browser, despite the project's own history of finding real bugs (wrong WS token field, missing
 auth header on an export button) exactly that way. Drove all four live via Playwright/Chromium
 (no project-level run skill existed yet for this app, and `chromium-cli` wasn't on `PATH`, so used
-Python's `playwright` package directly — already installed, browser binary launched clean).
+Python's `playwright` package directly — already installed, browser binary launched clean). Found
+one real bug (a stage detail panel that collapsed after every in-panel action); user chose to fix it
+immediately rather than move on to Execution Monitor UI — drafted, EXECUTED, and regression-tested
+it same day (see step 9 below).
 
 ## What happened, in order
 
@@ -53,16 +56,35 @@ Python's `playwright` package directly — already installed, browser binary lau
    in 4.4s) and the full suite clean (**32/32** in 126s) — confirmed transient, not a regression.
    Reinforces the test-data-hygiene item as worth doing sooner given the dataset's now-real size.
 8. **Updated `TPRM_Roadmap.md`, `task.md`, and this file** with the verification results and the one
-   real finding. Did not attempt the `VendorRiskTerminal.jsx` fix itself — this was a verification
-   pass, not a build session; the fix is a clean, well-understood one-liner for next time.
+   real finding.
+9. **User chose to fix the panel-collapse bug before moving on to Execution Monitor UI.** Drafted
+   `PanelCollapse_refactor.md` per GOVERNANCE §4.A draft-first (the fix touches production code, so
+   the verification-only exemption didn't apply once actual changes were on the table). User replied
+   EXECUTE. Applied exactly as drafted: `openIntegration` gained a `{ resetExpanded = true }` option;
+   `updateStage` and `RiskAcceptanceModal`'s `onSigned` now pass `{ resetExpanded: false }`; the
+   integration-list click keeps the default. Rebuilt `grc-frontend` only (frontend-only change, no
+   schema risk). Smoke **42/42**, pytest **32/32** (one transient `ReadTimeout` on
+   `test_tprm_export_csv` mid-verification, same pattern as earlier in the session — reran clean).
+   Wrote a dedicated Playwright regression (`verify_panel_fix.py`, scratchpad) reproducing the exact
+   original bug scenario end to end: mark a stage GAP → panel stays open, no re-click; sign a risk
+   acceptance → panel stays open, "Risk Accepted" visible with no re-click; switch to a *different*
+   integration → still correctly starts with no stage expanded. **7/7 checks passed, zero console
+   errors.** One debugging detour along the way: the first regression-script attempt hit a false
+   alarm (stage appeared not to update after marking GAP) that traced to the test's own 1-second
+   blind sleep racing the async refetch, not a real bug — fixed the script to wait for the actual
+   DOM update instead of a fixed delay, then confirmed clean. A second, unrelated flake (the "New
+   Integration" modal's vendor-field default depends on whether the vendors list finished loading
+   before the modal mounted) turned out to be pre-existing, harmless nondeterminism, not a
+   regression — made the script tolerant of either starting state rather than "fixing" product code
+   that wasn't the point of this pass.
 
 ## Where this leaves things
 
-TPRM's entire roadmap (Tier 1+2+3) is now **both fully built and browser-verified** — the
-verification gap flagged since 2026-08-04 is closed. Next session's pivot-point menu shrinks by one:
-**RAG P3 Execution Monitor UI** (real design/build work, needs 3 decisions confirmed first — see
-`Execution_Monitor_UI_Roadmap.md`), **TPRM Tier 4** (test-data hygiene now has a second data point
-favoring it), or the small `VendorRiskTerminal.jsx` panel-collapse fix found this session.
+TPRM's entire roadmap (Tier 1+2+3) is now **fully built, browser-verified, and the one bug found in
+that verification is fixed and regression-tested** — both gaps flagged earlier today are closed.
+Next session's pivot-point menu: **RAG P3 Execution Monitor UI** (real design/build work, needs 3
+decisions confirmed first — see `Execution_Monitor_UI_Roadmap.md`), or **TPRM Tier 4** (test-data
+hygiene now has a second data point favoring it).
 
 ---
 

@@ -179,15 +179,22 @@ itself works, though no due/expiring badge was actually visible on screen this s
 current data has 0 overdue reassessments and 0 expired acceptances (nothing in the corpus is old
 enough yet) (3.1).
 
-**One real, previously-undiscovered UX bug found:** `openIntegration()` unconditionally resets
-`expandedStage` to `null` on every call — and it's called after *every* stage-status button click
-(`updateStage`) and after signing a risk acceptance (`onSigned`). So the stage detail panel you're
-looking at collapses immediately after you mark a stage `gap`/`pass`/etc., or right after you sign a
-risk acceptance — forcing a re-click to see the result of the action you just took. Not
+**One real, previously-undiscovered UX bug found — since fixed (see below):** `openIntegration()`
+unconditionally reset `expandedStage` to `null` on every call — and it was called after *every*
+stage-status button click (`updateStage`) and after signing a risk acceptance (`onSigned`). So the
+stage detail panel collapsed immediately after marking a stage `gap`/`pass`/etc., or right after
+signing a risk acceptance — forcing a re-click to see the result of the action just taken. Not
 crash-causing, no error, but a genuine papercut in the exact workflow (mark gap → attach evidence →
-sign acceptance) this module exists for. Not fixed this session (flagged, not in scope for a
-verification-only pass) — worth a one-line fix (`setExpandedStage(stageId)` after refetch instead of
-`null`) whenever next in `VendorRiskTerminal.jsx`.
+sign acceptance) this module exists for.
+
+**✅ FIXED (2026-08-06)** — executed per `PanelCollapse_refactor.md` (now marked EXECUTED).
+`openIntegration` gained a `{ resetExpanded = true }` option; the two "just refreshing after an
+in-panel action" call sites (`updateStage`, `RiskAcceptanceModal`'s `onSigned`) now pass
+`{ resetExpanded: false }`, while the left-hand integration-list click keeps the default (reset)
+behavior. Rebuilt `grc-frontend`, verified: smoke 42/42, pytest 32/32, plus a dedicated Playwright
+regression reproducing the exact original bug scenario — panel now stays open through marking a
+stage GAP and through signing a risk acceptance with zero re-clicks, while switching to a different
+integration still correctly starts with no stage expanded. 7/7 checks passed, zero console errors.
 
 Verified: smoke 42/42, pytest 32/32 (re-ran clean after the browser session; one transient
 `ReadTimeout` on `test_tprm_export_csv` during a first pass immediately after the browser run

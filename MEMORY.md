@@ -90,13 +90,14 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
   (`PDFlib+PDI 9.0.7p3`). Not fixed (would mean re-extracting/re-chunking/re-embedding this file, a
   bigger separate lever) — worth checking whether other PDFs from the same producer have it too,
   next time retrieval quality on this file is in question.
-- **`VendorRiskTerminal.jsx`'s stage detail panel collapses after every action taken inside it**
-  (found 2026-08-06, browser-verifying TPRM): `openIntegration()` unconditionally sets
-  `expandedStage` to `null`, and it's called after both `updateStage` (any pass/gap/review/n-a click)
-  and the risk-acceptance `onSigned` callback — so marking a stage or signing an acceptance closes
-  the very panel you're looking at. Not crash-causing, no console error, just a real workflow
-  papercut. Not fixed — one-line fix (`setExpandedStage(stageId)` instead of `null`) whenever next
-  in that file.
+- **`VendorRiskTerminal.jsx`'s stage detail panel used to collapse after every action taken inside
+  it** (found 2026-08-06, browser-verifying TPRM; **fixed same day**, see `PanelCollapse_refactor.md`):
+  `openIntegration()` unconditionally set `expandedStage` to `null`, and it was called after both
+  `updateStage` (any pass/gap/review/n-a click) and the risk-acceptance `onSigned` callback — so
+  marking a stage or signing an acceptance closed the very panel being looked at. Fix: `openIntegration`
+  now takes `{ resetExpanded = true }`; the two refresh-after-action call sites pass `false`, the
+  integration-list click keeps the default. If this regresses, it'll look like a re-click being
+  needed after a stage action again.
 - **No project `run`-skill existed for this app as of 2026-08-06**, and `chromium-cli` isn't on
   `PATH` — browser verification used Python's `playwright` package directly instead (already
   installed, `p.chromium.launch(headless=True)` worked with no setup). Worth generating a proper

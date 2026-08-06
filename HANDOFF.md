@@ -34,7 +34,10 @@ remains complete (unchanged since 2026-08-04), **and as of 2026-08-06 all four o
 surfaces (2.3, 3.1, 3.2, 3.3) are browser-verified**, not just API-tested — driven live via
 Playwright/Chromium (admin session): create integration → mark gap → attach evidence → sign risk
 acceptance → export CSV, zero console errors, zero failed network requests. One real
-previously-unknown bug found along the way (not fixed, see item 2 below). This is again an open
+previously-unknown bug found along the way — **fixed the same day** (`PanelCollapse_refactor.md`,
+EXECUTED): `VendorRiskTerminal.jsx`'s stage detail panel no longer collapses after a status change
+or risk-acceptance sign-off; `grc-frontend` rebuilt, smoke 42/42, pytest 32/32, dedicated Playwright
+regression confirmed the exact original scenario now stays open (7/7 checks). This is again an open
 pivot point — pick one:
 
 1. **RAG P3 Execution Monitor UI** — **read `Execution_Monitor_UI_Roadmap.md` first, cold, before
@@ -47,26 +50,20 @@ pivot point — pick one:
    rewire, roughly TPRM-Tier-2-sized, not a small polish item. The roadmap has three open decisions
    to confirm with the user before drafting the actual diff (sequencing vs. Agent Registry
    De-stubbing; sync vs async execution; whether agent runs need audit-trail rigor).
-2. **Small, clean fix found during 2026-08-06 browser verification:** `VendorRiskTerminal.jsx`'s
-   `openIntegration()` resets `expandedStage` to `null` on every call, and it's invoked after every
-   stage-status button click and after signing a risk acceptance — so the detail panel collapses
-   right after the action you just took, forcing a re-click. Not crash-causing, just a real papercut
-   in the module's core workflow. One-liner: `setExpandedStage(stageId)` instead of `null` after
-   refetch in both `updateStage` and the `RiskAcceptanceModal`'s `onSigned`.
-3. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene (smoke/pytest/verification runs
-   have accumulated 435 vendors / 429+ integrations — this also caused one transient pytest
+2. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene (smoke/pytest/verification runs
+   have accumulated 435+ vendors / 429+ integrations — this also caused one transient pytest
    `ReadTimeout` on 2026-08-06, reproduced clean on rerun, but a second data point that this is worth
    doing sooner), or frontend component tests (none exist project-wide).
-4. **`EU AI ACT 2024_Doc.pdf` has a systematic text-extraction defect** (spaces injected mid-word,
+3. **`EU AI ACT 2024_Doc.pdf` has a systematic text-extraction defect** (spaces injected mid-word,
    e.g. `"Ar ticle 9"`) — confirmed isolated to this one file in the 158-doc corpus (no other file
    shares its PDF producer). Would need re-extraction (new dependency — neither `pdfplumber` nor
    `PyMuPDF` is currently installed) and re-ingestion to fix properly. Parked, not urgent — Golden
    Mapping already hand-patches the three queries that were actually affected.
-5. **`diagnose_rag.py`'s first-pass discriminator has the same `.startswith("INSUFFICIENT_DATA")`
+4. **`diagnose_rag.py`'s first-pass discriminator has the same `.startswith("INSUFFICIENT_DATA")`
    bug already fixed in `rag_benchmark.py`** — wrong on 3 of 4 real cases in this session's
    calibration run (see `JUDGE_CALIBRATION_v2.md` §4). Low urgency (the calibrated second-stage
    judge is what real decisions should use), but a clean small fix if anyone's in that file.
-6. **`diagnose_rag.py` has no resume-from-checkpoint logic** — a ~40-minute run died silently mid-way
+5. **`diagnose_rag.py` has no resume-from-checkpoint logic** — a ~40-minute run died silently mid-way
    this session (no error captured, likely transient network turbulence) and had to be patched
    ad-hoc (not committed) to resume from its own checkpoint file rather than restart from scratch.
    Worth adding permanently if this script gets run again — see `JUDGE_CALIBRATION_v2.md` §1.

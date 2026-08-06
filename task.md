@@ -86,12 +86,14 @@ sign risk acceptance → export CSV. **All four confirmed working** — zero con
 failed network requests across the run. Full detail and the one real finding (see below) in
 `TPRM_Roadmap.md`'s dated entry.
 
-**One real, previously-undiscovered UX bug found (not fixed, flagged for later):**
-`VendorRiskTerminal.jsx`'s `openIntegration()` resets `expandedStage` to `null` on every call, and
-it's called after every stage-status button click and after signing a risk acceptance — so the
-detail panel you're looking at collapses right after the action you just took, forcing a re-click.
-Not crash-causing, just a real papercut in the module's core workflow. One-line fix when next in
-that file (`setExpandedStage(stageId)` instead of `null` after refetch).
+**One real, previously-undiscovered UX bug found — fixed same day:**
+`VendorRiskTerminal.jsx`'s `openIntegration()` reset `expandedStage` to `null` on every call, and
+it was called after every stage-status button click and after signing a risk acceptance — so the
+detail panel collapsed right after the action just taken, forcing a re-click. **Fixed 2026-08-06**
+(`PanelCollapse_refactor.md`, EXECUTED): `openIntegration` now takes a `{ resetExpanded = true }`
+option, `false` on the two refresh-after-action call sites. Rebuilt `grc-frontend`; smoke 42/42,
+pytest 32/32; dedicated Playwright regression confirmed the panel now stays open through both
+actions (7/7 checks, zero console errors) while switching integrations still correctly resets.
 
 **Also:** re-ran pytest twice — the first pass right after the browser session had one transient
 `ReadTimeout` on `test_tprm_export_csv` (dataset has grown large: 435 vendors, 429+ integrations
@@ -112,8 +114,8 @@ CISA booklet (#50, missing source), CSF tiers table (#6, structured-extraction g
 methodology (#36, was misdiagnosed "prompt too strict" — actually hallucination), AI-agent benefits
 (#45, genuinely a too-strict-prompt case, the one true C1).
 **TPRM roadmap complete as of 2026-08-04** (Tier 1 + Tier 2 + Tier 3, all items). **TPRM's UI
-surfaces browser-verified 2026-08-06** (see "Browser verification pass" above) — that pivot option
-is now closed. **Next session:** RAG P3 Execution Monitor UI (real design/build work, needs 3
-sequencing/scope decisions confirmed first), TPRM Tier 4 (opportunistic hardening — test-data
-hygiene now has a second data point favoring doing it sooner), or the small `VendorRiskTerminal.jsx`
-panel-collapse UX fix found during browser verification. Refresh HANDOFF.md at session close.
+surfaces browser-verified 2026-08-06**, and the one bug found in that pass (panel-collapse) was
+**fixed the same day** — both pivot options are now closed. **Next session:** RAG P3 Execution
+Monitor UI (real design/build work, needs 3 sequencing/scope decisions confirmed first), or TPRM
+Tier 4 (opportunistic hardening — test-data hygiene now has a second data point favoring doing it
+sooner). Refresh HANDOFF.md at session close.
