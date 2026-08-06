@@ -52,7 +52,7 @@
 
 ## P3 — Platform Debt & Features
 
-- [ ] **Execution Monitor UI**: real-time agent job monitor on the WebSocket telemetry bus. **Scoped 2026-08-05** (not started, investigated cold before touching code — see `Execution_Monitor_UI_Roadmap.md`): the "frontend healthy, bus ready" framing this had carried across several sessions doesn't hold up — `OpsTerminal.jsx`'s job grid is a static fixture (never mutated at runtime), the `JOB_STATUS`/`POLICY_UPDATE` WS message types it listens for are never broadcast anywhere, agent execution has no persisted lifecycle at all (`execute_agent()` runs synchronously in-request, no job table exists), and the "Run Agent" button is currently broken end-to-end (bad URL, wrong field name, unregistered agent id). Real scope: new `AgentRun` model + `JOB_STATUS` broadcast + frontend rewire — closer to a TPRM-Tier-2-sized item than a polish task. Three open decisions flagged in the roadmap (sequencing vs. De-stubbing below; sync vs async execution; audit-trail rigor) need confirming before drafting the actual diff.
+- [x] **Execution Monitor UI**: real-time agent job monitor on the WebSocket telemetry bus. **Scoped 2026-08-05, built 2026-08-06** — see `Execution_Monitor_UI_Roadmap.md` for the cold investigation and `ExecutionMonitor_refactor.md` for the executed diff. All three open decisions confirmed with the user (build now not after De-stubbing; stay synchronous; add audit-trail logging). Shipped: new `AgentRun` model with a real PENDING/RUNNING/COMPLETED/FAILED lifecycle, `/run-agent` now persists + calls `log_security_event` (closing a real gap — agent execution previously wrote zero audit-trail entries, confirmed via grep before fixing) + broadcasts `JOB_STATUS`, `GET /ops/jobs` reads real data instead of a hardcoded fixture, `OpsTerminal.jsx`'s console panel renders real `result`/`error` instead of fabricated "SCANNING_RESOURCE"/"CRITICAL_THREAD_ABORT" text, and the "Run Agent" button (previously fully broken — bad field name, unregistered agent id, and even after fixing those, checked for a `stdout` field neither stub handler has ever returned) now actually populates the grid. Verified: smoke 43/43 (grew from 42 — added a real `/run-agent` check since `/ops/jobs` moving off the fixture broke the old "≥1 item" assertion on a fresh boot), pytest 32/32, manual curl round-trip, confirmed real `AGENT_EXECUTE` audit rows, and a two-tab Playwright regression proving the actual real-time claim — triggering a run in tab 1 populated tab 2's grid via WS push with zero manual interaction on tab 2 (5/5 checks, zero console errors either tab).
 - [ ] **Agent Registry De-stubbing**: `active-auditor` / `policy-analyzer` handlers in `agent.py` return canned responses — wire them to real RAG/audit logic
 - [x] **Documentation Drift**: GOVERNANCE.md/CLAUDE.md cited `fn_prevent_audit_modification`/`fn_prevent_evidence_modification` (real fn is `fn_prevent_immutability_violation`) and a nonexistent `data_fixtures.py`; TPRM module was undocumented in CLAUDE.md's file tree — all fixed *(2026-08-02, commit `2268d2d`)*. ~~CLAUDE.md claims `text-embedding-004`/Gemini 2.0 Flash~~ — re-checked 2026-08-02, CLAUDE.md already correctly says `all-MiniLM-L6-v2`/`gemini-2.5-flash`; this line was stale, leaving struck through rather than deleting silently.
 
@@ -115,7 +115,12 @@ methodology (#36, was misdiagnosed "prompt too strict" — actually hallucinatio
 (#45, genuinely a too-strict-prompt case, the one true C1).
 **TPRM roadmap complete as of 2026-08-04** (Tier 1 + Tier 2 + Tier 3, all items). **TPRM's UI
 surfaces browser-verified 2026-08-06**, and the one bug found in that pass (panel-collapse) was
-**fixed the same day** — both pivot options are now closed. **Next session:** RAG P3 Execution
-Monitor UI (real design/build work, needs 3 sequencing/scope decisions confirmed first), or TPRM
-Tier 4 (opportunistic hardening — test-data hygiene now has a second data point favoring doing it
-sooner). Refresh HANDOFF.md at session close.
+**fixed the same day**. **RAG P3 Execution Monitor UI also built and browser-verified 2026-08-06**
+(Tier 0+1+2, all three open decisions confirmed) — real agent-run persistence, real audit logging,
+real WebSocket-pushed grid updates, confirmed live across two browser tabs. All three post-TPRM
+pivot options from 2026-08-05's menu are now closed. **Next session:** Agent Registry De-stubbing
+(`active-auditor`/`policy-analyzer` still return canned responses — the monitor now has real
+infrastructure to show whatever they actually compute, making this a more natural next step than
+before), or TPRM Tier 4 (opportunistic hardening — test-data hygiene now has a third data point
+favoring doing it sooner: pytest went from ~2min to ~4m45s this session on the same 32 tests).
+Refresh HANDOFF.md at session close.

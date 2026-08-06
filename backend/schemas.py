@@ -31,6 +31,8 @@ class JobItem(BaseModel):
     duration: str
     cpu: str
     ram: str
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
 
 class KPIValue(BaseModel):
     value: Any
@@ -71,6 +73,7 @@ class AgentResult(BaseModel):
     status: str
     agent: str
     result: Dict[str, Any]
+    run_id: int
 
 class HealthSubsystem(BaseModel):
     status: str

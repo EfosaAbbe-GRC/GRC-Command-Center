@@ -8,6 +8,7 @@ import os
 import uuid
 import csv
 import io
+import json
 from fastapi.responses import StreamingResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -420,20 +421,42 @@ async def chat_endpoint(request: Request, payload: GRCQuery, background_tasks: B
         logger.error("Chat endpoint error", error=str(e))
         raise HTTPException(status_code=500, detail="Internal processing error")
 
+AGENT_TASK_LABELS = {
+    "active-auditor": "NIST AI RMF Audit",
+    "policy-analyzer": "Policy Gap Analysis",
+}
+
 @app.post("/api/v1/run-agent", response_model=AgentResult, dependencies=[Depends(authorize("AGENT_EXECUTE"))])
 @limiter.limit("10/minute")
 async def run_agent_endpoint(request: Request, payload: AgentRunRequest):
     user = get_current_user(request)
     logger.info("Registry Agent execution requested", agent=payload.agent_id, user=user["username"])
-    
+
+    run_id = audit_logger.create_agent_run(payload.agent_id, payload.args, user["username"])
+
     # Internal execution via the Zero-Trust Registry
     result = agent_runner.execute_agent(payload.agent_id, payload.args)
-    
+
     status = "success" if "error" not in result else "failed"
+    final_status = "COMPLETED" if status == "success" else "FAILED"
+    audit_logger.finish_agent_run(
+        run_id,
+        status=final_status,
+        result=result if status == "success" else None,
+        error=result.get("error") if status == "failed" else None,
+    )
+
+    log_security_event(
+        request, "AGENT_EXECUTE",
+        f"User '{user['username']}' executed agent '{payload.agent_id}' -> {final_status} (run_id={run_id})"
+    )
+    await manager.broadcast({"type": "JOB_STATUS"})
+
     return AgentResult(
         status=status,
         agent=payload.agent_id,
-        result=result
+        result=result,
+        run_id=run_id
     )
 
 # --- COMPLIANCE ENDPOINTS ---
@@ -486,7 +509,26 @@ def get_frameworks_for_policy(policy_id: str):
 
 @app.get("/api/v1/ops/jobs", response_model=List[JobItem], dependencies=[Depends(authorize("RAG_QUERY"))])
 def get_ops_jobs():
-    return data_service.get_ops_jobs()
+    runs = audit_logger.list_agent_runs()
+    jobs = []
+    for r in runs:
+        if r.completed_at:
+            elapsed = (r.completed_at - r.started_at).total_seconds()
+            duration = f"{int(elapsed // 60)}m {int(elapsed % 60)}s"
+        else:
+            duration = "—"
+        jobs.append(JobItem(
+            id=f"RUN_{r.id}",
+            agent=r.agent_id,
+            task=AGENT_TASK_LABELS.get(r.agent_id, r.agent_id),
+            status=r.status,
+            duration=duration,
+            cpu="N/A",
+            ram="N/A",
+            result=json.loads(r.result_json) if r.result_json else None,
+            error=r.error,
+        ))
+    return jobs
 
 # --- EXECUTIVE ENDPOINTS ---
 

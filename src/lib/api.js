@@ -252,8 +252,8 @@ export const api = {
     },
 
     // Agent execution
-    runAgent: (agentName, args = {}) =>
-        api.post('/run-agent', { agent_name: agentName, args }),
+    runAgent: (agentId, args = {}) =>
+        api.post('/run-agent', { agent_id: agentId, args }),
 
     // Ingestion
     triggerIngest: () => api.post('/ingest'),

@@ -92,3 +92,25 @@ class Policy(Base):
     modified_by: Mapped[Optional[str]] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+
+
+class AgentRun(Base):
+    """Persisted lifecycle for a single agent execution (Execution Monitor UI).
+
+    Status stays a plain string, not a SQLAlchemy Enum -- see the ALTER TYPE
+    gotcha in MEMORY.md; a new table has no such migration hazard, but a
+    plain string keeps this consistent with the rest of this file and
+    sidesteps the whole class of problem if a status value is ever added.
+    Values in practice: PENDING, RUNNING, COMPLETED, FAILED.
+    """
+    __tablename__ = "agent_runs"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    agent_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="PENDING")
+    args_json: Mapped[Optional[str]] = mapped_column(Text)
+    result_json: Mapped[Optional[str]] = mapped_column(Text)
+    error: Mapped[Optional[str]] = mapped_column(Text)
+    triggered_by: Mapped[str] = mapped_column(String(100), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)

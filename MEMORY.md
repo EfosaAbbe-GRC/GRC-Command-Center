@@ -14,15 +14,21 @@ was corrected the same day, see "Key numbers" below). **TPRM (Third-Party Risk M
 Tier 1, 2, and 3 all complete as of 2026-08-04**: 13-stage vendor egress/ingress assessment, risk
 acceptances, vendor-level risk rollup, WebSocket-pushed reassessment surfacing, CSV export, and
 file-upload evidence linkage into `evidence_chain`. **Browser-verified 2026-08-06** (all four UI
-surfaces driven live via Playwright, not just API-tested; one small known UX bug — see gotchas).
-See `TPRM_Roadmap.md` for the full item-by-item history; only opportunistic Tier 4 hardening
-remains, unscheduled.
+surfaces driven live via Playwright, not just API-tested; the one UX bug that pass found was fixed
+same day — see gotchas). See `TPRM_Roadmap.md` for the full item-by-item history; only opportunistic
+Tier 4 hardening remains, unscheduled. **Execution Monitor UI also built and browser-verified
+2026-08-06**: `OpsTerminal.jsx` now shows real agent-run data (new `AgentRun` table, real
+PENDING/RUNNING/COMPLETED/FAILED lifecycle, real `JOB_STATUS` WebSocket push confirmed live across
+two browser tabs) instead of a static fixture — see `ExecutionMonitor_refactor.md`. Agent Registry
+De-stubbing (the two registered agents still return canned responses) remains unscoped.
 
 ## Boot & verify (the ritual)
 
 ```powershell
 docker compose -f docker-compose-v2.yml up -d          # boot (no --build unless code changed)
-$env:PYTHONUTF8=1; python backend/tests/smoke_test.py  # expect 42/42 (grew from 27 with TPRM)
+$env:PYTHONUTF8=1; python backend/tests/smoke_test.py  # expect 43/43 (grew from 27->42 with TPRM,
+                                                         # ->43 with a real /run-agent check added
+                                                         # 2026-08-06 alongside Execution Monitor UI)
 cd backend; python -m pytest -v; cd ..                 # expect 32/32 — MUST run from backend/,
                                                          # not repo root (pyproject.toml's
                                                          # smoke_test.py --ignore only applies
@@ -103,6 +109,16 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
   installed, `p.chromium.launch(headless=True)` worked with no setup). Worth generating a proper
   project skill via `/run-skill-generator` next time browser-driving this app comes up, so this
   discovery doesn't repeat.
+- **`GET /ops/jobs` used to always return exactly 3 hardcoded fixture rows regardless of state;
+  since Execution Monitor UI (2026-08-06) it reads real `AgentRun` rows and returns genuinely
+  empty on a fresh boot with zero agent executions.** `fixtures.json`'s `jobs` array and
+  `data_service.get_ops_jobs()` are now dead code (left in place, not deleted — a Tier 4 cleanup
+  candidate). `smoke_test.py` now triggers a real `/run-agent` call before checking this endpoint
+  for exactly this reason.
+- **pytest went from ~2min to ~4m45s this session (same 32 tests, no new tests added to that
+  count)** on the same dataset-growth trend already noted for the `test_tprm_export_csv` transient
+  timeout — a third data point that Tier 4 test-data hygiene (435+ vendors, 429+ integrations from
+  accumulated smoke/pytest/verification runs) is worth doing sooner rather than later.
 
 ## Key numbers to not re-derive
 

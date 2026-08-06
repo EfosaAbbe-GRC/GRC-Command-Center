@@ -238,6 +238,13 @@ def run_smoke_tests():
     policies = test("Compliance policies", "GET", f"{V1}/compliance/policies",
                     check_contains=1)
 
+    # /ops/jobs now reads real AgentRun rows (Execution Monitor UI, 2026-08-06)
+    # instead of a hardcoded fixture -- trigger one first so the list isn't
+    # legitimately empty on a fresh boot with no agent executions yet.
+    test("Trigger agent run (active-auditor)", "POST", f"{V1}/run-agent",
+         json_body={"agent_id": "active-auditor", "args": {}},
+         check_fields=["status", "agent", "result", "run_id"])
+
     test("Operations jobs", "GET", f"{V1}/ops/jobs",
          check_contains=1)
 

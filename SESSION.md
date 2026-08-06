@@ -1,4 +1,4 @@
-# Session Log — 2026-08-06 ("Browser-Verifying TPRM, Then Fixing the One Bug It Found")
+# Session Log — 2026-08-06 ("TPRM Verified & Fixed, Then Execution Monitor UI Built & Verified")
 
 **Outcome:** Picked "browser-verify TPRM's UI" off the post-TPRM pivot-point menu (recommended over
 Execution Monitor UI, which needs design decisions before any code can be drafted). TPRM's four
@@ -10,7 +10,11 @@ auth header on an export button) exactly that way. Drove all four live via Playw
 Python's `playwright` package directly — already installed, browser binary launched clean). Found
 one real bug (a stage detail panel that collapsed after every in-panel action); user chose to fix it
 immediately rather than move on to Execution Monitor UI — drafted, EXECUTED, and regression-tested
-it same day (see step 9 below).
+it same day (see step 9 below). Then, same session, moved on to Execution Monitor UI itself: three
+open scope decisions confirmed with the user, a full diff drafted and EXECUTED covering a new
+`AgentRun` persistence layer, real audit logging, real WebSocket broadcasting, and a frontend
+rewire — verified with smoke/pytest plus a two-tab Playwright regression proving genuine real-time
+cross-tab updates (see steps 10-16 below).
 
 ## What happened, in order
 
@@ -78,13 +82,73 @@ it same day (see step 9 below).
    regression — made the script tolerant of either starting state rather than "fixing" product code
    that wasn't the point of this pass.
 
+10. **User chose to build the Execution Monitor UI next, same session.** Read
+    `Execution_Monitor_UI_Roadmap.md` cold per its own instruction before assuming scope. Confirmed
+    the one open factual question left in it (Decision #3 — does `run_agent_endpoint` currently
+    audit-log?) by grepping the actual code: it called only `logger.info`, never
+    `log_security_event`, unlike every other privileged action in the codebase — a real, confirmed
+    gap. Presented all three of the roadmap's open decisions to the user with the roadmap's own
+    recommendation on each; **all three recommended options confirmed** (build now, not sequenced
+    after De-stubbing; stay synchronous; add audit logging).
+11. **Drafted `ExecutionMonitor_refactor.md`** per GOVERNANCE §4.A, covering Tier 0+1+2 from the
+    roadmap's recommended sequence (Tier 3 stays explicitly out of scope). Investigated actual
+    current code before drafting rather than trusting the roadmap's claims verbatim — caught the
+    roadmap itself citing a stray-backslash path bug in `api.js` that turned out not to exist in the
+    current file (only the `agent_name`→`agent_id` field mismatch was real); corrected that in the
+    draft rather than propagating it.
+12. **User replied EXECUTE.** Applied across 7 files: new `AgentRun` model (`core/models.py`, plain
+    string status column, not a SQLAlchemy Enum — sidesteps the ALTER-TYPE class of gotcha entirely
+    for a new table); three new sync-bridge `AuditLogger` methods in `core/database.py`
+    (`create_agent_run`/`finish_agent_run`/`list_agent_runs`, matching the existing `update_policy`
+    pattern rather than `tprm.py`'s `Depends(get_db)` style, since `main.py` doesn't import that);
+    `run_agent_endpoint` rewritten to persist + audit-log + broadcast `JOB_STATUS`; `GET /ops/jobs`
+    repointed at the real table; `schemas.py` widened (`AgentResult.run_id`,
+    `JobItem.result`/`.error`); `api.js`'s field-name fix; `OpsTerminal.jsx` rewired (real
+    picker+trigger, real console rendering replacing the fabricated "SCANNING_RESOURCE"/
+    "CRITICAL_THREAD_ABORT" text — which also fixed a latent bug found along the way: the old code
+    checked `data.result.stdout`, a field neither stub handler has ever returned, so every prior
+    manual trigger silently fell through to "No STDOUT received." regardless of the id/field bugs);
+    `StatusBadge.jsx` gained a `PENDING` style. **Two corrections found only during implementation,
+    not caught in drafting:** the draft claimed `main.py` already had `import json` — it didn't,
+    added it; `core/database.py` also needed `import json` added (draft had this one right).
+13. **Rebuilt both `grc-backend` and `grc-frontend`.** Backend booted clean, new `agent_runs` table
+    created via the existing `create_all()` path with no errors. First smoke run came back 41/42:
+    `/ops/jobs` moving from an always-3-rows fixture to real data meant a genuinely-empty list on a
+    fresh boot with zero agent runs yet, breaking the old "≥1 item" assertion. Fixed by having the
+    smoke test trigger a real `/run-agent` call first — this also gives direct smoke coverage of the
+    new endpoint, not just a weakened assertion. Reran clean: **43/43**. Pytest: **32/32**, but ran
+    noticeably slower (4m45s vs. the usual ~2min on the same 32 tests) — another data point for the
+    Tier 4 test-data-hygiene item, not a regression from this session's changes.
+14. **Manual curl verification:** triggered both real agents plus one deliberately-unregistered id;
+    all three persisted correctly with real status/result/error, the unregistered one correctly
+    403-equivalent-denied with a real error message stored. Confirmed Decision #3's actual point by
+    reading `GET /admin/audit/security?event_type=AGENT_EXECUTE` directly — real audit rows exist,
+    each correlated to its `run_id`.
+15. **Two-tab Playwright regression** (`verify_exec_monitor.py`, scratchpad): tab 1 triggers a run
+    via the new picker, tab 2 (already open, no manual action) picks it up live via the `JOB_STATUS`
+    WebSocket broadcast. This is the actual "real-time monitor" claim the feature is named for, and
+    it was the one thing curl alone couldn't prove. First attempt hit two script-only false alarms,
+    both traced and fixed without touching product code: a hardcoded expected run-id collided with
+    leftover rows from an earlier interrupted script run (fixed by capturing the real `run_id` from
+    the actual API response instead of assuming a number), and a Playwright strict-mode ambiguity
+    where "RUN_6" legitimately appeared in both a grid row and the console header text (fixed by
+    scoping the locator to the grid column). Final run: **5/5 checks passed, zero console errors on
+    either tab** — FAILED-row rendering, COMPLETED-row real result JSON, tab 1's own refresh, and
+    tab 2's live WS-driven update all confirmed working.
+16. **Updated `Execution_Monitor_UI_Roadmap.md`, `task.md`, `MEMORY.md`, `HANDOFF.md`, and this
+    file** with the build results.
+
 ## Where this leaves things
 
 TPRM's entire roadmap (Tier 1+2+3) is now **fully built, browser-verified, and the one bug found in
-that verification is fixed and regression-tested** — both gaps flagged earlier today are closed.
-Next session's pivot-point menu: **RAG P3 Execution Monitor UI** (real design/build work, needs 3
-decisions confirmed first — see `Execution_Monitor_UI_Roadmap.md`), or **TPRM Tier 4** (test-data
-hygiene now has a second data point favoring it).
+that verification is fixed and regression-tested**. **RAG P3 Execution Monitor UI is now also fully
+built and browser-verified**, the same session — all three of its open decisions confirmed, real
+persistence + real audit logging + real cross-tab WebSocket updates proven live. Both of
+2026-08-05's post-TPRM pivot options are now closed. Next session's menu: **Agent Registry
+De-stubbing** (`active-auditor`/`policy-analyzer` still return canned responses — now has real
+infrastructure to show its output in, making this the more natural next step), or **TPRM Tier 4**
+(test-data hygiene now has three independent data points favoring it, including this session's
+pytest wall-clock growth).
 
 ---
 

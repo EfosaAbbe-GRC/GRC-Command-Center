@@ -11,9 +11,10 @@ export const OpsTerminal = () => {
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
     const [selectedJob, setSelectedJob] = useState(null);
-    const [manualOutput, setManualOutput] = useState(null);
     const [stats, setStats] = useState({ running: 2, queued: 0, failed: 2 });
     const [showGovernance, setShowGovernance] = useState(false);
+    const [selectedAgent, setSelectedAgent] = useState('active-auditor');
+    const [triggering, setTriggering] = useState(false);
 
     // Fetch Ingestion Status (RAG Sync)
     const { data: ingestStatus, refresh: refreshIngest } = useApiData('/ingest/status');
@@ -65,16 +66,15 @@ export const OpsTerminal = () => {
     });
 
     const runAgent = async () => {
-        setManualOutput("> Initializing Agent Instance...\n> SECURE_TUNNEL_ESTABLISHED\n> Handshaking with regional GRC node...\n> Validating compliance manifests...");
+        setTriggering(true);
         try {
-            const data = await api.runAgent('compliance_checker');
-            if (data.result.stdout) {
-                setManualOutput(data.result.stdout);
-            } else {
-                setManualOutput("Agent session terminated. No STDOUT received.");
-            }
+            const data = await api.runAgent(selectedAgent);
+            await refresh();
+            setSelectedJob(`RUN_${data.run_id}`);
         } catch (err) {
-            setManualOutput(`FATAL_ERROR: ${err.message}`);
+            console.error("Agent execution failed:", err);
+        } finally {
+            setTriggering(false);
         }
     };
 
@@ -224,7 +224,17 @@ export const OpsTerminal = () => {
                         <div className="flex gap-1 items-center">
                             {isAdmin ? (
                                 <>
-                                    <button onClick={runAgent} title="Run Agent" className="p-2 hover:bg-[var(--layer-3)] rounded-md text-[var(--text-tertiary)] hover:text-[var(--success)] transition-all active:scale-90"><Play size={14} strokeWidth={2.5} /></button>
+                                    <select
+                                        value={selectedAgent}
+                                        onChange={(e) => setSelectedAgent(e.target.value)}
+                                        className="bg-[var(--layer-2)] border border-[var(--border-default)] rounded text-[9px] font-mono font-bold py-1 px-2 text-[var(--text-primary)]"
+                                    >
+                                        <option value="active-auditor">active-auditor</option>
+                                        <option value="policy-analyzer">policy-analyzer</option>
+                                    </select>
+                                    <button onClick={runAgent} disabled={triggering} title="Run Agent" className="p-2 hover:bg-[var(--layer-3)] rounded-md text-[var(--text-tertiary)] hover:text-[var(--success)] transition-all active:scale-90 disabled:opacity-40">
+                                        <Play size={14} strokeWidth={2.5} className={triggering ? 'animate-pulse' : ''} />
+                                    </button>
                                     <button title="Rerun" className="p-2 hover:bg-[var(--layer-3)] rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all active:scale-90"><RotateCcw size={14} strokeWidth={2.5} /></button>
                                     <button title="Stop Agent" className="p-2 hover:bg-[var(--layer-3)] rounded-md text-[var(--text-tertiary)] hover:text-[var(--danger)] transition-all active:scale-90"><AlertOctagon size={14} strokeWidth={2.5} /></button>
                                 </>
@@ -242,53 +252,35 @@ export const OpsTerminal = () => {
                         </div>
                         
                         <div className="relative z-10">
-                            {manualOutput ? (
-                                <div className="whitespace-pre-wrap text-[var(--text-primary)] font-bold">{manualOutput}</div>
-                            ) : (
-                                <div className="space-y-1.5">
-                                    <div className="text-[var(--text-tertiary)] opacity-60 mb-4 font-bold"># Initializing operational context for session {activeJob.id}...</div>
-                                    <div className="flex gap-4"><span className="text-[var(--text-tertiary)] w-10">09:14:02</span> <span className="text-[var(--accent)] font-bold">[INFO]</span> <span className="text-[var(--text-secondary)]">Agent runtime v2.4.1 environment validated.</span></div>
-                                    <div className="flex gap-4"><span className="text-[var(--text-tertiary)] w-10">09:14:03</span> <span className="text-[var(--accent)] font-bold">[INFO]</span> <span className="text-[var(--text-secondary)]">Consolidating endpoint metrics for <span className="text-[var(--text-primary)] font-bold italic">{activeJob.task}</span>.</span></div>
-                                    <div className="flex gap-4"><span className="text-[var(--text-tertiary)] w-10">09:14:03</span> <span className="text-[var(--success)] font-bold">[AUTH]</span> <span className="text-[var(--text-secondary)]">Target security certificate successfully negotiated.</span></div>
-                                    
-                                    {activeJob.status === 'RUNNING' && (
-                                        <div className="mt-4 space-y-1">
-                                            <div className="text-[var(--accent)] animate-pulse font-bold flex items-center gap-3">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] glow-accent" />
-                                                <span>SCANNING_RESOURCE: arn:aws:s3:::prod-compliance-data-01</span>
-                                            </div>
-                                            <div className="text-[var(--accent)] animate-pulse [animation-delay:200ms] font-bold flex items-center gap-3">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] glow-accent" />
-                                                <span>SCANNING_RESOURCE: arn:aws:s3:::prod-compliance-data-02</span>
-                                            </div>
-                                            <div className="text-[var(--accent)] animate-pulse [animation-delay:400ms] font-bold flex items-center gap-3">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] glow-accent" />
-                                                <span>ANALYZING_PERMISSION_DELTAS...</span>
-                                            </div>
+                            <div className="space-y-1.5">
+                                <div className="text-[var(--text-tertiary)] opacity-60 mb-4 font-bold"># {activeJob.task} — agent '{activeJob.agent}' — {activeJob.id}</div>
+
+                                {(activeJob.status === 'RUNNING' || activeJob.status === 'PENDING') && (
+                                    <div className="text-[var(--accent)] animate-pulse font-bold flex items-center gap-3">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] glow-accent" />
+                                        <span>{activeJob.status}...</span>
+                                    </div>
+                                )}
+
+                                {activeJob.status === 'FAILED' && (
+                                    <div className="mt-2 p-4 bg-[var(--danger-subtle)] border border-[var(--danger)] rounded shadow-lg">
+                                        <div className="text-[var(--danger)] font-bold flex items-center gap-2 mb-1">
+                                            <Hash size={12} /> EXECUTION_ERROR
                                         </div>
-                                    )}
-                                    
-                                    {activeJob.status === 'FAILED' && (
-                                        <div className="mt-4 p-4 bg-[var(--danger-subtle)] border border-[var(--danger)] rounded shadow-lg animate-in shake duration-500">
-                                            <div className="text-[var(--danger)] font-bold flex items-center gap-2 mb-1">
-                                                <Hash size={12} /> CRITICAL_THREAD_ABORT
-                                            </div>
-                                            <div className="text-[var(--text-primary)] font-medium leading-relaxed">Connection timeout after 30s. Target node 10.0.0.15 unreachable in current VPC scope.</div>
-                                            <div className="mt-3 text-[9px] text-[var(--danger)] opacity-60 font-bold uppercase tracking-widest">Trace_ID: 0x55921A (ABORTED)</div>
+                                        <div className="text-[var(--text-primary)] font-medium leading-relaxed whitespace-pre-wrap">{activeJob.error || 'Unknown error'}</div>
+                                    </div>
+                                )}
+
+                                {activeJob.status === 'COMPLETED' && (
+                                    <div className="mt-2 p-4 bg-[var(--success-subtle)] border border-[var(--success)] rounded shadow-lg">
+                                        <div className="text-[var(--success)] font-bold flex items-center gap-2 mb-2">
+                                            <CheckCircle2 size={12} /> COMPLETED
                                         </div>
-                                    )}
-                                    
-                                    {activeJob.status === 'COMPLETED' && (
-                                        <div className="mt-4 p-4 bg-[var(--success-subtle)] border border-[var(--success)] rounded shadow-lg animate-in zoom-in duration-300">
-                                            <div className="text-[var(--success)] font-bold flex items-center gap-2 mb-1">
-                                                <CheckCircle2 size={12} /> SESSION_TERMINATED_CLEANLY
-                                            </div>
-                                            <div className="text-[var(--text-primary)] font-medium italic">All compliance objectives satisfied. 0 Issues discovered in current infrastructure epoch.</div>
-                                        </div>
-                                    )}
-                                    <div className="opacity-20 mt-8 pt-4 border-t border-[var(--border-default)] text-[9px] font-bold tracking-[0.3em] text-center">END_OF_EVENT_LOG</div>
-                                </div>
-                            )}
+                                        <pre className="text-[var(--text-primary)] text-[10px] whitespace-pre-wrap">{JSON.stringify(activeJob.result, null, 2)}</pre>
+                                    </div>
+                                )}
+                                <div className="opacity-20 mt-8 pt-4 border-t border-[var(--border-default)] text-[9px] font-bold tracking-[0.3em] text-center">END_OF_EVENT_LOG</div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -6,13 +6,14 @@ Enforces SECURITY DEFINER immutability on audit_logs and evidence_chain.
 import os
 import datetime
 import asyncio
+import json
 from typing import List, Optional, Dict, Any
 from sqlalchemy import select, update, text, func
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import NullPool
 from core.logger import logger
 from core.config import settings
-from core.models import Base, AuditLog, EvidenceChain, User, RefreshToken, SecurityEvent, Policy
+from core.models import Base, AuditLog, EvidenceChain, User, RefreshToken, SecurityEvent, Policy, AgentRun
 
 # ─── Engine Setup ────────────────────────────────────────────────────────────
 DATABASE_URL = settings.DATABASE_URL
@@ -543,6 +544,49 @@ class AuditLogger:
         except Exception as e:
             logger.error("Policy update failed", id=policy_id, error=str(e))
             return False
+
+    async def _create_agent_run_async(self, agent_id: str, args: dict, triggered_by: str) -> int:
+        async with AsyncSessionLocal() as session:
+            run = AgentRun(
+                agent_id=agent_id,
+                status="RUNNING",
+                args_json=json.dumps(args or {}),
+                triggered_by=triggered_by,
+                started_at=_naive_utcnow(),
+            )
+            session.add(run)
+            await session.commit()
+            await session.refresh(run)
+            return run.id
+
+    def create_agent_run(self, agent_id: str, args: dict, triggered_by: str) -> int:
+        """Inserts directly as RUNNING, not PENDING->RUNNING as two writes: execution is
+        synchronous (Decision #2, 2026-08-06) so there's no real gap between the two states
+        worth a second DB round-trip for. The status column still supports PENDING for when
+        async execution lands and that gap becomes real."""
+        return _run_async(self._create_agent_run_async(agent_id, args, triggered_by))
+
+    async def _finish_agent_run_async(self, run_id: int, status: str, result: dict = None, error: str = None):
+        async with AsyncSessionLocal() as session:
+            run = await session.get(AgentRun, run_id)
+            run.status = status
+            run.result_json = json.dumps(result) if result is not None else None
+            run.error = error
+            run.completed_at = _naive_utcnow()
+            await session.commit()
+
+    def finish_agent_run(self, run_id: int, status: str, result: dict = None, error: str = None):
+        return _run_async(self._finish_agent_run_async(run_id, status, result, error))
+
+    async def _list_agent_runs_async(self, limit: int = 50) -> list:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(AgentRun).order_by(AgentRun.started_at.desc()).limit(limit)
+            )
+            return result.scalars().all()
+
+    def list_agent_runs(self, limit: int = 50) -> list:
+        return _run_async(self._list_agent_runs_async(limit))
 
     def update_policy(self, policy_id: int, required_role: str, is_active: bool, modified_by: str, source_doc: str = None):
         return _run_async(self._update_policy_async(policy_id, required_role, is_active, modified_by, source_doc))

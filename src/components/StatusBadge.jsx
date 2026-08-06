@@ -17,6 +17,7 @@ const STATUS_CONFIG = {
     
     REVIEW: { color: 'var(--accent)', bg: 'var(--accent-subtle)', label: 'UNDER REVIEW' },
     RUNNING: { color: 'var(--accent)', bg: 'var(--accent-subtle)', label: 'RUNNING', animate: true },
+    PENDING: { color: 'var(--text-tertiary)', bg: 'var(--layer-2)', label: 'PENDING' },
     PROCESSING: { color: 'var(--accent)', bg: 'var(--accent-subtle)', label: 'PROCESSING', animate: true },
     INDEXED: { color: 'var(--success)', bg: 'var(--success-subtle)', label: 'INDEXED' },
 };

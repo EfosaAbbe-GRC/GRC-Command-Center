@@ -1,9 +1,12 @@
 # Execution Monitor UI — Implementation Roadmap (read this cold, before drafting anything)
 
-**Created:** 2026-08-05 · **Status:** NOT STARTED — this is a scoping document, not a ready-to-EXECUTE
-diff. Investigated the actual current code (not assumed from prior docs) specifically so a session
-with zero prior context can pick this up correctly. Draft the real `_refactor.md` diff (per
-GOVERNANCE §4.A) only after the three open decisions in §0 are confirmed with the user.
+**Created:** 2026-08-05 · **Status:** ✅ BUILT (2026-08-06) — Tier 0 + Tier 1 + Tier 2 all executed
+per `ExecutionMonitor_refactor.md` (now marked EXECUTED). All three decisions in §0 were confirmed
+with the recommended option in each case. Smoke 43/43, pytest 32/32, real cross-tab WebSocket
+verification passed 5/5. Tier 3 (async/queued execution, real telemetry, historical pagination)
+remains explicitly out of scope, unchanged from this roadmap's original recommendation. This
+document is now historical scoping record, not a live task list — see `task.md`/`SESSION.md` for
+current state.
 
 ---
 
