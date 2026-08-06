@@ -12,7 +12,6 @@ export const ComplianceTerminal = () => {
     const [selectedId, setSelectedId] = useState(null);
     const [frameworks, setFrameworks] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [remediating, setRemediating] = useState(false);
 
     const { data: policies, loading, error, refresh } = useApiData('/compliance/policies', {
         onSuccess: (resData) => {
@@ -28,31 +27,6 @@ export const ComplianceTerminal = () => {
             refresh();
         }
     });
-
-    const handleTriggerRescan = async () => {
-        if (!isAdmin) return;
-        try {
-            await api.post('/ingest');
-            refresh();
-        } catch (err) {
-            console.error("Rescan trigger failed:", err);
-        }
-    };
-
-    const handleRemediate = async () => {
-        if (!isAdmin) return;
-        setRemediating(true);
-        try {
-            await api.post('/ingest');
-            setTimeout(() => {
-                refresh();
-                setRemediating(false);
-            }, 2000);
-        } catch (err) {
-            console.error("Remediation failed:", err);
-            setRemediating(false);
-        }
-    };
 
     const activePolicy = (policies && policies.length > 0) ? (policies.find(p => p.id === selectedId) || policies[0]) : {};
 
@@ -103,6 +77,11 @@ export const ComplianceTerminal = () => {
             <div className="h-14 bg-[var(--layer-1)] border-b border-[var(--border-default)] flex items-center justify-between px-6 shrink-0 z-20 shadow-sm">
                 <div className="flex items-center gap-6">
                     <span className="text-[var(--text-primary)] font-bold tracking-widest text-xs font-display">POLICY_GRID_CONTROL</span>
+                    <span className="px-2 py-0.5 rounded-sm border text-[9px] font-bold uppercase font-mono tracking-widest"
+                        style={{ borderColor: 'var(--text-tertiary)', color: 'var(--text-tertiary)' }}
+                        title="Illustrative reference data -- not connected to live infrastructure scanning">
+                        REFERENCE_CATALOG
+                    </span>
                     <div className="h-6 w-px bg-[var(--border-subtle)]" />
                     
                     {/* Command Search */}
@@ -212,24 +191,11 @@ export const ComplianceTerminal = () => {
                     {/* Logs (4 cols) */}
                     <div className="col-span-4 p-5 space-y-3 overflow-y-auto border-r border-[var(--border-default)] scrollbar-thin scrollbar-thumb-[var(--layer-4)]">
                         <h4 className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.2em] mb-3 flex items-center gap-1.5">
-                            <Terminal size={11} className="text-[var(--accent)]" /> OPERATIONAL_EVIDENCE_STREAM
+                            <Terminal size={11} className="text-[var(--accent)]" /> REFERENCE_ENTRY_DETAIL
                         </h4>
-                        <div className="font-mono text-[9px] leading-relaxed space-y-1.5">
-                            <div className="flex gap-3"><span className="text-[var(--text-tertiary)] opacity-30">001</span> <span>[10:42:01]</span> <span className="text-[var(--success)] font-bold">INIT</span> <span>Accessing encrypted node configuration pool...</span></div>
-                            <div className="flex gap-3"><span className="text-[var(--text-tertiary)] opacity-30">002</span> <span>[10:42:02]</span> <span className="text-[var(--accent)] font-bold">INFO</span> <span>Policy {activePolicy.id} validator active.</span></div>
-                            <div className="flex gap-3"><span className="text-[var(--text-tertiary)] opacity-30">003</span> <span>[10:42:02]</span> <span className="text-[var(--accent)] font-bold">INFO</span> <span>Cross-referencing telemetry (v1.2.4-stable).</span></div>
-                            {activePolicy.status === 'FAIL' && (
-                                <>
-                                    <div className="flex gap-3 text-[var(--danger)] bg-[var(--danger-subtle)] animate-pulse px-1 rounded-sm">
-                                        <span className="opacity-30">004</span> <span>[10:42:03]</span> <span className="font-bold">FAIL</span> <span>Telemetry mismatch detected in shadow config.</span>
-                                    </div>
-                                    <div className="flex gap-3 text-[var(--danger)]"><span className="opacity-30">005</span> <span>[10:42:03]</span> <span className="font-bold">CRIT</span> <span>Security policy threshold breach (Found: 644).</span></div>
-                                </>
-                            )}
-                            {activePolicy.status !== 'FAIL' && (
-                                <div className="flex gap-3 text-[var(--success)]"><span className="opacity-30">004</span> <span>[10:42:03]</span> <span className="font-bold">PASS</span> <span>14/14 Node validators successfully closed.</span></div>
-                            )}
-                            <div className="flex gap-3"><span className="text-[var(--text-tertiary)] opacity-30">006</span> <span>[10:42:04]</span> <span className="text-[#bc8cff] font-bold">ARTIFACT</span> <span>Metadata hash logged: {activePolicy.id}_integrity.json</span></div>
+                        <div className="text-[10px] text-[var(--text-tertiary)] leading-relaxed italic">
+                            This entry is illustrative reference data (see REFERENCE_CATALOG above) —
+                            not backed by live infrastructure scanning. Status and score are static.
                         </div>
                     </div>
 
@@ -284,19 +250,9 @@ export const ComplianceTerminal = () => {
                         {/* Summary Action */}
                         {isAdmin ? (
                             <div className="mt-4 pt-4 border-t border-[var(--border-default)] flex gap-3">
-                                <button 
-                                    onClick={handleTriggerRescan}
-                                    className="flex-1 py-1 px-3 bg-[var(--layer-2)] hover:bg-[var(--layer-3)] border border-[var(--border-default)] rounded text-[10px] font-bold text-[var(--text-primary)] transition-all"
-                                >
-                                    Update Policy
-                                </button>
-                                <button 
-                                    disabled={remediating}
-                                    onClick={() => handleRemediate()}
-                                    className={`flex-1 py-1 px-3 border rounded text-[10px] font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${activePolicy.status === 'FAIL' ? 'bg-[var(--danger)] hover:bg-[#f86d67] border-[var(--danger)] text-white' : 'bg-[var(--layer-2)] border-[var(--border-default)] hover:bg-[var(--layer-3)]'}`}
-                                >
-                                    {remediating ? <Activity className="animate-spin" size={14} /> : (activePolicy.status === 'FAIL' ? 'REMEDIATE_NOW' : 'TRIGGER_RESCAN')}
-                                </button>
+                                <div className="flex-1 text-center text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest opacity-50 py-1">
+                                    No live scan/remediate actions -- reference catalog only
+                                </div>
                             </div>
                         ) : (
                             <div className="mt-4 pt-4 border-t border-[var(--border-default)] text-center text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest opacity-50">

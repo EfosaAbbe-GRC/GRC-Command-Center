@@ -25,10 +25,18 @@ RMF questions through the real `rag_engine.query()` pipeline (same one behind `/
 real source-cited findings; `policy-analyzer` inspects the real RBAC `Policy` table and reports the
 genuine gap sitting there (all 13 seeded policies missing `source_doc`). Real cost: `active-auditor`
 takes **~43s and blocks the entire backend for everyone** during that window, not just the triggering
-request — see gotchas. See `AgentRegistry_DeStubbing_refactor.md` for the executed diff. Separately
-flagged, not yet scoped: `ComplianceTerminal.jsx`'s policy grid (`get_compliance_policies`) is *also*
-100% static fixture data, unrelated to the real RBAC `Policy` table — found while scoping
-De-stubbing, deliberately not folded into it.
+request — see gotchas. See `AgentRegistry_DeStubbing_refactor.md` for the executed diff.
+**`ComplianceTerminal.jsx`'s misleading "live scanning" UI fixed the same day (2026-08-06)**: its
+5-policy grid (`get_compliance_policies`) is 100% static fixture data representing external
+infrastructure controls (AWS S3 encryption, IAM MFA, etc.) with no real backing in this project —
+unlike TPRM/Execution Monitor/Agent Registry, there was nothing real to wire it to, so "de-stubbing"
+it the same way wasn't achievable. Worse than just static: its `Update Policy`/`REMEDIATE_NOW`
+buttons both silently called `/ingest` (RAG re-indexing) regardless of which policy was selected,
+and its evidence panel showed hardcoded fake incident text. Fixed via honesty instead of fake
+realism: added a `REFERENCE_CATALOG` badge, removed the misleading buttons, replaced the fake log
+with an honest static note. See `ComplianceGrid_Honesty_refactor.md`. `Framework_Mappings`
+(`get_framework_mappings`) has the same underlying fixture-fake issue, a separate data source, not
+touched in this pass.
 
 ## Boot & verify (the ritual)
 

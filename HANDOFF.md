@@ -68,22 +68,34 @@ cross-encoder reranker run synchronously on the single event loop, no executor o
 `/chat` behavior, now exercised at ~10x normal duration via a button). Decision #3 ("stay
 synchronous") wasn't reversed — it was explicitly confirmed and the code works correctly — but the
 original framing undersold both the real cost and its blast radius. See MEMORY.md gotchas for the
-full detail. **Separately flagged while scoping, deliberately not folded in:**
-`ComplianceTerminal.jsx`'s entire policy grid (`get_compliance_policies`) turns out to *also* be
-100% static fixture data, unrelated to the real RBAC `Policy` table — a previously-unknown finding,
-its own separate scoping question for later.
+full detail.
+
+**`ComplianceTerminal.jsx`'s misleading "live scanning" UI is also fixed (2026-08-06, same day)** —
+found while scoping De-stubbing: its 5-policy grid turned out to *also* be 100% static fixture data,
+same as the RBAC grid was before this session, except representing *external infrastructure*
+controls (AWS S3 encryption, IAM MFA, etc.) with no real system in this project to wire it to —
+de-stubbing the way TPRM/Execution Monitor/Agent Registry were wasn't achievable here. Worse than
+just static: its `Update Policy`/`REMEDIATE_NOW` buttons both silently called `/ingest` (RAG
+re-indexing) regardless of which policy was selected, and its evidence panel showed hardcoded fake
+incident text ("Security policy threshold breach") for any `FAIL`-status policy. User confirmed the
+honest fix over attempting fake realism: `REFERENCE_CATALOG` badge added, the misleading buttons
+removed, the fake log replaced with an honest static note. See `ComplianceGrid_Honesty_refactor.md`.
+Frontend-only, no backend/schema changes. `Framework_Mappings` has the same underlying issue (a
+separate fixture data source) — flagged, not touched in this pass.
 
 This is again an open pivot point — every item on the post-TPRM menu since 2026-08-05 is now closed
-(Execution Monitor UI, Agent Registry De-stubbing). Pick one:
+(Execution Monitor UI, Agent Registry De-stubbing, ComplianceTerminal honesty). Pick one:
 
 1. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene has three independent data
-   points now favoring doing it sooner: a transient pytest `ReadTimeout` on 2026-08-06 (reproduced
-   clean on rerun), and pytest's wall-clock time growing from ~2min to ~4m45s across the same 32
-   tests in the same session. 435+ vendors / 429+ integrations accumulated from repeated
-   smoke/pytest/verification runs. Also: frontend component tests (none exist project-wide).
-2. **`ComplianceTerminal.jsx`'s fixture-fake policy grid** (found 2026-08-06 scoping De-stubbing,
-   see above) — needs its own cold scoping pass to figure out what "real" compliance scanning would
-   even mean for that grid before anything can be drafted.
+   points now favoring doing it sooner, but the real fix is likely bigger than its "small effort"
+   label suggests: `RiskAcceptance` rows (and any `Integration` that has one) are protected by a
+   DB-level immutability trigger blocking UPDATE/DELETE by design — a naive "delete old test data"
+   cleanup would either fail outright or require bypassing a security invariant this project
+   deliberately built. The honest fix is probably a dedicated test schema/DB, not a cleanup script —
+   found this scoping tonight, not yet fully investigated. Also: frontend component tests (none
+   exist project-wide).
+2. **`Framework_Mappings`' fixture-fake data source** (`get_framework_mappings`) — same underlying
+   issue as the policy grid just fixed, separate data, not yet scoped.
 3. **Revisit `active-auditor`'s synchronous execution now that its real cost is known precisely**
    (optional, not urgent) — ~43s of full-backend blocking per run is a materially different number
    than the ~16s originally discussed when Decision #3 was confirmed. Worth a fresh look with

@@ -1,4 +1,4 @@
-# Session Log — 2026-08-06 ("TPRM Verified & Fixed, Then Execution Monitor UI and Agent Registry De-stubbing Both Built & Verified")
+# Session Log — 2026-08-06 ("TPRM, Execution Monitor UI, Agent Registry De-stubbing, and a Compliance-Grid Honesty Fix — Four Items, One Session")
 
 **Outcome:** Picked "browser-verify TPRM's UI" off the post-TPRM pivot-point menu (recommended over
 Execution Monitor UI, which needs design decisions before any code can be drafted). TPRM's four
@@ -19,7 +19,12 @@ Agent Registry De-stubbing — scoped it cold (four decisions, all confirmed), d
 real logic for both stub handlers, and in the process of verifying it, caught and corrected two of
 its own draft's estimates that turned out to be meaningfully wrong once actually measured (see
 steps 17-24 below) — consistent with this whole session's pattern of not taking an estimate on
-faith once the real system can just be asked.
+faith once the real system can just be asked. **User asked for one more before stopping, offered the
+choice; picked `ComplianceTerminal.jsx`'s fixture-fake policy grid** over TPRM Tier 4 (which turned
+out to be more architecturally loaded than expected — see step 25). Scoping it cold revealed the
+problem was worse than the earlier flag suggested (misleading buttons doing something unrelated to
+what they claimed, a fabricated incident log), and that genuine "de-stubbing" wasn't achievable (no
+real infrastructure to wire to) — fixed via honesty instead (see steps 26-28).
 
 ## What happened, in order
 
@@ -204,6 +209,35 @@ faith once the real system can just be asked.
     errors) — confirming the real, high-quality NIST AI RMF findings (accurate answers, real source
     citations, correctly-computed severity) and real policy-gap output both render correctly.
 
+25. **User asked for one more item before stopping, offered the choice.** Weighed TPRM Tier 4 against
+    the flagged `ComplianceTerminal.jsx` fixture grid — investigated Tier 4 first and found its
+    "small effort" label doesn't hold up: `RiskAcceptance` rows (and any `Integration` that has one)
+    are protected by a DB-level immutability trigger blocking UPDATE/DELETE by design, so a naive
+    "clean up old test data" fix would either fail outright or mean bypassing a security invariant
+    this project deliberately built. Picked `ComplianceTerminal.jsx` instead — purely additive
+    (make something honest instead of fake), no deletion risk, same shape as the day's other three
+    fixes.
+26. **Investigated `ComplianceTerminal.jsx` cold and found the problem was worse than originally
+    flagged.** Its 5-policy grid is static fixture data representing *external infrastructure*
+    controls (AWS S3 encryption, IAM MFA enforcement, etc.) — unlike TPRM/Execution Monitor/Agent
+    Registry, there's no real system in this project to wire it to; building fake cloud-API
+    integration would just swap one kind of fakeness for another. Worse: its `Update Policy`/
+    `REMEDIATE_NOW` buttons both silently called `/ingest` (RAG re-indexing) regardless of which
+    policy was selected — clicking "REMEDIATE_NOW" on the failed IAM MFA policy did nothing about
+    MFA — and its evidence panel showed a hardcoded fake incident log ("Security policy threshold
+    breach (Found: 644)") for any failed policy, static, never real.
+27. **Presented this reframed finding to the user before drafting anything** — "de-stub it" wasn't
+    achievable the way the other three were; the real choice was between honesty (relabel, stop the
+    misleading buttons) and a bigger scope change (replace with a different real data source
+    entirely). User confirmed the honest, smaller fix.
+28. **Drafted and EXECUTED `ComplianceGrid_Honesty_refactor.md`** per GOVERNANCE §4.A: added a
+    `REFERENCE_CATALOG` badge, removed both misleading buttons (replaced with a static "no live
+    scan/remediate actions" note), replaced the fabricated incident log with an honest static
+    explanation. Frontend-only, no backend/schema risk. Rebuilt `grc-frontend`, verified via
+    Playwright: badge visible, old fake content confirmed gone, untouched functionality (search, CSV
+    export, real data-structure view, framework mappings) still works — 10/10 checks, zero console
+    errors.
+
 ## Where this leaves things
 
 TPRM's entire roadmap (Tier 1+2+3) is now **fully built, browser-verified, and the one bug found in
@@ -212,12 +246,19 @@ built and browser-verified**, the same session — all three of its open decisio
 persistence + real audit logging + real cross-tab WebSocket updates proven live. **Agent Registry
 De-stubbing is now also fully built and browser-verified, the same session again** — both handlers
 do real work, with one important correction on the record: `active-auditor` genuinely costs ~43s of
-full-backend blocking per run, not the ~16s/single-request framing its own draft estimated. Every
-item on the post-TPRM pivot menu since 2026-08-05 is now closed. Next session's menu: **TPRM Tier 4**
-(test-data hygiene now has three independent data points favoring it), the newly-flagged
-**`ComplianceTerminal.jsx` fixture-fake policy grid** (its own separate scoping question), or
-**revisiting `active-auditor`'s sync execution** with the now-accurate ~43s number in hand (optional
-— not a defect, just worth a fresh look if it feels worse in practice than it did on paper).
+full-backend blocking per run, not the ~16s/single-request framing its own draft estimated.
+**`ComplianceTerminal.jsx`'s misleading "live scanning" UI is fixed too, the same session a fourth
+time** — honest labeling in place of fake realism, since no real infrastructure exists to back
+genuine compliance scanning here. Four substantial things shipped in one session, each following the
+same discipline: investigate cold, surface what's actually true (even when it contradicts the
+original framing or a prior estimate), present real decisions before drafting, verify for real
+(smoke/pytest/curl/browser) rather than trust that code compiling means it works. Next session's
+menu: **TPRM Tier 4** (test-data hygiene's real fix is likely a dedicated test schema, not a cleanup
+script, given the immutability constraint found tonight — not yet fully investigated),
+**`Framework_Mappings`' own separate fixture-fake data source** (same underlying issue as the policy
+grid just fixed), or **revisiting `active-auditor`'s sync execution** with the now-accurate ~43s
+number in hand (optional — not a defect, just worth a fresh look if it feels worse in practice than
+it did on paper).
 
 ---
 
