@@ -1,3 +1,71 @@
+# Session Log — 2026-08-06 ("Browser-Verifying TPRM: All Four Surfaces Work, One Real UX Bug Found")
+
+**Outcome:** Picked "browser-verify TPRM's UI" off the post-TPRM pivot-point menu (recommended over
+Execution Monitor UI, which needs design decisions before any code can be drafted). TPRM's four
+Tier 2/3 surfaces (2.3 vendor rollup, 3.1 reassessment surfacing, 3.2 CSV export, 3.3 evidence
+upload) had only ever been checked via API/curl/WS-client — never actually clicked through in a
+real browser, despite the project's own history of finding real bugs (wrong WS token field, missing
+auth header on an export button) exactly that way. Drove all four live via Playwright/Chromium
+(no project-level run skill existed yet for this app, and `chromium-cli` wasn't on `PATH`, so used
+Python's `playwright` package directly — already installed, browser binary launched clean).
+
+## What happened, in order
+
+1. **Boot-ritual verification first:** stack already up (20h+ uptime), smoke **42/42**, readiness
+   all green. Noted in passing: 427 integrations / 434 vendors accumulated from repeated
+   smoke/pytest runs — the existing Tier 4 test-data-hygiene item, not new.
+2. **No project `run` skill existed for this app** — checked per the `run` skill's own instructions,
+   found nothing. `chromium-cli` also wasn't installed. Fell back to Python's `playwright` package
+   (present, browser binary launched successfully on the first try) rather than generating a whole
+   new skill for a one-off verification pass.
+3. **Wrote a Playwright driver** (`verify_tprm.py`, scratchpad) that logs in as admin, creates a
+   throwaway vendor+integration, expands a stage, marks it `gap`, attaches a real evidence file,
+   signs a risk acceptance, and exports the CSV — capturing a screenshot at every step plus all
+   console errors and failed network requests.
+4. **First run surfaced a real, previously-unknown UX bug immediately:** `VendorRiskTerminal.jsx`'s
+   `openIntegration()` resets `expandedStage` to `null` on every call, and it's invoked after *every*
+   stage-status button click (`updateStage`) and after signing a risk acceptance (`onSigned`) — so
+   the detail panel collapses right after the action you just took, breaking the driver's
+   `wait_for_selector` and, in real use, forcing an analyst to re-click after every single action in
+   the module's core workflow (mark gap → attach evidence → sign acceptance). Not crash-causing, no
+   console error — just a genuine papercut that only surfaced by actually clicking through, exactly
+   the class of bug this pass was meant to find. **Not fixed** — flagged for a one-line fix
+   (`setExpandedStage(stageId)` instead of `null` after refetch) whenever next in that file.
+5. **Also discovered mid-script (not a bug, a UI default):** the "New Integration" modal's vendor
+   field defaults to a `<select>` dropdown once ≥1 vendor exists (`newVendor` state initialized to
+   `vendors.length === 0`) rather than the new-vendor text inputs — correct, intentional behavior,
+   just had to toggle "+ New vendor" to reach a clean, identifiable test subject.
+6. **All four features confirmed working end to end**, once the script accounted for both of the
+   above: **zero console errors, zero failed network requests** across the full run.
+   - **2.3 vendor rollup:** portfolio strip rendered all 435 real vendor chips, correct tier coloring.
+   - **3.1 reassessment surfacing:** the WS-broadcast → refetch pipeline fired exactly as designed —
+     6 GETs to `reassessments/due`/`acceptances/expiring` (1 initial mount + 2 broadcasting actions,
+     each triggering 2 refetches) — though the badge itself wasn't visually confirmed on screen,
+     since current data has 0 due/0 expiring (nothing in the corpus is old enough yet). Chose not to
+     backdate database timestamps to force a visual (a heavier-handed test than this pass called
+     for); the live network trace is sufficient evidence the mechanism itself works.
+   - **3.2 CSV export:** real Chromium download, correct filename/auth/content, including the
+     freshly-created test row in the Integrations section.
+   - **3.3 evidence upload:** real file upload, evidence entry appeared with correct filename, size,
+     hash prefix, and uploader.
+7. **Pytest went 31/32 on the first re-run right after the browser session** — one `ReadTimeout` on
+   `test_tprm_export_csv`. Didn't take it at face value: reran the single test in isolation (passed
+   in 4.4s) and the full suite clean (**32/32** in 126s) — confirmed transient, not a regression.
+   Reinforces the test-data-hygiene item as worth doing sooner given the dataset's now-real size.
+8. **Updated `TPRM_Roadmap.md`, `task.md`, and this file** with the verification results and the one
+   real finding. Did not attempt the `VendorRiskTerminal.jsx` fix itself — this was a verification
+   pass, not a build session; the fix is a clean, well-understood one-liner for next time.
+
+## Where this leaves things
+
+TPRM's entire roadmap (Tier 1+2+3) is now **both fully built and browser-verified** — the
+verification gap flagged since 2026-08-04 is closed. Next session's pivot-point menu shrinks by one:
+**RAG P3 Execution Monitor UI** (real design/build work, needs 3 decisions confirmed first — see
+`Execution_Monitor_UI_Roadmap.md`), **TPRM Tier 4** (test-data hygiene now has a second data point
+favoring it), or the small `VendorRiskTerminal.jsx` panel-collapse fix found this session.
+
+---
+
 # Session Log — 2026-08-05 ("Golden Mapping Closes the EU AI Act Cluster; a Scorer Bug Traced Back Through Every Prior Run")
 
 **Outcome:** Picked RAG P2 Golden Mapping off the post-TPRM pivot-point menu (over Judge

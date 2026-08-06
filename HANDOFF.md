@@ -2,8 +2,9 @@
 
 ## Continue from this point in a new chat
 
-**Date:** August 5, 2026
-**Version:** 1.4.0 (Retrieval-Tuned & Re-Ranked + Golden Mapping; TPRM module fully built out)
+**Date:** August 6, 2026
+**Version:** 1.4.0 (Retrieval-Tuned & Re-Ranked + Golden Mapping; TPRM module fully built out AND
+browser-verified)
 **Baselines:** **92% RAG accuracy** (v6 benchmark — this is the scorer's actual, corrected output;
 a benchmark-scorer bug found the same day was inflating every historical number by one query, see
 `RAG_Benchmark_Report_v6.md` §3a) · smoke test **42/42** · pytest **32/32** (run from `backend/`)
@@ -29,7 +30,12 @@ MEMORY.md before quoting any of the old 44/72/78/82/86% figures). **Judge Calibr
 classifier) is now `v2_calibrated`, 4/4 human agreement on the full current population of ambiguous
 cases (see `JUDGE_CALIBRATION_v2.md`). The 4 remaining open benchmark failures are now all confirmed
 genuine, not diagnostic artifacts. The TPRM module's entire roadmap — Tier 1, Tier 2, and Tier 3 —
-remains complete (unchanged since 2026-08-04). This is again an open pivot point — pick one:
+remains complete (unchanged since 2026-08-04), **and as of 2026-08-06 all four of its Tier 2/3 UI
+surfaces (2.3, 3.1, 3.2, 3.3) are browser-verified**, not just API-tested — driven live via
+Playwright/Chromium (admin session): create integration → mark gap → attach evidence → sign risk
+acceptance → export CSV, zero console errors, zero failed network requests. One real
+previously-unknown bug found along the way (not fixed, see item 2 below). This is again an open
+pivot point — pick one:
 
 1. **RAG P3 Execution Monitor UI** — **read `Execution_Monitor_UI_Roadmap.md` first, cold, before
    assuming anything about scope.** The "frontend healthy, bus ready" framing this carried for
@@ -41,11 +47,16 @@ remains complete (unchanged since 2026-08-04). This is again an open pivot point
    rewire, roughly TPRM-Tier-2-sized, not a small polish item. The roadmap has three open decisions
    to confirm with the user before drafting the actual diff (sequencing vs. Agent Registry
    De-stubbing; sync vs async execution; whether agent runs need audit-trail rigor).
-2. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene (smoke/pytest have accumulated
-   hundreds of vendors/integrations across runs), or frontend component tests (none exist
-   project-wide).
-3. **Browser-verify TPRM's UI surfaces** — 2.3/3.1/3.2/3.3 were all built and verified via
-   API/curl/WS-client checks only, still no browser-automation tool used on them as of this session.
+2. **Small, clean fix found during 2026-08-06 browser verification:** `VendorRiskTerminal.jsx`'s
+   `openIntegration()` resets `expandedStage` to `null` on every call, and it's invoked after every
+   stage-status button click and after signing a risk acceptance — so the detail panel collapses
+   right after the action you just took, forcing a re-click. Not crash-causing, just a real papercut
+   in the module's core workflow. One-liner: `setExpandedStage(stageId)` instead of `null` after
+   refetch in both `updateStage` and the `RiskAcceptanceModal`'s `onSigned`.
+3. **TPRM Tier 4** (opportunistic, low-priority) — test-data hygiene (smoke/pytest/verification runs
+   have accumulated 435 vendors / 429+ integrations — this also caused one transient pytest
+   `ReadTimeout` on 2026-08-06, reproduced clean on rerun, but a second data point that this is worth
+   doing sooner), or frontend component tests (none exist project-wide).
 4. **`EU AI ACT 2024_Doc.pdf` has a systematic text-extraction defect** (spaces injected mid-word,
    e.g. `"Ar ticle 9"`) — confirmed isolated to this one file in the 158-doc corpus (no other file
    shares its PDF producer). Would need re-extraction (new dependency — neither `pdfplumber` nor

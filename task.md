@@ -68,13 +68,36 @@
 - [x] **2.4 Method applicability + `NOT_APPLICABLE` status** *(2026-08-02)* — seed data fixed (egress #4/#6 marked `file`-only; DB reconciled on boot), stage fan-out filter, justification-required N/A with audit logging, summary fix (N/A counts as completed). **Bug found & fixed live:** Postgres `stagestatus` enum needed `ALTER TYPE ... ADD VALUE` — `create_all()` doesn't alter an existing enum type for new Python enum members. 4 new tests; **smoke 42/42**, **pytest 25/25** (20 TPRM + 5 IAM)
 - [x] **2.1 Surface stage guidance in the UI** *(2026-08-02)* — `StageOut` widened with `guidance`/`review_questions`/`evidence_to_collect`; `VendorRiskTerminal.jsx` stage rows expand into a detail panel. No schema risk (additive read-only fields). **smoke 42/42**, **pytest 25/25**, manual API content check passed
 - [x] **2.2 UI risk-acceptance form (admin)** *(2026-08-02)* — frontend-only (`RiskAcceptanceModal`, acceptance status embedded in the GAP stage detail panel). **smoke 42/42**, **pytest 25/25**, manual end-to-end sign→list check passed
-- [x] **2.3 Vendor-level risk rollup** *(2026-08-03)* — `_recompute_vendor_tier` (max-severity across a vendor's integrations) hooked into `create_integration` + both `approve_integration` success paths; `VendorRiskTerminal.jsx` gained a vendor-portfolio strip + tiered dropdown labels. New `test_tprm_vendor_rollup`. **smoke 42/42**, **pytest 26/26**, live API check confirmed real tier distribution (was 100% `unscored`). Not browser-verified (no browser-automation tool this session). **Tier 2 now fully complete.**
+- [x] **2.3 Vendor-level risk rollup** *(2026-08-03)* — `_recompute_vendor_tier` (max-severity across a vendor's integrations) hooked into `create_integration` + both `approve_integration` success paths; `VendorRiskTerminal.jsx` gained a vendor-portfolio strip + tiered dropdown labels. New `test_tprm_vendor_rollup`. **smoke 42/42**, **pytest 26/26**, live API check confirmed real tier distribution (was 100% `unscored`). **Browser-verified 2026-08-06** — portfolio strip renders all 435 real vendor chips with correct tier coloring, zero console errors. **Tier 2 now fully complete.**
 
 ## P5 — TPRM Tier 3 (lifecycle & reporting)
 
-- [x] **3.1 Reassessment surfacing** *(2026-08-03)* — `_broadcast_reassessment_status` (bare WS signal, no payload) hooked into `create_integration`/`create_risk_acceptance`/both `approve_integration` paths; `VendorRiskTerminal.jsx` header badge + expandable panel. Event-driven only (no backend scheduler exists in this repo — accepted limitation: a due-date lapsing with zero TPRM activity won't push live). **Bonus fix:** `OpsTerminal.jsx`'s WebSocket had never actually connected (`user?.access_token` doesn't exist) — fixed via new `api.getAccessToken()`. **smoke 42/42**, **pytest 26/26**, WS broadcast confirmed live via a one-off client script. Not browser-verified (no browser tool; also no naturally-overdue data yet to check against).
-- [x] **3.2 TPRM assessment report export** *(2026-08-03)* — `GET /tprm/export`, three-section CSV (Integrations/Stage Assessments/Risk Acceptances), gated by existing `EVIDENCE_EXPORT` capability. **Bonus fix:** `ComplianceTerminal.jsx`'s export button was silently 401ing (`window.location.href` sends no auth header) — fixed via new shared `api.downloadFile()` helper, used by both buttons. **smoke 42/42**, **pytest 28/28**, manual curl check confirmed headers/data/RBAC. Not browser-verified.
-- [x] **3.3 Evidence linkage to `evidence_chain`** *(2026-08-04)* — full file-upload architecture: new `StageEvidenceLink` append-only table + `POST/GET .../stages/{stage_id}/evidence`, `log_evidence` widened to return the row id. **Real infra bug found & fixed:** new Docker volume mounted root-owned (uploads 500'd under non-root `grcuser`) — fixed in `Dockerfile.backend` (matched the proven `faiss_index` chown pattern), volume recreated, durability re-verified via upload-then-rebuild round trip. **smoke 42/42**, **pytest 32/32**. Not browser-verified. **TPRM roadmap (Tier 1+2+3) now fully complete.**
+- [x] **3.1 Reassessment surfacing** *(2026-08-03)* — `_broadcast_reassessment_status` (bare WS signal, no payload) hooked into `create_integration`/`create_risk_acceptance`/both `approve_integration` paths; `VendorRiskTerminal.jsx` header badge + expandable panel. Event-driven only (no backend scheduler exists in this repo — accepted limitation: a due-date lapsing with zero TPRM activity won't push live). **Bonus fix:** `OpsTerminal.jsx`'s WebSocket had never actually connected (`user?.access_token` doesn't exist) — fixed via new `api.getAccessToken()`. **smoke 42/42**, **pytest 26/26**, WS broadcast confirmed live via a one-off client script. **Browser-verified 2026-08-06** — the WS-push → refetch pipeline fires correctly on every qualifying action (6 GETs matching 1 mount + 2 broadcasting actions exactly); badge itself not visually confirmed since current data has 0 overdue/0 expiring (nothing old enough yet), but the mechanism behind it is proven live.
+- [x] **3.2 TPRM assessment report export** *(2026-08-03)* — `GET /tprm/export`, three-section CSV (Integrations/Stage Assessments/Risk Acceptances), gated by existing `EVIDENCE_EXPORT` capability. **Bonus fix:** `ComplianceTerminal.jsx`'s export button was silently 401ing (`window.location.href` sends no auth header) — fixed via new shared `api.downloadFile()` helper, used by both buttons. **smoke 42/42**, **pytest 28/28**, manual curl check confirmed headers/data/RBAC. **Browser-verified 2026-08-06** — real download via Chromium, correct filename/headers/content including a freshly-created row.
+- [x] **3.3 Evidence linkage to `evidence_chain`** *(2026-08-04)* — full file-upload architecture: new `StageEvidenceLink` append-only table + `POST/GET .../stages/{stage_id}/evidence`, `log_evidence` widened to return the row id. **Real infra bug found & fixed:** new Docker volume mounted root-owned (uploads 500'd under non-root `grcuser`) — fixed in `Dockerfile.backend` (matched the proven `faiss_index` chown pattern), volume recreated, durability re-verified via upload-then-rebuild round trip. **smoke 42/42**, **pytest 32/32**. **Browser-verified 2026-08-06** — real file upload via Chromium, evidence entry appeared with correct filename/size/hash/uploader. **TPRM roadmap (Tier 1+2+3) now fully complete.**
+
+---
+
+## Browser verification pass (2026-08-06)
+
+All four previously-API-only-tested TPRM UI surfaces (2.3, 3.1, 3.2, 3.3) driven live through
+Chromium via Playwright (admin session): create integration → mark stage gap → attach evidence →
+sign risk acceptance → export CSV. **All four confirmed working** — zero console errors, zero
+failed network requests across the run. Full detail and the one real finding (see below) in
+`TPRM_Roadmap.md`'s dated entry.
+
+**One real, previously-undiscovered UX bug found (not fixed, flagged for later):**
+`VendorRiskTerminal.jsx`'s `openIntegration()` resets `expandedStage` to `null` on every call, and
+it's called after every stage-status button click and after signing a risk acceptance — so the
+detail panel you're looking at collapses right after the action you just took, forcing a re-click.
+Not crash-causing, just a real papercut in the module's core workflow. One-line fix when next in
+that file (`setExpandedStage(stageId)` instead of `null` after refetch).
+
+**Also:** re-ran pytest twice — the first pass right after the browser session had one transient
+`ReadTimeout` on `test_tprm_export_csv` (dataset has grown large: 435 vendors, 429+ integrations
+from accumulated smoke/pytest/verification runs); reproduced as a clean pass in isolation and on a
+full clean rerun (**32/32**), so not a regression — just reinforces the existing Tier 4 test-data
+hygiene item below as worth doing sooner rather than later.
 
 ---
 
@@ -88,7 +111,9 @@ failures, all confirmed genuine (not diagnostic artifacts) via this session's ca
 CISA booklet (#50, missing source), CSF tiers table (#6, structured-extraction gap), gap-assessment
 methodology (#36, was misdiagnosed "prompt too strict" — actually hallucination), AI-agent benefits
 (#45, genuinely a too-strict-prompt case, the one true C1).
-**TPRM roadmap complete as of 2026-08-04** (Tier 1 + Tier 2 + Tier 3, all items), unchanged this
-session. **Next session:** RAG P2 Judge Calibration or P3 Execution Monitor UI (the other two
-post-TPRM pivot options), TPRM Tier 4 (opportunistic hardening), or the browser-verification gap on
-TPRM's UI surfaces (still open from 2026-08-04). Refresh HANDOFF.md at session close.
+**TPRM roadmap complete as of 2026-08-04** (Tier 1 + Tier 2 + Tier 3, all items). **TPRM's UI
+surfaces browser-verified 2026-08-06** (see "Browser verification pass" above) — that pivot option
+is now closed. **Next session:** RAG P3 Execution Monitor UI (real design/build work, needs 3
+sequencing/scope decisions confirmed first), TPRM Tier 4 (opportunistic hardening — test-data
+hygiene now has a second data point favoring doing it sooner), or the small `VendorRiskTerminal.jsx`
+panel-collapse UX fix found during browser verification. Refresh HANDOFF.md at session close.

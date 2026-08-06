@@ -164,6 +164,36 @@ pytest 32/32. Not browser-verified. **Tier 3 is now fully complete (3.1/3.2/3.3 
 entire TPRM roadmap (Tier 1 + Tier 2 + Tier 3) is done.** Remaining backlog: Tier 4 (opportunistic
 hardening/housekeeping — test-data hygiene, frontend tests) whenever revisited.
 
+**✅ Browser verification pass (2026-08-06)** — 2.3, 3.1, 3.2, and 3.3 had only ever been checked via
+API/curl/WS-client; this session drove all four live through a real Chromium browser (Playwright,
+admin session) end to end: created a vendor+integration, expanded a stage, marked it `gap`, attached
+a real evidence file, signed a risk acceptance, exported the CSV, all against the actual running
+frontend at `localhost:3006`. **Result: all four work correctly** — zero console errors, zero failed
+network requests across the whole run. Vendor-portfolio strip rendered all 435 real vendor chips
+with correct tier coloring (2.3). CSV export downloaded with correct auth, filename, and content,
+including the freshly-created row (3.2). Evidence upload appended a real entry (filename, size, hash
+prefix, uploader) to the stage panel (3.3). The WS-broadcast → refetch pipeline for reassessment
+data fired correctly on every qualifying action (6 GETs to `reassessments/due`/`acceptances/expiring`
+across 1 mount + 2 broadcasting actions, matching the code's design exactly) — confirmed the pipeline
+itself works, though no due/expiring badge was actually visible on screen this session because
+current data has 0 overdue reassessments and 0 expired acceptances (nothing in the corpus is old
+enough yet) (3.1).
+
+**One real, previously-undiscovered UX bug found:** `openIntegration()` unconditionally resets
+`expandedStage` to `null` on every call — and it's called after *every* stage-status button click
+(`updateStage`) and after signing a risk acceptance (`onSigned`). So the stage detail panel you're
+looking at collapses immediately after you mark a stage `gap`/`pass`/etc., or right after you sign a
+risk acceptance — forcing a re-click to see the result of the action you just took. Not
+crash-causing, no error, but a genuine papercut in the exact workflow (mark gap → attach evidence →
+sign acceptance) this module exists for. Not fixed this session (flagged, not in scope for a
+verification-only pass) — worth a one-line fix (`setExpandedStage(stageId)` after refetch instead of
+`null`) whenever next in `VendorRiskTerminal.jsx`.
+
+Verified: smoke 42/42, pytest 32/32 (re-ran clean after the browser session; one transient
+`ReadTimeout` on `test_tprm_export_csv` during a first pass immediately after the browser run
+reproduced as a pass in isolation and on a full clean rerun — not a regression, just contention from
+the dataset now being large, see Tier 4 test-data hygiene below).
+
 **3.3 Evidence linkage to `evidence_chain`** — L
 - *What:* let a stage attach real evidence (file hash / chain-of-custody) into the existing immutable `evidence_chain`, instead of free-text `evidence_notes` only.
 - *Why:* elevates "evidence" from a note to a tamper-evident, hashed artifact — consistent with how RAG-ingested docs are already chained.

@@ -13,8 +13,10 @@ GRC.OS / GRC Command Center — agentic GRC platform. FastAPI backend (:8001) + 
 was corrected the same day, see "Key numbers" below). **TPRM (Third-Party Risk Management) module —
 Tier 1, 2, and 3 all complete as of 2026-08-04**: 13-stage vendor egress/ingress assessment, risk
 acceptances, vendor-level risk rollup, WebSocket-pushed reassessment surfacing, CSV export, and
-file-upload evidence linkage into `evidence_chain`. See `TPRM_Roadmap.md` for the full item-by-item
-history; only opportunistic Tier 4 hardening remains, unscheduled.
+file-upload evidence linkage into `evidence_chain`. **Browser-verified 2026-08-06** (all four UI
+surfaces driven live via Playwright, not just API-tested; one small known UX bug — see gotchas).
+See `TPRM_Roadmap.md` for the full item-by-item history; only opportunistic Tier 4 hardening
+remains, unscheduled.
 
 ## Boot & verify (the ritual)
 
@@ -88,6 +90,18 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
   (`PDFlib+PDI 9.0.7p3`). Not fixed (would mean re-extracting/re-chunking/re-embedding this file, a
   bigger separate lever) — worth checking whether other PDFs from the same producer have it too,
   next time retrieval quality on this file is in question.
+- **`VendorRiskTerminal.jsx`'s stage detail panel collapses after every action taken inside it**
+  (found 2026-08-06, browser-verifying TPRM): `openIntegration()` unconditionally sets
+  `expandedStage` to `null`, and it's called after both `updateStage` (any pass/gap/review/n-a click)
+  and the risk-acceptance `onSigned` callback — so marking a stage or signing an acceptance closes
+  the very panel you're looking at. Not crash-causing, no console error, just a real workflow
+  papercut. Not fixed — one-line fix (`setExpandedStage(stageId)` instead of `null`) whenever next
+  in that file.
+- **No project `run`-skill existed for this app as of 2026-08-06**, and `chromium-cli` isn't on
+  `PATH` — browser verification used Python's `playwright` package directly instead (already
+  installed, `p.chromium.launch(headless=True)` worked with no setup). Worth generating a proper
+  project skill via `/run-skill-generator` next time browser-driving this app comes up, so this
+  discovery doesn't repeat.
 
 ## Key numbers to not re-derive
 
