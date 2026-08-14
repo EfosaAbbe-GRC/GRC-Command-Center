@@ -7,10 +7,13 @@ For the live task board, read `task.md`. For governance rules, read `GOVERNANCE.
 
 GRC.OS / GRC Command Center — agentic GRC platform. FastAPI backend (:8001) + React 19 frontend
 (:3006, Nginx) + PostgreSQL 16 + FAISS RAG over the `../GRC_Analyst/` PDF corpus. 4 containers via
-`docker compose -f docker-compose-v2.yml`. Current accuracy baseline: **92%** on the 50-query suite
-(2026-08-05, Golden Mapping metadata + a scorer-bug fix — see `RAG_Benchmark_Report_v6.md` §3/§3a;
-**this is now the scorer's actual output**, not a manual footnote — the whole historical trajectory
-was corrected the same day, see "Key numbers" below). **TPRM (Third-Party Risk Management) module —
+`docker compose -f docker-compose-v2.yml`. LLM is **Groq** (`llama-3.3-70b-versatile`) as of
+2026-08-13 — migrated off Gemini after the user stopped paying for it, see
+`LLM_Groq_Migration_2026-08-13.md`. **RAG accuracy is UNVERIFIED under Groq — do not quote a number
+until `rag_benchmark.py` is re-run.** The last known figure, **92%** on the 50-query suite
+(2026-08-05, Golden Mapping metadata + a scorer-bug fix — see `RAG_Benchmark_Report_v6.md` §3/§3a),
+was measured against Gemini 2.5 Flash and may not hold under the new model. **TPRM (Third-Party Risk
+Management) module —
 Tier 1, 2, and 3 all complete as of 2026-08-04**: 13-stage vendor egress/ingress assessment, risk
 acceptances, vendor-level risk rollup, WebSocket-pushed reassessment surfacing, CSV export, and
 file-upload evidence linkage into `evidence_chain`. **Browser-verified 2026-08-06** (all four UI
@@ -89,8 +92,9 @@ cd backend; python -m pytest -v; cd ..                  # hits :8002 by default 
 Invoke-RestMethod http://localhost:8001/api/v1/readiness  # dev stack health -- expect all "ready"
                                                             # (read-only, safe to run directly against
                                                             # the dev stack any time)
-$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py  # expect 46/50 (92%) -- scorer fixed
-                                                            # 2026-08-05, also needs PYTHONUTF8=1;
+$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py  # 46/50 (92%) was the Gemini-era number,
+                                                            # NOT YET RE-RUN against Groq (migrated
+                                                            # 2026-08-13) -- also needs PYTHONUTF8=1;
                                                             # untouched by the test-stack split,
                                                             # still targets :8001 by default (read-only,
                                                             # never created TPRM data)
@@ -239,7 +243,10 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 
 - Benchmark trajectory (**corrected 2026-08-05** — see below): 42 (v1, Apr 11) → 70 → 76 → 80 → 84
   (v5, Jul 18) → **92** (v6, Aug 5 — Golden Mapping). Archives in `rag_benchmark_results.v*.json`;
-  query list lives inside `backend/tests/rag_benchmark.py`.
+  query list lives inside `backend/tests/rag_benchmark.py`. **This entire trajectory is Gemini
+  2.5 Flash-era.** The LLM changed to Groq (`llama-3.3-70b-versatile`) 2026-08-13 — a re-run under
+  Groq is a new data point to add to this list, not a replacement for it, but don't assume 92% still
+  holds until it's actually measured.
 - **A scorer bug (`answer.startswith("INSUFFICIENT_DATA")` instead of a substring check) inflated
   every single one of these numbers by exactly 1 query/2pts** — the model would answer part of a
   multi-part question and state `INSUFFICIENT_DATA` inline for the rest, which the strict prefix

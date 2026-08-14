@@ -3,16 +3,15 @@
 ## Continue from this point in a new chat
 
 **Date:** August 13, 2026
-**Version:** 1.4.0 — RAG tuned + Golden Mapping; TPRM, Execution Monitor UI, Agent Registry
-De-stubbing, ComplianceTerminal + Framework_Mappings honesty fixes, TPRM Tier 4 test-data hygiene, a
-first (API-layer-only) TPRM dogfooding pass, and an LLM provider migration (Gemini → Groq) all built
-and verified.
+**Version:** 1.4.0 — RAG tuned + Golden Mapping; TPRM (all tiers) complete and browser-verified;
+Execution Monitor UI + Agent Registry De-stubbing + ComplianceTerminal/Framework_Mappings honesty
+fixes all built and verified; TPRM Tier 4 test-data hygiene; a first (API-layer-only) TPRM
+dogfooding pass; LLM provider migrated Gemini → Groq.
 **Baselines:** smoke test **43/43** · pytest **32/32**, both against the isolated test stack
-(`docker-compose.test.yml`, port 8002) and now running on **Groq** (`llama-3.3-70b-versatile`), not
-Gemini — see `LLM_Groq_Migration_2026-08-13.md`. **92% RAG accuracy figure is stale as of the
-provider switch** — it was measured against Gemini 2.5 Flash; `rag_benchmark.py` has not yet been
-re-run against Groq, so don't quote 92% as current without re-running it first. See `MEMORY.md`'s
-"Boot & verify" for the full ritual.
+(`docker-compose.test.yml`, port 8002), now running on **Groq** (`llama-3.3-70b-versatile`) — see
+`LLM_Groq_Migration_2026-08-13.md`. **RAG accuracy is UNKNOWN as of the provider switch** — 92% was
+measured against Gemini 2.5 Flash and has not been re-run against Groq. Don't quote 92% as current.
+**Everything is pushed** (`c130234`).
 
 ---
 
@@ -23,68 +22,83 @@ Paste this as your first message:
 ---
 
 I'm continuing work on the GRC Command Center (v1.4.0). Read `MEMORY.md` (durable facts),
-`SESSION.md` (last session's log — 2026-08-06 entry has the full narrative if you need detail
-beyond this summary), and `task.md` (live board) in the project root, then verify the stack per the
-boot ritual in MEMORY.md before proposing anything.
+`SESSION.md` (last session's log — the 2026-08-13 entry at the top has the full narrative), and
+`task.md` (live board) in the project root, then verify the stack per the boot ritual in `MEMORY.md`
+before proposing anything.
 
-**Current state, in brief:** RAG accuracy 92% (corrected trajectory, Golden Mapping + a
-scorer-bug fix, both 2026-08-05 — don't quote old 44/72/78/82/86% figures). TPRM's entire roadmap
-is complete and browser-verified. RAG P3 Execution Monitor UI is built and browser-verified (real
-`AgentRun` persistence, real audit logging, real cross-tab WebSocket push). Agent Registry
-De-stubbing is done — `active-auditor` runs real NIST AI RMF questions through the actual RAG
-pipeline, `policy-analyzer` inspects the real RBAC `Policy` table (found a genuine gap: all 13
-seeded policies missing `source_doc`) — with one corrected number on the record: `active-auditor`
-costs **~43s of full-backend blocking per run** (FAISS/reranker work is synchronous, no executor
-offload — blocks every user, not just the caller), not the ~16s first estimated.
-`ComplianceTerminal.jsx`'s misleading "rescan"/"remediate" buttons and fabricated incident log are
-fixed too — replaced with honest `REFERENCE_CATALOG` labeling, since there's no real infrastructure
-in this project to back genuine live scanning. Full detail on all four in `SESSION.md`'s 2026-08-06
-entry and the four executed `_refactor.md` diffs (`PanelCollapse`, `ExecutionMonitor`,
-`AgentRegistry_DeStubbing`, `ComplianceGrid_Honesty`). Everything is pushed (`70d1f43`).
+**Current state, in brief:** TPRM's entire roadmap (Tier 1-4) is complete and browser-verified,
+including test-data hygiene — the dev stack runs on an isolated test-suite stack now
+(`docker-compose.test.yml`, port 8002) so `pytest`/`smoke_test.py` no longer pollute dev-stack data.
+RAG P3 Execution Monitor UI, Agent Registry De-stubbing, and the ComplianceTerminal +
+Framework_Mappings honesty fixes are all built and browser-verified (see `SESSION.md`'s 2026-08-06
+entry for that work's detail). **Two things changed most recently (2026-08-13), both need
+follow-up:**
 
-**Important context for how to approach this project going forward, not just what's built:** this
-is explicitly a *progressive* project — the goal is eventually shipping to production, but not
-soon, and there's no deadline pressure. The user is already fully aware of the gaps a real GRC-tool
-comparison surfaces (no live infrastructure integration, no multi-tenancy/SSO, single-process
-architecture, no frontend tests) — don't re-raise those as new findings. **Before any real
-production push, the user wants a genuine hands-on, rigorous personal-use pass** — actual end-to-end
-workflows across terminals as a real user would run them, not the feature-by-feature
-build-then-verify-in-isolation pattern used for the four items above. This is a distinct, more
-valuable kind of testing, and the right thing to reach for once the backlog runs dry of clear next
-builds, or whenever production-readiness comes up as a live question — not a checklist to start
-silently closing.
+1. **A first TPRM dogfooding pass ran, API-layer only** — one realistic fictional vendor (`Meridian
+   Cloud Storage`, two integrations, 26 individually-reasoned stages, evidence uploads, risk
+   acceptances) driven through the real backend. 61/61 checks passed, zero application bugs found
+   (see `TPRM_Dogfooding_Pass_2026-08-13.md`). **Not yet verified in an actual browser** — no
+   automation tool was available that session, so whether `VendorRiskTerminal.jsx` actually *renders*
+   this data cleanly is still unknown. Prior browser passes (2026-08-06) found real bugs an API-only
+   check would have missed (panel-collapse, a missing auth header on an export button) — don't treat
+   the API-layer pass as equivalent to the real thing.
+2. **The LLM provider was forced to migrate from Gemini to Groq** — the user stopped paying for the
+   Gemini API key, which was also the direct cause of a ~23-minute full-backend block found during
+   that session's boot-ritual check (no fast-fail on the old client). Migrated `core/rag.py` to
+   `ChatGroq` (`llama-3.3-70b-versatile`), added explicit `max_retries=2, timeout=30` so no future
+   provider hiccup can reproduce that block, verified live (real `/chat` call, smoke 43/43, pytest
+   32/32, a live `active-auditor` run back to its ~31s baseline). See
+   `LLM_Groq_Migration_2026-08-13.md`. **The RAG benchmark has not been re-run against the new
+   provider** — the last known number (92%) is Gemini-era and may not hold under Llama 3.3 70B.
 
-**Open backlog** (none urgent, pick based on what's actually wanted next):
+**Important context for how to approach this project, not just what's built:** this is explicitly a
+*progressive* project — the goal is eventually shipping to production, but not soon, no deadline
+pressure. The user is already aware of the gaps a real GRC-tool comparison surfaces (no live
+infrastructure integration, no multi-tenancy/SSO, single-process architecture, no frontend tests) —
+don't re-raise those as new findings. Zero frontend component tests exist project-wide (known,
+parked, not urgent).
 
-1. **Re-run `rag_benchmark.py` against Groq** — the 92% figure was measured against Gemini 2.5
-   Flash; the 2026-08-13 provider migration (see `LLM_Groq_Migration_2026-08-13.md`) hasn't been
-   benchmarked yet. No code change needed (the benchmark hits `/chat` over HTTP, not the SDK
-   directly) — just needs running and the result recorded, since a 70B Llama model via Groq could
-   land meaningfully above or below Gemini 2.5 Flash's number.
-2. **Finish the dogfooding pass in a real browser** — highest-value next session if there's no
-   strong pull toward a specific feature. 2026-08-13 covered the backend API surface only (no
-   browser-automation tool was available that session): one realistic fictional vendor, `Meridian
-   Cloud Storage`, two integrations (CRITICAL egress / LOW ingress), 26 individually-reasoned
-   stages, evidence uploads, risk-acceptance sign-offs, RBAC-boundary probes — 61/61 checks passed,
-   zero application bugs found (see `TPRM_Dogfooding_Pass_2026-08-13.md`). What's still unverified:
-   whether `VendorRiskTerminal.jsx` actually *renders* this data cleanly — the 2026-08-06 pass found
-   a real UI bug (panel-collapse) and a real auth-header bug (export button) that the API-only pass
-   would have missed entirely. Pick up against this same vendor, don't create new throwaway data.
-3. **Revisit `active-auditor`'s synchronous execution** (optional, not a defect) — now that its real
-   cost (~43s full-backend blocking) is known precisely, worth a fresh look if it starts to feel
-   worse in practice than it did on paper.
-4. **Minor, low-urgency parked items:** `EU AI ACT 2024_Doc.pdf`'s text-extraction defect (isolated
-   to one corpus file, Golden Mapping already hand-patches the affected queries);
-   `diagnose_rag.py`'s first-pass discriminator sharing a bug already fixed in `rag_benchmark.py`;
-   `diagnose_rag.py` has no resume-from-checkpoint logic; zero frontend component tests exist
-   project-wide. See `JUDGE_CALIBRATION_v2.md` §1/§4 for detail on the RAG-diagnostic items.
+---
 
-**Closed since the August 6 version of this doc:** TPRM Tier 4 test-data hygiene (isolated
-`docker-compose.test.yml` test stack + one-time dev-stack reset — see
-`TPRM_Tier4_TestDataHygiene_refactor.md`); `Framework_Mappings`' honesty caption (see
-`FrameworkMappings_Honesty_refactor.md`); the first, API-layer-only dogfooding pass (item 2 above,
-minus the browser-verification piece); the Gemini → Groq LLM migration (item 1 above, minus the
-benchmark re-run).
+## Recommended order for next session
+
+**Step 1 — Re-run the RAG benchmark (do this first, it's quick and unblocks everything else):**
+```powershell
+$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py
+```
+No code change needed — it hits `/chat` over HTTP, already confirmed working against Groq. Record
+the real number (could land above or below 92%) before quoting any RAG accuracy figure. If it drops
+meaningfully, that's worth surfacing to the user as a real tradeoff of the forced provider switch,
+not silently absorbed.
+
+**Step 2 — Finish the dogfooding pass in an actual browser, if browser-automation tooling is
+available this session** (Playwright or similar). This is the single highest-value remaining item:
+- Log in as admin, open `VendorRiskTerminal.jsx`, find `Meridian Cloud Storage` (already seeded on
+  the dev stack — **don't create new throwaway vendor data**, use this one).
+- Confirm the vendor portfolio strip, the CRITICAL/LOW tier badges, and both integrations' 26 mixed
+  pass/gap/not_applicable stage rows all render without console errors or failed requests.
+- Specifically check the CSV export button and the risk-acceptance detail panel — both are exactly
+  the kind of thing the 2026-08-06 pass found broken (missing auth header, panel collapsing after
+  in-panel actions) that an API-only check cannot catch.
+- If no browser tool is available this session either, say so explicitly rather than re-running the
+  API-only script again — that would just re-confirm what's already known and not add new signal.
+
+**Step 3 — optional / only if there's a specific pull toward it:**
+- Revisit `active-auditor`'s synchronous execution (not a defect — now that its real cost, ~43s/~31s
+  full-backend blocking, is known precisely from two separate live measurements, worth a fresh look
+  only if it starts to feel worse in practice).
+- Migrate `backend/tests/diagnose_rag.py` / `validate_diagnostic.py` to Groq too — these are
+  RAG-diagnostic/judge-calibration tooling, currently non-functional (still pinned to the dead
+  Gemini key). Only worth doing if a future benchmark-diagnosis pass is actually needed.
+- `EU AI ACT 2024_Doc.pdf`'s text-extraction defect (isolated to one corpus file, Golden Mapping
+  already hand-patches the affected queries) — see `JUDGE_CALIBRATION_v2.md` §1/§4.
+- Frontend component test coverage (zero exists project-wide) — known gap, not urgent, not something
+  to silently start closing without the user asking for it.
+
+**Standing housekeeping reminder (not urgent, user's call):** the old Gemini key was briefly printed
+into a conversation transcript during the migration session (already low-risk — the key was already
+dead — but flagged to the user directly at the time). Worth confirming it's been revoked in Google
+Cloud Console if that hasn't happened yet.
 
 ---
 
@@ -92,13 +106,17 @@ benchmark re-run).
 
 ```powershell
 docker compose -f docker-compose-v2.yml ps
-$env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 43/43
+docker compose -f docker-compose.test.yml ps
+$env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 43/43 (hits :8002 by default)
 cd backend; python -m pytest -v; cd ..                   # expect 32/32 -- MUST run from backend/
-$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py # 46/50 (92%) was the Gemini-era number --
-                                                           # NOT YET RE-RUN against Groq, see backlog #1
-cat RAG_Benchmark_Report_v6.md
+$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py # NOT YET RE-RUN against Groq -- do this first
+Invoke-RestMethod http://localhost:8001/api/v1/readiness  # dev stack health, read-only, safe anytime
 ```
 
-**Note:** `grc-frontend` shows Docker-healthcheck "unhealthy" continuously (harmless — an
-IPv6/IPv4 loopback mismatch in the healthcheck itself, not a real outage; see MEMORY.md gotchas).
-The app serves fine on `http://localhost:3006`.
+**Notes:**
+- `grc-frontend` shows Docker-healthcheck "unhealthy" continuously (harmless — an IPv6/IPv4 loopback
+  mismatch in the healthcheck itself, not a real outage; see `MEMORY.md` gotchas). The app serves
+  fine on `http://localhost:3006`.
+- `smoke_test.py`/`pytest` target the isolated test stack (`:8002`) by default now, not the dev
+  stack. To check the dev/dogfooding stack specifically, set
+  `GRC_TEST_BASE=http://localhost:8001` first — see `MEMORY.md`'s "Boot & verify" section.
