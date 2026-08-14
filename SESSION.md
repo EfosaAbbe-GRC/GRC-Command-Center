@@ -1,3 +1,84 @@
+# Session Log — 2026-08-13 ("Committing a Half-Closed Session, Then a Genuine TPRM Dogfooding Pass")
+
+**Outcome:** Picked up mid-stream from a prior session (2026-08-13) that had left work executed but
+uncommitted — the working tree had two finished, verified refactors sitting as diffs: the
+`Framework_Mappings` honesty caption and TPRM Tier 4 test-data hygiene (isolated test stack + dev-
+stack reset). Investigated both diffs against their own `_refactor.md` docs (already marked EXECUTED
+with verification detail) to confirm they matched what was claimed before committing anything — they
+did, exactly. Committed as two commits (`6bb960f`, `56aaac1`), matching this repo's established
+one-commit-per-refactor-doc convention. Then, with the dev stack confirmed clean (0 vendors/
+integrations post-Tier-4-reset) and no strong pull toward a specific build, ran the standing
+recommendation: a genuine dogfooding pass (see `MEMORY.md`'s "Project direction," open since
+2026-08-06). No browser-automation tool was available this session, so it covered the backend API
+surface only — real judgment-driven use of the same endpoints the frontend calls, not actual UI
+clicking. **Zero application bugs found** — a real (negative) result, distinct from every prior pass,
+which had each found at least one genuine bug.
+
+## What happened, in order
+
+1. **Investigated the 15-ish dirty working-tree items** the user flagged, rather than assuming they
+   were safe to commit blind: read both untracked `_refactor.md` docs (`FrameworkMappings_Honesty_
+   refactor.md`, `TPRM_Tier4_TestDataHygiene_refactor.md`), confirmed each already said `Status: ✅
+   EXECUTED` with real verification numbers (Playwright 5/5, pytest 32/32, smoke 43/43), then diffed
+   every changed file against what the docs claimed — `git diff` on `ComplianceTerminal.jsx` and all
+   nine test files matched the docs' own diffs exactly, including a duplicate-import cleanup in
+   `test_iam_08.py`. Checked `docker-compose.test.yml`'s default password fallback against
+   `docker-compose-v2.yml`'s pre-existing convention before staging it, to rule out a new secret
+   being introduced.
+2. **Committed as two commits**, splitting `ComplianceTerminal.jsx`+doc from the nine test files+
+   `docker-compose.test.yml`+doc (letting `MEMORY.md`/`task.md`'s combined diff ride with the larger
+   TPRM Tier 4 commit, since splitting those two files' hunks precisely wasn't worth the friction for
+   a same-day, same-session pair of changes).
+3. **Confirmed dev stack state before proposing the dogfooding pass**: `docker compose ps` (all
+   healthy), `/api/v1/readiness` (all green), direct `psql` count (0 vendors, 0 integrations) — not
+   assumed from the Tier 4 doc's claim.
+4. **Asked the user directly** how to source the dogfooding vendor (real vendor vs. realistic
+   fictional vendor vs. user-driven browser walkthrough) rather than guessing — this is a judgment
+   call about real-world exposure and time cost only the user could make. Chose: realistic fictional
+   vendor, filled out with genuine reasoning.
+5. **Read the actual TPRM module** (`core/tprm.py`, `data/seed_tprm_stages.py`) cold rather than
+   working from memory of the roadmap docs, to get the real 13-stage egress/ingress question sets,
+   endpoint payload shapes, RBAC capability names, and role hierarchy (`admin=3 > analyst=2 >
+   viewer=1`) right.
+6. **Wrote a one-off driver script** (`dogfood_tprm_pass.py`, kept in scratchpad, not committed —
+   deliberately not a new permanent fixture generator, which would work against the same test-data-
+   hygiene principle Tier 4 just fixed) that creates one vendor, **Meridian Cloud Storage**, with a
+   CRITICAL-tier egress PII-backup integration and a LOW-tier ingress DR-test-return integration, and
+   walks all 26 assessment stages with individually reasoned pass/gap/not_applicable judgments (not
+   placeholder text) — 2 deliberate gaps on egress (manual SSH-key rotation; a 72hr vs. 24-48hr
+   breach-notification mismatch), 1 gap + 2 genuine not-applicables on ingress. Also uploads 2
+   evidence files, signs 3 risk acceptances, approves both integrations, and probes RBAC boundaries
+   (unauthenticated, viewer, analyst) at each privileged step.
+7. **Ran it against the real dev stack** (`localhost:8001`, not the new isolated test stack — the
+   whole point is this is the app's first genuine non-test data). **61/61 checks passed.**
+   Cross-checked beyond just trusting API responses: `docker logs grc-backend` showed only expected
+   `Security Event` log lines (no swallowed exceptions), and a direct `psql` query confirmed the DB
+   state matched exactly (26 stage responses split 21 pass / 3 gap / 2 not_applicable, 3 risk
+   acceptances, 2 evidence links, vendor tier correctly recomputed to CRITICAL as the max across its
+   two integrations).
+8. **Documented the result** in `TPRM_Dogfooding_Pass_2026-08-13.md`, `task.md`, and `MEMORY.md`'s
+   "Project direction" section — explicitly flagging what this pass does *not* cover (real browser/
+   UI interaction — no automation tool was available this session) so a future session doesn't
+   mistake "API-layer dogfooding passed clean" for "the dogfooding ask is fully satisfied." Also
+   flagged Meridian's vendor data as real state now, not test noise, so a future Tier-4-style cleanup
+   doesn't sweep it up by mistake.
+9. **Ran the full boot-ritual verification** (`smoke_test.py` + `pytest`, both against the new
+   isolated test stack) before committing the doc updates, as a sanity check — pytest came back
+   32/32 clean, but smoke_test.py returned 28/34 with a cluster of 401s. Investigated rather than
+   re-running blind: `docker logs grc-backend-test` showed the real cause was external, not a
+   regression — `GOOGLE_API_KEY` hit a `403 PERMISSION_DENIED` and then the free-tier's
+   20-requests/day `429 RESOURCE_EXHAUSTED` cap during the `active-auditor` RAG call, and with no
+   fast-fail/circuit-breaker in `rag.py`'s retry loop, that single request stayed blocking the whole
+   single-threaded backend for **~23 minutes** — long enough that the smoke test's own JWT expired
+   mid-wait and cascaded into 401s on every subsequent check, including the TPRM vendor-creation
+   check. Confirmed this wasn't a regression from anything committed this session (pytest's 32/32
+   doesn't touch RAG at all; the dogfooding pass's 61/61 had already proven the TPRM/RBAC code path
+   clean minutes earlier on the dev stack). Logged as a new `MEMORY.md` gotcha with an explicit open
+   action item (check the Gemini project's billing/quota status) rather than silently patching
+   `rag.py`'s retry behavior without being asked.
+
+---
+
 # Session Log — 2026-08-06 ("TPRM, Execution Monitor UI, Agent Registry De-stubbing, and a Compliance-Grid Honesty Fix — Four Items, One Session")
 
 **Outcome:** Picked "browser-verify TPRM's UI" off the post-TPRM pivot-point menu (recommended over

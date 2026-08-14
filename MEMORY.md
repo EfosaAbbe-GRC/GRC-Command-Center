@@ -63,6 +63,14 @@ session. **This is the right thing to propose once the backlog runs dry of clear
 whenever production-readiness comes up as a live question** — not something to wait to be asked for
 explicitly, and not a checklist of the known gaps to start silently closing.
 
+**First TPRM dogfooding pass done 2026-08-13, API layer only** — one realistic fictional vendor
+(`Meridian Cloud Storage`, two integrations, 26 individually-reasoned stages, real risk-acceptance
+sign-offs) driven through the real backend on the dev stack. Zero application bugs found. See
+`TPRM_Dogfooding_Pass_2026-08-13.md`. **Explicitly incomplete:** no browser-automation tool was
+available that session, so the actual React UI was never clicked through against this data — do
+that (Playwright or manual) before calling the dogfooding ask fully satisfied. This vendor's data is
+real dev-stack state now, not test noise — don't purge it in a future Tier-4-style cleanup.
+
 ## Boot & verify (the ritual)
 
 **Changed 2026-08-13 (TPRM Tier 4):** `smoke_test.py`/`pytest` now default to an isolated test
@@ -112,6 +120,19 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 
 - **Ingestion blocks the entire API** for its duration (sync work on the async event loop). Monitor
   via `docker logs grc-backend`, not HTTP. JWTs expire during the wait — re-login per poll.
+- **A struggling Gemini API key can turn `active-auditor`'s documented ~43s full-backend block into
+  ~23 minutes** (found 2026-08-13 re-running smoke_test.py post-Tier-4): `rag.py`'s RAG-query retry
+  loop has no fast-fail/circuit-breaker, so when `GOOGLE_API_KEY` hit a `403 PERMISSION_DENIED`
+  ("Your project has been denied access") plus a `429 RESOURCE_EXHAUSTED` (free-tier
+  20-requests/day cap for `gemini-2.5-flash`) back to back, it kept retrying for ~23 minutes with the
+  entire single-threaded backend blocked the whole time — long enough that the calling smoke-test's
+  own JWT expired mid-wait, cascading into a wave of unrelated 401s on every subsequent check
+  (misleading at first glance — looked like an auth regression, was actually all downstream of one
+  stuck request). **Action item, not yet done:** check the Gemini/Google AI Studio project's billing
+  and quota status directly — the `PERMISSION_DENIED` message in particular suggests something more
+  than routine rate-limiting. Not a code regression from anything committed 2026-08-13 — pytest
+  32/32 (no RAG dependency) and a from-scratch 61-check TPRM dogfooding pass both passed clean in
+  the same session.
 - **OneDrive:** corpus folder is pinned always-keep-on-device (2026-07-18). Files failing with
   "Stream has ended unexpectedly" are TRULY truncated (check `%%EOF` tail), not dehydrated —
   7 such files sit quarantined as `GRC_Analyst/*.pdf.corrupt`.

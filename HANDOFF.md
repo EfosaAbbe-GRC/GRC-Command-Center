@@ -2,11 +2,14 @@
 
 ## Continue from this point in a new chat
 
-**Date:** August 6, 2026
+**Date:** August 13, 2026
 **Version:** 1.4.0 — RAG tuned + Golden Mapping; TPRM, Execution Monitor UI, Agent Registry
-De-stubbing, and ComplianceTerminal honesty fix all built AND browser-verified.
+De-stubbing, ComplianceTerminal + Framework_Mappings honesty fixes, TPRM Tier 4 test-data hygiene,
+and a first (API-layer-only) TPRM dogfooding pass all built and verified.
 **Baselines:** **92% RAG accuracy** (`RAG_Benchmark_Report_v6.md` §3a — this is the corrected,
-actual scorer output) · smoke test **43/43** · pytest **32/32** (run from `backend/`)
+actual scorer output) · smoke test **43/43** · pytest **32/32** — both now run from `backend/`
+against the isolated test stack (`docker-compose.test.yml`, port 8002) by default, not the dev
+stack. See `MEMORY.md`'s "Boot & verify" for the full ritual.
 
 ---
 
@@ -50,25 +53,28 @@ silently closing.
 
 **Open backlog** (none urgent, pick based on what's actually wanted next):
 
-1. **A genuine dogfooding pass** (see above) — arguably the highest-value next session if there's no
-   strong pull toward a specific feature. Would mean actually using the app: log in as each role,
-   run a vendor through the full TPRM lifecycle, trigger both real agents, export reports, work the
-   compliance grid — end to end, looking for friction and gaps that isolated feature checks miss.
-2. **TPRM Tier 4** (test-data hygiene) — real, but bigger than its "small effort" label:
-   `RiskAcceptance` rows (and any `Integration` with one) are DB-immutable by design, so a naive
-   cleanup script would fail or require bypassing a real security invariant. The honest fix is
-   likely a dedicated test schema/DB — found this while scoping, not yet investigated further. Also
-   bundled here: zero frontend component tests exist project-wide.
-3. **`Framework_Mappings`' fixture-fake data source** — same underlying issue as the
-   `ComplianceTerminal` policy grid just fixed, separate data, not yet scoped.
-4. **Revisit `active-auditor`'s synchronous execution** (optional, not a defect) — now that its real
+1. **Finish the dogfooding pass in a real browser** — highest-value next session if there's no
+   strong pull toward a specific feature. 2026-08-13 covered the backend API surface only (no
+   browser-automation tool was available that session): one realistic fictional vendor, `Meridian
+   Cloud Storage`, two integrations (CRITICAL egress / LOW ingress), 26 individually-reasoned
+   stages, evidence uploads, risk-acceptance sign-offs, RBAC-boundary probes — 61/61 checks passed,
+   zero application bugs found (see `TPRM_Dogfooding_Pass_2026-08-13.md`). What's still unverified:
+   whether `VendorRiskTerminal.jsx` actually *renders* this data cleanly — the 2026-08-06 pass found
+   a real UI bug (panel-collapse) and a real auth-header bug (export button) that the API-only pass
+   would have missed entirely. Pick up against this same vendor, don't create new throwaway data.
+2. **Revisit `active-auditor`'s synchronous execution** (optional, not a defect) — now that its real
    cost (~43s full-backend blocking) is known precisely, worth a fresh look if it starts to feel
    worse in practice than it did on paper.
-5. **Minor, low-urgency parked items:** `EU AI ACT 2024_Doc.pdf`'s text-extraction defect (isolated
+3. **Minor, low-urgency parked items:** `EU AI ACT 2024_Doc.pdf`'s text-extraction defect (isolated
    to one corpus file, Golden Mapping already hand-patches the affected queries);
    `diagnose_rag.py`'s first-pass discriminator sharing a bug already fixed in `rag_benchmark.py`;
-   `diagnose_rag.py` has no resume-from-checkpoint logic. See `JUDGE_CALIBRATION_v2.md` §1/§4 for
-   detail on the latter two.
+   `diagnose_rag.py` has no resume-from-checkpoint logic; zero frontend component tests exist
+   project-wide. See `JUDGE_CALIBRATION_v2.md` §1/§4 for detail on the RAG-diagnostic items.
+
+**Closed since the August 6 version of this doc:** TPRM Tier 4 test-data hygiene (isolated
+`docker-compose.test.yml` test stack + one-time dev-stack reset — see
+`TPRM_Tier4_TestDataHygiene_refactor.md`); `Framework_Mappings`' honesty caption (see
+`FrameworkMappings_Honesty_refactor.md`); the first, API-layer-only dogfooding pass (item 1 above).
 
 ---
 

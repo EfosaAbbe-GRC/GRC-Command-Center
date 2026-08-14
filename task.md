@@ -161,3 +161,14 @@ defect). HANDOFF.md refreshed at session close.
   See `TPRM_Tier4_TestDataHygiene_refactor.md` for full detail. Verified: pytest 32/32 and
   smoke_test.py 43/43 against the isolated test stack (both immutability probes passing for real),
   dev-stack vendor count confirmed at 0 throughout.
+
+- [x] **Genuine TPRM dogfooding pass (API layer)** *(2026-08-13)*: first judgment-driven, non-fixture
+  data the app has held — one fictional-but-realistic vendor (`Meridian Cloud Storage`) with two
+  integrations (CRITICAL-tier egress PII backup, LOW-tier ingress DR-test return), 26 stages each
+  individually reasoned (not scripted placeholders), 2 evidence files, 3 risk acceptances,
+  RBAC-boundary probes (unauthenticated/viewer/analyst all correctly denied where expected). **Zero
+  application bugs found** — risk tiering, deny-by-default approval, RBAC, vendor-tier rollup,
+  evidence linking, CSV export all correct under real use; DB state and backend logs cross-checked,
+  not just API responses trusted. See `TPRM_Dogfooding_Pass_2026-08-13.md`. **Explicitly partial:**
+  no browser-automation tool was available this session, so this covers the API surface only, not
+  the actual React UI — a real browser pass against this same data is still an open item.
