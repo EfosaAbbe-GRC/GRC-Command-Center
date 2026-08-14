@@ -211,10 +211,13 @@ export const ComplianceTerminal = () => {
 
                     {/* Framework Mapping & Context (4 cols) */}
                     <div className="col-span-4 p-5 flex flex-col overflow-hidden bg-[var(--layer-1)]">
-                        <h4 className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.2em] mb-4">
+                        <h4 className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.2em] mb-1">
                             Framework_Mappings
                         </h4>
-                        
+                        <div className="text-[9px] text-[var(--text-tertiary)] italic mb-3">
+                            Hand-curated reference mapping — not live-computed.
+                        </div>
+
                         <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-[var(--layer-4)]">
                             {frameworks.length > 0 ? (
                                 frameworks.map((fw) => (
