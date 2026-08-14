@@ -1,4 +1,4 @@
-# Session Log — 2026-08-13 ("Committing a Half-Closed Session, Then a Genuine TPRM Dogfooding Pass")
+# Session Log — 2026-08-13 ("Committing a Half-Closed Session, a Genuine TPRM Dogfooding Pass, and a Forced LLM Migration")
 
 **Outcome:** Picked up mid-stream from a prior session (2026-08-13) that had left work executed but
 uncommitted — the working tree had two finished, verified refactors sitting as diffs: the
@@ -76,6 +76,49 @@ which had each found at least one genuine bug.
    clean minutes earlier on the dev stack). Logged as a new `MEMORY.md` gotcha with an explicit open
    action item (check the Gemini project's billing/quota status) rather than silently patching
    `rag.py`'s retry behavior without being asked.
+10. **User revealed the root cause directly**: they'd stopped paying for the Gemini API key — the
+    `PERMISSION_DENIED`/quota issue wasn't transient, it was permanent. Asked what to use instead
+    rather than guessing; recommended Groq's free tier (over local Ollama) as the lower-friction move
+    most likely to hold the 92% RAG benchmark baseline, since `core/rag.py` already goes through
+    LangChain's provider-agnostic chat-model interface — confirmed this via a cold read of `rag.py`
+    before recommending, not assumed. User confirmed Groq.
+11. **User asked whether to reuse an existing Groq key from a different project** — answered directly
+    (dedicated key recommended: free-tier limits pool per-account either way, so a separate key buys
+    clean usage attribution and independent revocation, not more quota) rather than treating it as
+    obvious. User created a dedicated key and pasted it in chat.
+12. **Migrated `core/rag.py`'s LLM call from `ChatGoogleGenerativeAI` to `ChatGroq`**
+    (`llama-3.3-70b-versatile`), plus `requirements.txt`, `config.py`, `main.py`'s readiness/root-
+    endpoint text, both `docker-compose*.yml` files, and `CLAUDE.md`'s architecture header. **Also
+    closed the actual reliability gap from step 9, not just swapped providers**: added
+    `max_retries=2, timeout=30` to the new client, since the old integration's total absence of any
+    bound is what let one bad Gemini response block the backend for 23 minutes — bounding it now
+    means no future provider's hiccup can reproduce that regardless of which API is behind it.
+13. **A secret-hygiene mistake, caught and disclosed immediately**: a `grep` intended to check
+    whether `.env` already had a `GROQ_API_KEY` line used `-n` (content) instead of `-c` (count) and
+    printed the existing `GOOGLE_API_KEY` value into the transcript. Told the user directly in the
+    same turn and recommended rotating that key in Google Cloud Console — practical risk was low
+    (the key was already dead), but flagged rather than left unmentioned. Used `-c`-only checks and
+    `sed`-based in-place edits for the rest of the `.env` work to avoid repeating it.
+14. **Verified live, not just import-clean**: rebuilt both `grc-backend` and `grc-backend-test`
+    images from the updated `requirements.txt`, confirmed `/api/v1/readiness` reports the Groq key as
+    ready on both stacks, ran a real `/api/v1/chat` call that answered correctly with real corpus
+    citations, then re-ran the full boot-ritual suite — **smoke 43/43** and **pytest 32/32**, both
+    measurably *faster* than the failing-Gemini run from step 9 (pytest 76s vs. 108s). The specific
+    `active-auditor` call that had blocked for ~23 minutes under the dying Gemini key completed in
+    **~31 seconds** against Groq — back at the originally-documented baseline, confirming the block
+    was the API key's failure mode, not something wrong with the architecture itself.
+15. **Caught and fixed a dating mistake before committing**: had written "2026-08-14" throughout the
+    new migration doc and doc updates, going purely off UTC timestamps in Docker logs without
+    converting to local time. Checked directly (UTC 02:25 on the 14th converts to 22:25 EDT on the
+    13th) — still the same calendar day this whole session has been dated. Renamed the doc file and
+    corrected every reference before it could seed a future session's confusion, consistent with this
+    workspace's own standing rule to convert relative/ambiguous dates to absolute ones and get them
+    right the first time.
+16. **Documented in `LLM_Groq_Migration_2026-08-13.md`, `task.md`, `MEMORY.md` (resolving the step-9
+    gotcha rather than leaving it as an open action item), and `HANDOFF.md`** — including an explicit
+    flag that the 92% RAG benchmark figure is now stale (measured against Gemini, not yet re-run
+    against Groq) so a future session doesn't quote it as current without re-running
+    `rag_benchmark.py` first.
 
 ---
 

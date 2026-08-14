@@ -166,9 +166,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
 @app.get("/", response_model=StatusResponse)
 def read_root():
     return {
-        "status": "active", 
-        "system": "Agentic GRC Orchestrator v1.0", 
-        "engine": "Gemini Pro"
+        "status": "active",
+        "system": "Agentic GRC Orchestrator v1.0",
+        "engine": "Groq (Llama 3.3 70B)"
     }
 
 @app.get("/api/v1/health", response_model=HealthResponse)
@@ -377,9 +377,9 @@ def readiness_check():
 
     # 3. API Key
     if rag_engine.api_key:
-        checks["llm_api_key"] = {"status": "ready", "detail": "Google API key configured"}
+        checks["llm_api_key"] = {"status": "ready", "detail": "Groq API key configured"}
     else:
-        checks["llm_api_key"] = {"status": "not_ready", "detail": "GOOGLE_API_KEY missing"}
+        checks["llm_api_key"] = {"status": "not_ready", "detail": "GROQ_API_KEY missing"}
 
     # 4. Auth
     checks["authentication"] = {

@@ -10,7 +10,7 @@ from core.logger import logger
 from core.database import audit_logger
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
@@ -74,14 +74,14 @@ class RAGEngine:
         self.documents_path = documents_path or settings.DOCUMENTS_PATH
         self.vector_store = None
         self.qa_chain = None
-        self.api_key = settings.GOOGLE_API_KEY
+        self.api_key = settings.GROQ_API_KEY
         self.ingestion_state = IngestionState()
         self.reranker = None  # lazy-loaded cross-encoder (Change 3)
         self.embeddings = None  # lazy-loaded, cached HuggingFaceEmbeddings for golden-mapping matching
         self.golden_mappings = None       # lazy-loaded list of golden mapping entries
         self.golden_trigger_vecs = None   # list[np.ndarray], one L2-normalized matrix per entry
         if not self.api_key:
-            logger.warn("GOOGLE_API_KEY not found. RAG will not work until set.")
+            logger.warn("GROQ_API_KEY not found. RAG will not work until set.")
 
     def get_ingestion_status(self) -> dict:
         """Return the current ingestion state as a dict."""
@@ -89,12 +89,14 @@ class RAGEngine:
 
     def ingest_documents(self):
         """
-        Reads PDFs from GRC_Analyst and embeds them into FAISS using Gemini Embeddings.
+        Reads PDFs from GRC_Analyst and embeds them into FAISS using local
+        HuggingFace embeddings (all-MiniLM-L6-v2) -- not the LLM API key, but
+        gated on it anyway since a corpus with no working chat model is useless.
         """
         logger.info(f"Scanning {self.documents_path} for PDFs...")
-        
+
         if not self.api_key:
-            return {"status": "error", "message": "Missing GOOGLE_API_KEY"}
+            return {"status": "error", "message": "Missing GROQ_API_KEY"}
 
         try:
             # Load PDFs
@@ -112,9 +114,9 @@ class RAGEngine:
         Reads Markdown/Text files from the notebooks directory.
         """
         logger.info(f"Scanning {notes_path} for Notes...")
-        
+
         if not self.api_key:
-            return {"status": "error", "message": "Missing GOOGLE_API_KEY"}
+            return {"status": "error", "message": "Missing GROQ_API_KEY"}
 
         try:
             from langchain_community.document_loaders import TextLoader
@@ -319,7 +321,12 @@ class RAGEngine:
         Retrieval is now handled explicitly in query() to capture sources.
         """
         prompt = ChatPromptTemplate.from_template(PRODUCTION_PROMPT_TEMPLATE)
-        model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=self.api_key)
+        # max_retries/timeout bounded explicitly: the prior Gemini integration had
+        # neither, and an unhappy API key (PERMISSION_DENIED + free-tier
+        # RESOURCE_EXHAUSTED, found 2026-08-13) let the SDK's own retry/backoff
+        # block the whole single-threaded backend for ~23 minutes on one request.
+        model = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=self.api_key,
+                          max_retries=2, timeout=30)
 
         self.qa_chain = (
             prompt

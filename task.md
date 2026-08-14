@@ -172,3 +172,22 @@ defect). HANDOFF.md refreshed at session close.
   not just API responses trusted. See `TPRM_Dogfooding_Pass_2026-08-13.md`. **Explicitly partial:**
   no browser-automation tool was available this session, so this covers the API surface only, not
   the actual React UI — a real browser pass against this same data is still an open item.
+
+- [x] **LLM provider migration: Gemini → Groq** *(2026-08-13)*: user stopped paying for the Google
+  Cloud project behind `GOOGLE_API_KEY`, which had started returning `403 PERMISSION_DENIED` and the
+  free tier's `429 RESOURCE_EXHAUSTED` (20 req/day) — the direct cause of the ~23-minute backend
+  block logged as a gotcha the day before. Migrated `core/rag.py`'s LLM call (embeddings/reranker/
+  FAISS all stayed local, untouched) from `ChatGoogleGenerativeAI` to `ChatGroq`
+  (`llama-3.3-70b-versatile`), a small change since both are LangChain chat-model interfaces. **Also
+  closed the actual reliability gap, not just swapped providers:** the old integration had no
+  `max_retries`/`timeout`, which is what let one bad API response cascade into a 23-minute block;
+  the new client is explicitly bounded (`max_retries=2, timeout=30`). Updated `requirements.txt`,
+  `config.py`, `main.py`'s readiness/root-endpoint text, both `docker-compose*.yml` files' env
+  passthrough, and `CLAUDE.md`'s architecture header. See `LLM_Groq_Migration_2026-08-13.md`.
+  **Verified live, not just import-clean:** readiness green on both stacks, a real `/chat` call
+  answered correctly with real corpus citations, rebuilt both backend images, **smoke 43/43** and
+  **pytest 32/32** against the Groq-backed test stack — including a live `active-auditor` run
+  completing in ~31s (back to the documented baseline, confirming the block was the API key, not
+  the architecture). **Open:** `diagnose_rag.py`/`validate_diagnostic.py` (parked RAG-diagnostic
+  tooling) still pinned to Gemini and now non-functional, not migrated (out of scope, low priority);
+  `rag_benchmark.py`'s 92% figure not yet re-run against Groq to confirm it still holds.

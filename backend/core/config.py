@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://grc_admin:grc_password_2026@localhost:5432/grc_audit")
     
     # AI
+    # GROQ_API_KEY powers the live chat/RAG-generation LLM (core/rag.py) as of
+    # 2026-08-13. GOOGLE_API_KEY is kept only for the parked, Gemini-pinned
+    # backend/tests/diagnose_rag.py and validate_diagnostic.py scripts -- not
+    # read anywhere in the live app path.
+    GROQ_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
 
     # Auth

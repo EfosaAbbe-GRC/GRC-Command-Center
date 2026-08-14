@@ -59,6 +59,7 @@ services:
       - "8001:8001"
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-grc_admin}:${POSTGRES_PASSWORD:-grc_password_2026}@db:5432/grc_audit
+      - GROQ_API_KEY=${GROQ_API_KEY}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - DOCUMENTS_PATH=/app/GRC_Analyst

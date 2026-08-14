@@ -20,7 +20,7 @@ GRC.OS is an agentic Governance, Risk, and Compliance platform that orchestrates
 ```text
 GRC Command Center v1.2.0
 ├── Backend: FastAPI (Python 3.11, port 8001)
-│   ├── LLM: Google Gemini 2.5 Flash
+│   ├── LLM: Groq (Llama 3.3 70B Versatile) — migrated from Gemini 2.5 Flash 2026-08-13
 │   ├── Embeddings: all-MiniLM-L6-v2 (local HuggingFace)
 │   ├── Re-Ranker: cross-encoder/ms-marco-MiniLM-L-6-v2 (k=20 → top 10)
 │   ├── Vector Store: FAISS (with SHA-256 integrity hashing)
