@@ -35,8 +35,13 @@ buttons both silently called `/ingest` (RAG re-indexing) regardless of which pol
 and its evidence panel showed hardcoded fake incident text. Fixed via honesty instead of fake
 realism: added a `REFERENCE_CATALOG` badge, removed the misleading buttons, replaced the fake log
 with an honest static note. See `ComplianceGrid_Honesty_refactor.md`. `Framework_Mappings`
-(`get_framework_mappings`) has the same underlying fixture-fake issue, a separate data source, not
-touched in this pass.
+(`get_framework_mappings`) closed the same day **2026-08-13** — re-investigated cold rather than
+assumed: it's *not* the same class of problem (no misleading buttons, no fabricated logs, just static
+hand-curated control-mapping content — a legitimate GRC artifact). Added a one-line honest caption
+("Hand-curated reference mapping — not live-computed.") under the panel header so it's unambiguous
+even standalone, not relying on the neighboring panels' labels by inference. See
+`FrameworkMappings_Honesty_refactor.md`. Frontend-only, browser-verified (5/5 checks, zero console
+errors).
 
 ## Project direction (durable — read before proposing what's next)
 
@@ -60,21 +65,37 @@ explicitly, and not a checklist of the known gaps to start silently closing.
 
 ## Boot & verify (the ritual)
 
+**Changed 2026-08-13 (TPRM Tier 4):** `smoke_test.py`/`pytest` now default to an isolated test
+stack (`docker-compose.test.yml`, port 8002) instead of the dev/dogfooding stack — see
+`TPRM_Tier4_TestDataHygiene_refactor.md`. A bare run no longer touches dev-stack data.
+
 ```powershell
-docker compose -f docker-compose-v2.yml up -d          # boot (no --build unless code changed)
-$env:PYTHONUTF8=1; python backend/tests/smoke_test.py  # expect 43/43 (grew from 27->42 with TPRM,
-                                                         # ->43 with a real /run-agent check added
-                                                         # 2026-08-06 alongside Execution Monitor UI)
-cd backend; python -m pytest -v; cd ..                 # expect 32/32 — MUST run from backend/,
-                                                         # not repo root (pyproject.toml's
-                                                         # smoke_test.py --ignore only applies
-                                                         # from that rootdir)
-Invoke-RestMethod http://localhost:8001/api/v1/readiness  # expect all "ready"
+docker compose -f docker-compose-v2.yml up -d           # boot dev stack (no --build unless code changed)
+docker compose -f docker-compose.test.yml up -d         # boot isolated test stack (own DB, port 8002,
+                                                          # reuses the real FAISS index read-only)
+$env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # hits :8002 by default -- expect 43/43
+cd backend; python -m pytest -v; cd ..                  # hits :8002 by default -- expect 32/32,
+                                                          # MUST run from backend/ (pyproject.toml's
+                                                          # smoke_test.py --ignore only applies from
+                                                          # that rootdir)
+Invoke-RestMethod http://localhost:8001/api/v1/readiness  # dev stack health -- expect all "ready"
+                                                            # (read-only, safe to run directly against
+                                                            # the dev stack any time)
 $env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py  # expect 46/50 (92%) -- scorer fixed
-                                                            # 2026-08-05, also needs PYTHONUTF8=1
+                                                            # 2026-08-05, also needs PYTHONUTF8=1;
+                                                            # untouched by the test-stack split,
+                                                            # still targets :8001 by default (read-only,
+                                                            # never created TPRM data)
 ```
 
-Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
+**To check the dev/dogfooding stack specifically** (not just "does the suite pass"): set
+`GRC_TEST_BASE=http://localhost:8001` before running `smoke_test.py`/`pytest` — every test file
+resolves its target container (`grc-db-pg` vs `grc-db-pg-test`) and database name from the same
+variable, so the immutability probes stay correct either way. Do this sparingly — the whole point
+of the split is that routine runs shouldn't touch dev-stack data; reach for it only when you
+specifically need to confirm the dev stack's own health end-to-end (e.g. right after resetting it).
+
+Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, both stacks).
 
 ## Conventions (established, keep following)
 
@@ -181,6 +202,17 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot).
   relative-path logic (found copying `security_audit.py` to the wrong depth first, which broke its
   unrelated `../agents` dummy-script bootstrap — fixed by copying to `/app/tests/` instead of
   `/app/`).
+- **Piping `smoke_test.py`'s output through `head -N`/`tail -N` on this Windows/Git-Bash setup gives
+  a false "exited with code 0"** (found 2026-08-13, TPRM Tier 4 verification): `head -N` closes its
+  end of the pipe once it has its N lines, which kills the still-running Python process via
+  `BrokenPipeError` the next time it tries to print — and in a bash pipeline, `$?`/the reported exit
+  code reflects the *last* command (`head`/`tail`), not the producer, so this reads as a clean
+  success even though the script died partway through and never printed its final `RESULTS:` line.
+  `tail -N` has the same failure mode but looks like total silence instead (it can't emit anything
+  until it sees EOF from the killed-early producer). Confirmed by checking for the process directly
+  (`tasklist` showed nothing running) after a "completed" pipe run had truncated output. Fix: redirect
+  straight to a file (`python ... > out.log 2>&1`, no pipe) and read the file after, never pipe a
+  long-running script's stdout through `head`/`tail` on this setup.
 
 ## Key numbers to not re-derive
 

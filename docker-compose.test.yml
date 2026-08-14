@@ -1,0 +1,79 @@
+# ─── GRC Command Center — Isolated Test Stack ──────────────────────────────
+# Purpose: smoke_test.py / pytest run against THIS stack, not the dev/dogfooding
+# database, so recurring test runs never pollute real usage data again.
+# Run:  docker compose -f docker-compose.test.yml up -d --build
+# Then: pytest / smoke_test.py with no env var set hit this stack automatically
+#       (GRC_TEST_BASE defaults to http://localhost:8002).
+# See TPRM_Tier4_TestDataHygiene_refactor.md for the full rationale.
+#
+# Explicit project name below is required: without it, Compose infers the
+# project name from the directory, which collides with docker-compose-v2.yml's
+# default project and makes the dev stack's containers look like "orphans" of
+# this one -- a real risk if `--remove-orphans` is ever used here.
+name: grc-test
+
+services:
+
+  db-test:
+    image: postgres:16-alpine
+    container_name: grc-db-pg-test
+    restart: unless-stopped
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: grc_audit_test
+      POSTGRES_USER: ${POSTGRES_USER:-grc_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grc_password_2026}
+    volumes:
+      - grc-db-data-test:/var/lib/postgresql/data
+    networks:
+      - grc-net-test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grc_admin} -d grc_audit_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: grc-backend-test
+    restart: unless-stopped
+    depends_on:
+      db-test:
+        condition: service_healthy
+    ports:
+      - "8002:8001"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-grc_admin}:${POSTGRES_PASSWORD:-grc_password_2026}@db-test:5432/grc_audit_test
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DOCUMENTS_PATH=/app/GRC_Analyst
+      - AUTH_ENABLED=true
+    volumes:
+      # Reuses the REAL FAISS index, read-only -- avoids an unnecessary ~11min
+      # re-ingest. Nothing in the test suite calls POST /ingest, so RO is safe.
+      - grc-faiss:/app/faiss_index:ro
+      - grc-tprm-evidence-test:/app/data/tprm_evidence
+      - "${DOCUMENTS_PATH}:/app/GRC_Analyst:ro"
+    networks:
+      - grc-net-test
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  grc-db-data-test:
+    driver: local
+  grc-tprm-evidence-test:
+    driver: local
+  grc-faiss:
+    external: true
+    name: grc_command_center_grc-faiss
+
+networks:
+  grc-net-test:
+    driver: bridge

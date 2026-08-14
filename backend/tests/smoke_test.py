@@ -1,10 +1,13 @@
 """
 GRC Command Center — Backend Smoke Test (Auth-Aware)
 Run with: python tests/smoke_test.py
-Requires: backend running on localhost:8001 (python main.py)
+Requires: the isolated test stack up (docker compose -f docker-compose.test.yml
+up), reachable at localhost:8002 by default. Set GRC_TEST_BASE to target a
+different stack (e.g. http://localhost:8001 for the dev stack).
 """
 import requests
 import json
+import os
 import sys
 import time
 
@@ -17,8 +20,18 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-BASE = "http://localhost:8001"
+BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8002")
 V1 = f"{BASE}/api/v1"
+
+# The immutability probes below use `docker exec` to hit Postgres directly,
+# bypassing the HTTP API entirely -- they need to target whichever stack BASE
+# actually points at, not always the dev stack's container/database.
+_is_test_stack = ":8002" in BASE
+DB_CONTAINER = os.environ.get(
+    "GRC_TEST_DB_CONTAINER", "grc-db-pg-test" if _is_test_stack else "grc-db-pg")
+DB_NAME = os.environ.get(
+    "GRC_TEST_DB_NAME", "grc_audit_test" if _is_test_stack else "grc_audit")
+
 PASS = 0
 FAIL = 0
 ERRORS = []
@@ -394,11 +407,11 @@ def run_smoke_tests():
     # ─── 13. Audit DB Immutability ───
     print("\n── AUDIT IMMUTABILITY ──")
     # Verifies PL/pgSQL SECURITY DEFINER triggers by attempting DELETE via psql
-    # inside the grc-db-pg container. No port exposure required.
+    # inside the target container (DB_CONTAINER). No port exposure required.
     import subprocess
     try:
         result = subprocess.run(
-            ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+            ["docker", "exec", DB_CONTAINER, "psql", "-U", "grc_admin", "-d", DB_NAME,
              "-c", "SELECT id FROM audit_logs ORDER BY id DESC LIMIT 1;"],
             capture_output=True, text=True, timeout=10
         )
@@ -408,12 +421,12 @@ def run_smoke_tests():
             if line.isdigit():
                 row_id = int(line)
                 break
-        
+
         if row_id is None:
             # Trigger a new log to ensure we have data to test
             requests.post(f"{V1}/auth/login", json={"username": "admin", "password": "grc-admin-2026"})
             result = subprocess.run(
-                ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+                ["docker", "exec", DB_CONTAINER, "psql", "-U", "grc_admin", "-d", DB_NAME,
                  "-c", "SELECT id FROM audit_logs ORDER BY id DESC LIMIT 1;"],
                 capture_output=True, text=True, timeout=10
             )
@@ -425,7 +438,7 @@ def run_smoke_tests():
 
         if row_id is not None:
             delete_result = subprocess.run(
-                ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+                ["docker", "exec", DB_CONTAINER, "psql", "-U", "grc_admin", "-d", DB_NAME,
                  "-c", f"DELETE FROM audit_logs WHERE id = {row_id};"],
                 capture_output=True, text=True, timeout=10
             )
@@ -547,7 +560,7 @@ def run_smoke_tests():
     if ra_created:
         try:
             probe = subprocess.run(
-                ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+                ["docker", "exec", DB_CONTAINER, "psql", "-U", "grc_admin", "-d", DB_NAME,
                  "-c", "UPDATE risk_acceptances SET gap_description = 'TAMPER' "
                        "WHERE id = (SELECT id FROM risk_acceptances LIMIT 1);"],
                 capture_output=True, text=True, timeout=10

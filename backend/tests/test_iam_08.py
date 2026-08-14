@@ -1,9 +1,8 @@
 import requests
 import time
-import requests
-import time
+import os
 
-BASE_URL = "http://localhost:8001/api/v1"
+BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 
 def test_iam_08():
     print("--- 🧪 PHASE 5 SECURITY TEST: IAM-08 (RESILIENCE) ---")

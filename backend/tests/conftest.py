@@ -13,14 +13,24 @@ test can leak a lock to the next — regardless of order or mid-test failure.
 
 It no-ops silently if docker/psql isn't reachable (the same dependency the
 immutability tests already assume), so a bare run without the stack still works.
+
+Targets whichever stack GRC_TEST_BASE points at (default: the isolated test
+stack on :8002) -- must match test_tprm.py/smoke_test.py's own DB_CONTAINER/
+DB_NAME resolution, or this fixture silently mutates the wrong database's
+users table on every single test.
 """
+import os
 import subprocess
 
 import pytest
 
-_DB_CONTAINER = "grc-db-pg"
+_BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8002")
+_is_test_stack = ":8002" in _BASE
+_DB_CONTAINER = os.environ.get(
+    "GRC_TEST_DB_CONTAINER", "grc-db-pg-test" if _is_test_stack else "grc-db-pg")
 _DB_USER = "grc_admin"
-_DB_NAME = "grc_audit"
+_DB_NAME = os.environ.get(
+    "GRC_TEST_DB_NAME", "grc_audit_test" if _is_test_stack else "grc_audit")
 
 
 def _clear_forced_reset():

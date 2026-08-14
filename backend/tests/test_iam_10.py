@@ -1,7 +1,8 @@
 import requests
 import time
+import os
 
-BASE_URL = "http://localhost:8001/api/v1"
+BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 
 def test_iam_10_agent_sync():
     print("--- IAM-10: Strategic Agent Policy Sync Smoke Test ---")

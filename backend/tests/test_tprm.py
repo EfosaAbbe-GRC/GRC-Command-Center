@@ -1,14 +1,17 @@
 """
 GRC Command Center — TPRM Module Tests (Auth + RBAC + lifecycle + immutability)
 
-Integration-style, consistent with test_iam_*.py / test_auth.py: exercises the
-live backend on localhost:8001. Run with either:
+Integration-style, consistent with test_iam_*.py / test_auth.py: exercises a
+live backend, by default the isolated test stack on localhost:8002. Run with
+either:
 
     pytest tests/test_tprm.py -v
     python tests/test_tprm.py
 
-Requires the stack up (docker compose -f docker-compose-v2.yml up) and the
-assessment_stages table seeded (python -m data.seed_tprm_stages).
+Requires the test stack up (docker compose -f docker-compose.test.yml up) and
+the assessment_stages table seeded (done automatically via lifespan startup,
+same as the dev stack). Set GRC_TEST_BASE to target a different stack (e.g.
+http://localhost:8001 for the dev stack).
 
 Tests skip (not fail) when the backend is unreachable, so a bare `pytest` run
 without the stack does not produce false red.
@@ -21,8 +24,17 @@ from datetime import datetime, timezone
 import pytest
 import requests
 
-BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8001")
+BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8002")
 V1 = f"{BASE}/api/v1"
+
+# The immutability probes below use `docker exec` to hit Postgres directly,
+# bypassing the HTTP API entirely -- they need to target whichever stack BASE
+# actually points at, not always the dev stack's container/database.
+_is_test_stack = ":8002" in BASE
+DB_CONTAINER = os.environ.get(
+    "GRC_TEST_DB_CONTAINER", "grc-db-pg-test" if _is_test_stack else "grc-db-pg")
+DB_NAME = os.environ.get(
+    "GRC_TEST_DB_NAME", "grc_audit_test" if _is_test_stack else "grc_audit")
 
 CREDS = {
     "admin":   ("admin",   "grc-admin-2026"),
@@ -264,7 +276,7 @@ def test_tprm_risk_acceptance_immutable():
 
     try:
         probe = subprocess.run(
-            ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+            ["docker", "exec", DB_CONTAINER, "psql", "-U", "grc_admin", "-d", DB_NAME,
              "-c", "UPDATE risk_acceptances SET gap_description = 'TAMPER' "
                    "WHERE id = (SELECT id FROM risk_acceptances LIMIT 1);"],
             capture_output=True, text=True, timeout=15)
@@ -408,7 +420,7 @@ def test_tprm_evidence_link_immutable():
 
     try:
         probe = subprocess.run(
-            ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+            ["docker", "exec", DB_CONTAINER, "psql", "-U", "grc_admin", "-d", DB_NAME,
              "-c", "UPDATE stage_evidence_links SET linked_by = 'tampered';"],
             capture_output=True, text=True, timeout=15)
     except FileNotFoundError:
@@ -471,7 +483,7 @@ def test_tprm_risk_acceptance_truncate_blocked():
 
     try:
         probe = subprocess.run(
-            ["docker", "exec", "grc-db-pg", "psql", "-U", "grc_admin", "-d", "grc_audit",
+            ["docker", "exec", DB_CONTAINER, "psql", "-U", "grc_admin", "-d", DB_NAME,
              "-c", "TRUNCATE risk_acceptances;"],
             capture_output=True, text=True, timeout=15)
     except FileNotFoundError:

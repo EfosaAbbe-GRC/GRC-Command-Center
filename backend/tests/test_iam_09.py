@@ -1,8 +1,9 @@
 import requests
 import json
 import time
+import os
 
-BASE_URL = "http://localhost:8001/api/v1"
+BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 
 def test_iam_09_policy_engine():
     print("--- IAM-09: Strategic Policy Engine Smoke Test ---")

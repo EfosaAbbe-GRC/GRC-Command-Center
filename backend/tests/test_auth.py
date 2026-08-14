@@ -1,10 +1,13 @@
 """
 GRC Command Center — Auth & RBAC Enforcement Tests
 Run with: python tests/test_auth.py
-Requires: backend running on localhost:8001 (python main.py)
+Requires: the isolated test stack up (docker compose -f docker-compose.test.yml
+up), reachable at localhost:8002 by default. Set GRC_TEST_BASE to target a
+different stack (e.g. http://localhost:8001 for the dev stack).
 """
 import requests
 import json
+import os
 import sys
 
 # Windows consoles default to cp1252, which cannot encode the box-drawing /
@@ -16,7 +19,7 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-BASE = "http://localhost:8001"
+BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8002")
 V1 = f"{BASE}/api/v1"
 PASS = 0
 FAIL = 0
