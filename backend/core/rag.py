@@ -17,6 +17,16 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
 
+# Single source of truth for the generation model. Groq retired
+# `llama-3.3-70b-versatile` between 2026-08-13 and 2026-08-17 (404 model_not_found on
+# every call, core RAG dead for ~4 days) and named openai/gpt-oss-120b as its designated
+# replacement; independently, that model also won a head-to-head against the other
+# candidates on this module's own PRODUCTION_PROMPT_TEMPLATE. See
+# RAG_Model_Outage_refactor.md. Kept as a constant so /readiness validates the SAME
+# model the chain actually uses -- this project has a documented history of docs/checks
+# drifting from code.
+GROQ_MODEL = "openai/gpt-oss-120b"
+
 PRODUCTION_PROMPT_TEMPLATE = """You are a senior GRC (Governance, Risk, and Compliance) Auditor.
 Answer the following question explicitly and ONLY based on the provided context.
 - If the answer is not in the context, state: "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
@@ -325,7 +335,7 @@ class RAGEngine:
         # neither, and an unhappy API key (PERMISSION_DENIED + free-tier
         # RESOURCE_EXHAUSTED, found 2026-08-13) let the SDK's own retry/backoff
         # block the whole single-threaded backend for ~23 minutes on one request.
-        model = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=self.api_key,
+        model = ChatGroq(model=GROQ_MODEL, groq_api_key=self.api_key,
                           max_retries=2, timeout=30)
 
         self.qa_chain = (

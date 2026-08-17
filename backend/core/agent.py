@@ -15,6 +15,24 @@ NIST_AI_RMF_AUDIT_QUESTIONS = [
     "What does the NIST AI RMF recommend for measuring and monitoring AI system risk?",
 ]
 
+# Every non-answer `rag_engine.query()` can return. These are engine/infrastructure
+# failures, NOT audit outcomes -- an auditor must not draw a conclusion from them.
+# Kept in sync with core/rag.py's query() error returns.
+_ENGINE_FAILURE_MARKERS = (
+    "i encountered an error processing your request",   # generic exception path
+    "security alert: knowledge base integrity check failed",
+    "error loading index:",
+    "rag engine not initialized",
+)
+
+
+def _is_engine_failure(answer: str) -> bool:
+    if not answer or not answer.strip():
+        return True
+    low = answer.lower()
+    return any(m in low for m in _ENGINE_FAILURE_MARKERS)
+
+
 async def active_auditor_handler(args: Dict[str, Any]) -> Dict[str, Any]:
     """NIST AI RMF Active Auditor: runs a fixed set of canonical NIST AI RMF
     questions through the real RAG pipeline (the same engine behind /chat,
@@ -25,16 +43,40 @@ async def active_auditor_handler(args: Dict[str, Any]) -> Dict[str, Any]:
     findings = []
     all_sources = set()
     unanswered = 0
+    errored = 0
     for question in NIST_AI_RMF_AUDIT_QUESTIONS:
         result = await rag_engine.query(question)
         answer = result.get("answer", "")
         sources = result.get("sources", [])
         all_sources.update(sources)
-        if "INSUFFICIENT_DATA" in answer:
+        if _is_engine_failure(answer):
+            errored += 1
+        elif "INSUFFICIENT_DATA" in answer:
             unanswered += 1
         findings.append({"question": question, "answer": answer, "sources": sources})
 
     total = len(NIST_AI_RMF_AUDIT_QUESTIONS)
+
+    # An engine failure is NOT an audit finding, and must never be reported as one.
+    # Before 2026-08-17 an errored answer fell through to the `unanswered == 0` branch,
+    # so a dead LLM produced "4/4 core functions substantiated from corpus, severity
+    # LOW" -- a favourable audit opinion backed by nothing. Verified live against the
+    # retired Groq model. See RAG_Model_Outage_refactor.md.
+    if errored:
+        logger.error("active-auditor aborted: RAG engine failure",
+                     errored=errored, total=total)
+        return {
+            "status": "error",
+            "msg": (f"NIST AI RMF Audit could not run — the RAG engine failed on "
+                    f"{errored}/{total} queries. No audit conclusion is available. "
+                    f"Check GET /api/v1/readiness (is the configured LLM model still "
+                    f"available?) before trusting any result from this agent."),
+            "engine_failures": errored,
+            "evidence_cited": False,
+            "sources": sorted(all_sources),
+            "findings": findings,
+        }
+
     if unanswered == 0:
         severity = "LOW"
     elif unanswered < total / 2:

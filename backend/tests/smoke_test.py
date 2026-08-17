@@ -326,6 +326,29 @@ def run_smoke_tests():
             print(f"     ℹ️  Trigger via: POST {V1}/ingest")
         elif "SECURITY ALERT" in response_text:
             print(f"     ⚠️  FAISS integrity check failed — delete faiss_index/ and re-ingest")
+        else:
+            # Field presence is NOT a pass. The check above asserts only that `response`
+            # and `sources` exist -- so {"response": "I encountered an error processing
+            # your request.", "sources": []} satisfied it, and this suite reported 43/43
+            # for ~4 days while every RAG query 404'd on a retired Groq model
+            # (2026-08-17, see RAG_Model_Outage_refactor.md). Assert substance instead.
+            if "error processing your request" in response_text.lower():
+                FAIL += 1
+                msg = ("FAIL Chat generation — endpoint returned its generic error "
+                       "response; the LLM call is failing (check the configured model "
+                       "still exists: GET /api/v1/readiness)")
+                print(f"  ❌ {msg}")
+                ERRORS.append(msg)
+            elif not chat_result.get("sources"):
+                FAIL += 1
+                msg = ("FAIL Chat citations — answer returned with ZERO sources; "
+                       "retrieval or generation is broken")
+                print(f"  ❌ {msg}")
+                ERRORS.append(msg)
+            else:
+                PASS += 1
+                print(f"  ✅ Chat generation produced a real answer "
+                      f"({len(response_text)} chars, {len(chat_result['sources'])} source(s))")
 
     # ─── 9. Agent Execution ───
     print("\n── AGENT EXECUTION ──")

@@ -375,11 +375,48 @@ def readiness_check():
     else:
         checks["faiss_index"] = {"status": "not_ready", "detail": "No index found — run ingestion"}
 
-    # 3. API Key
-    if rag_engine.api_key:
-        checks["llm_api_key"] = {"status": "ready", "detail": "Groq API key configured"}
-    else:
+    # 3. LLM — key present AND the configured model actually resolves.
+    #
+    # A configured key proves nothing on its own: Groq retired
+    # `llama-3.3-70b-versatile` and this check reported "ready" for ~4 days while every
+    # RAG call 404'd (found 2026-08-17, see RAG_Model_Outage_refactor.md). Validating
+    # against the provider's model list is a cheap GET -- deliberately NOT a generation
+    # call, since readiness is polled and a per-poll LLM round-trip is its own problem.
+    if not rag_engine.api_key:
         checks["llm_api_key"] = {"status": "not_ready", "detail": "GROQ_API_KEY missing"}
+    else:
+        try:
+            import httpx
+            from core.rag import GROQ_MODEL
+            r = httpx.get(
+                "https://api.groq.com/openai/v1/models",
+                headers={"Authorization": f"Bearer {rag_engine.api_key}"},
+                timeout=10.0,
+            )
+            if r.status_code != 200:
+                checks["llm_api_key"] = {
+                    "status": "degraded",
+                    "detail": f"Groq model list unreachable (HTTP {r.status_code}) — "
+                              f"cannot confirm '{GROQ_MODEL}' is available",
+                }
+            else:
+                available = {m.get("id") for m in r.json().get("data", [])}
+                if GROQ_MODEL in available:
+                    checks["llm_api_key"] = {
+                        "status": "ready",
+                        "detail": f"Groq key configured; model '{GROQ_MODEL}' available",
+                    }
+                else:
+                    checks["llm_api_key"] = {
+                        "status": "error",
+                        "detail": f"Configured model '{GROQ_MODEL}' is NOT available on this "
+                                  f"account — RAG generation will fail. Retired or renamed?",
+                    }
+        except Exception as e:
+            checks["llm_api_key"] = {
+                "status": "degraded",
+                "detail": f"Groq key configured, but model availability unverified: {e}",
+            }
 
     # 4. Auth
     checks["authentication"] = {
@@ -437,13 +474,19 @@ async def run_agent_endpoint(request: Request, payload: AgentRunRequest):
     # Internal execution via the Zero-Trust Registry
     result = await agent_runner.execute_agent(payload.agent_id, payload.args)
 
-    status = "success" if "error" not in result else "failed"
-    final_status = "COMPLETED" if status == "success" else "FAILED"
+    # A handler can fail two ways: the runner catches an exception (result carries an
+    # "error" key), or the handler itself concludes it could not do its job and returns
+    # status="error" -- e.g. active-auditor when the RAG engine is down (2026-08-17).
+    # Only the first was detected before, so a dead-engine audit was recorded COMPLETED
+    # and surfaced as a green run in the Execution Monitor. See RAG_Model_Outage_refactor.md.
+    failed = ("error" in result) or (result.get("status") == "error")
+    status = "failed" if failed else "success"
+    final_status = "FAILED" if failed else "COMPLETED"
     audit_logger.finish_agent_run(
         run_id,
         status=final_status,
-        result=result if status == "success" else None,
-        error=result.get("error") if status == "failed" else None,
+        result=result if not failed else None,
+        error=(result.get("error") or result.get("msg")) if failed else None,
     )
 
     log_security_event(
