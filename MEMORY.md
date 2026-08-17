@@ -156,6 +156,17 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 - **Draft-first (GOVERNANCE §4.A):** propose code changes as a markdown diff artifact, wait for the
   user's "EXECUTE" before touching production files. Small deployment-blocking bugfixes found
   mid-deploy may proceed but must be documented in the artifact.
+- **Commit AND push after approval (standing rule, set 2026-08-17).** The full loop is
+  draft → EXECUTE → verify → commit → **push**. Don't stop at commit, and don't end a piece of work
+  with a dirty working tree. Requested directly after 12 commits sat unpushed for a day; the reasons
+  are that work on one machine is at risk, and that the user uses **claude.ai as a second reviewer**
+  against the GitHub repo — which only sees what has actually been pushed. Repo is
+  `EfosaAbbe-GRC/GRC-Command-Center`, **public**, commits go straight to `main` (this repo's
+  established pattern).
+- **Explain the work in plain English, analogies welcome.** Standing request, 2026-08-17: the user
+  wants to fully understand what he is approving, not rubber-stamp it. Lead with what a change means
+  in practice, then the mechanism. This is not a request to simplify the *work* or soften findings —
+  plain English means clearer, never vaguer.
 - **Task board:** `task.md`, priority-ordered (P0–P3), checkboxes with completion dates.
 - **Benchmarks:** always archive `rag_benchmark_results.json` → `.vN_<change>.json` BEFORE re-running;
   one variable per run; report as `RAG_Benchmark_Report_vN.md` with trajectory table.
