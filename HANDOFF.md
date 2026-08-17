@@ -9,6 +9,41 @@
 > `OpsTerminal_EmptyState_refactor.md`. Read `SESSION.md`'s 2026-08-16/17 entry (top of file) for the
 > narrative.
 >
+> ## ▶ NEXT SESSION — start here (set 2026-08-17)
+>
+> 1. **Golden Mapping entries for the enumeration queries (#4, #6, #12, #18).** Highest-value lever on
+>    RAG accuracy. These four are **one root cause**: 1000-char chunking shatters multi-page
+>    enumerations, so "list/explain the whole framework" queries retrieve fragments and the model
+>    correctly refuses. Golden Mapping is the established fix (it closed the EU AI Act cluster).
+>    Do **not** re-diagnose #18 as a retrieval bug — that was investigated and disproved, see
+>    `RAG_Benchmark_Report_v7.md` §Correction.
+> 2. **Minimum-content / quality filter before re-ranking.** ~30% of #18's context budget went to a
+>    mojibake sponsors page and two sub-150-char stubs. A length threshold plus a non-ASCII-ratio guard
+>    fixes this class across all 158 documents automatically — and keeps working for future additions.
+> 3. **Corpus authority review — user-led, human judgement required** (user's own proposal, 2026-08-17).
+>    See "Corpus composition" below: a crude name heuristic flags **33 of 158 PDFs** as personal or
+>    secondary material, and `MEMORY.md` already carries an "official sources only" rule that predates
+>    much of it. Evidence it costs accuracy: on query #12 (ISO 27001 mandatory documentation)
+>    `Notes from Study +.pdf` supplied **4 of 10 chunks and out-retrieved the actual standard**.
+>    **Removing documents requires a re-ingest (~11 min) and will move the benchmark — treat it as one
+>    deliberate change with a v8 measurement, one variable per run, and archive first.**
+> 4. **Frontend component test harness** (Vitest + RTL) — still unbuilt, still the only protection
+>    missing for three frontend fixes made 2026-08-16/17. Touches `package.json`; needs its own draft.
+>
+> Lower priority, still open: establish whether v7's latency is free-tier rate limiting (not yet
+> proven a model property); migrate `diagnose_rag.py`/`validate_diagnostic.py` off the dead Gemini key
+> (has now blocked analysis twice); the binary benchmark scorer cannot distinguish a correct refusal
+> from a failure and currently **rewards the less honest model**.
+>
+> **Corpus composition (measured 2026-08-17):** 158 PDFs / 684 MB. The four largest flagged files are
+> `the-modern-analysts-guide-to-preparing-ai-ready-data` (35.4 MB), `Security plus study guide` (35.3 MB
+> — Security+ cert prep, not GRC), `Grc Roadmap Booklet!` (35.0 MB) and `Notes from Study +` (24.1 MB) —
+> ~130 MB, roughly 19% of the corpus by size. Also present: several "for Dummies" titles, multiple cheat
+> sheets, and a **LinkedIn advertising carousel**
+> (`Carrossel-LinkedIn-AD1-InsideCouncil-powerfront-...compressed.pdf`). The heuristic over-flags —
+> `Nist Guide to RA.pdf` is official NIST and legitimate — which is exactly why this step needs a human,
+> not a script.
+>
 > **Update 2026-08-17 (later):** the RAG benchmark below is **done** — and running it uncovered that
 > Groq had retired `llama-3.3-70b-versatile`, leaving the core engine dead for ~4 days while four
 > separate checks reported green. Model is now **`openai/gpt-oss-120b`**; readiness/smoke/agent checks
