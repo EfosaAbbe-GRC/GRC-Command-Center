@@ -1,3 +1,73 @@
+# Session Log — 2026-08-17b ("The Audit Before the Tests: Executive Was Serving Fiction")
+
+**Outcome:** The user asked for automated screen tests, given that both 2026-08-16 bugs were
+frontend-triggered and no frontend tests exist. **Pushed back on the ordering and the user accepted:**
+writing tests against untested code encodes current behaviour as correct, and this codebase has a
+documented history of fabricated data (ComplianceTerminal, Framework_Mappings, and the `stats: {running:
+2}` default fixed hours earlier). Test-first here would have written
+`expect(governancePosture).toBe('92.4%')` and cemented a fabrication as the expected contract. So:
+audit first, fix, *then* tests.
+
+Made the audit hypothesis-driven rather than open-ended — both prior bugs were the same class ("what
+does this screen do with no data?") and the other four terminals had never been checked for it. Drove
+all five as admin with every list endpoint intercepted to `[]`.
+
+**The hypothesis came back clean.** All five render honest empty states, zero crashes, zero JS errors,
+action controls reachable. The Ops deadlock was the only instance. A negative result worth recording.
+
+**But it surfaced something larger on the way past: `ExecutiveTerminal` was serving `fixtures.json` as
+live governance KPIs** — the last and largest instance of the exact class already fixed twice, on the
+most stakeholder-facing screen in the app, with trend deltas ("+1.2% VS PRIOR PERIOD") implying a
+historical baseline that exists nowhere in this system. `142 active users` against **3** real accounts.
+8 open findings against 3 real gaps. 98% coverage. A fabricated AUG→JAN trend chart. Invented budget
+figures including two `$450k`/`$120k` values hardcoded in the JSX. `UNIT_HEALTH: OPTIMAL` hardcoded.
+`FISCAL_CONTEXT: Q3_FY2026` frozen (correct by luck in August, wrong from October). And `1M/3M/6M/YTD`
+buttons with no `onClick` — the same defect as ComplianceTerminal's removed buttons. Roughly the top
+two-thirds of the screen; the bottom third (identity audit, policy engine) always was genuinely real.
+
+Fixed per the user's chosen approach, *wire what's real, label the rest* (`ExecutiveHonesty_refactor.md`):
+the three footer metrics now compute from real state (unresolved TPRM gaps / policy `source_doc`
+coverage / user count) via the established `_run_async` sync-bridge — using raw SQL for the gap count,
+because `core.tprm` imports `core.database` and the ORM route would be circular. Four unbackable panels
+got `Reference` badges with honest captions. `UNIT_HEALTH` now reads the real `/readiness` endpoint;
+`FISCAL_CONTEXT` computes. Dead period buttons removed. **`policy_coverage` now honestly reads 0%** —
+true, matching `policy-analyzer`'s independent finding, and deliberately not massaged.
+
+**Verified:** new `backend/tests/test_executive.py` (**pytest 33 → 38**), **smoke 43/43**, **15/15**
+browser checks with zero console errors, and an audit re-run showing no regression (Executive's button
+count correctly 10 → 6).
+
+**Three corrections from this session, all mine:**
+
+- **A verification check gave a false pass.** `"READY" in page_text`, meant to prove `UNIT_HEALTH` was
+  wired to real readiness, was satisfied by the unrelated `AUDIT_STATE` KPI card that also reads
+  "READY" — while the tile actually rendered `--`. **A screenshot caught it, not the check.** This is
+  the *second* false pass from whole-page text assertions in two days (the first nearly hid the
+  evidence-notes data loss). Rewritten to read the specific DOM node. Lesson recorded in `MEMORY.md`:
+  take screenshots even when checks are green.
+- **That `--` then turned out to be correct behaviour**, not a bug — `/readiness` resolves after first
+  paint, so the honest placeholder shows briefly before settling on `READY`. Confirmed by DOM dump and
+  a cropped screenshot. The check now waits.
+- **A scary rebuild failure was transient.** Compose reported `grc-backend is unhealthy / dependency
+  failed to start` and never started the frontend; the backend logs showed a clean boot with health
+  returning 200. Compose gave up before the healthcheck threshold. A second plain `up -d` fixed it.
+  Consistent with the existing `MEMORY.md` warning about post-rebuild red herrings on this WSL2 setup.
+
+**One addition beyond the approved draft, disclosed:** once four panels carry a `Reference` badge, the
+three real footer metrics read as ambiguous by omission — added a counterpart green `Live` badge.
+Three lines, serves the fix's purpose, called out rather than slipped in.
+
+**Also noted honestly:** the audit re-run's Compliance row showed populated data rather than the empty
+state, because the script arms interception after login and Compliance is the default landing terminal.
+The original run did observe its genuine empty state; the re-run just didn't re-test that path.
+
+**Next:** the component test harness (Vitest + React Testing Library, empty/render-state contracts for
+all five terminals plus regressions for the three bugs fixed 2026-08-16/17) — now unblocked, and it will
+assert the *corrected* Executive behaviour. It touches `package.json` and adds dev dependencies, so it
+comes as its own draft.
+
+---
+
 # Session Log — 2026-08-16/17 ("Closing the UI Dogfooding Gap: Two Real Bugs, Both Fixed")
 
 **Outcome:** Closed the open item the 2026-08-13 pass left behind — the browser/UI half of the

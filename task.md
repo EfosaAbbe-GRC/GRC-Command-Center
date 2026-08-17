@@ -174,6 +174,30 @@ defect). HANDOFF.md refreshed at session close.
   the actual React UI — a real browser pass against this same data is still an open item.
   → **CLOSED 2026-08-16/17**, see the next item.
 
+- [x] **5-terminal empty-state audit + Executive fabricated-KPI honesty fix** *(2026-08-17)*: ran a
+  hypothesis-driven audit before writing the requested screen tests — deliberately in that order, since
+  tests written against untested code encode current behaviour as correct, and this codebase has a
+  documented history of fabricated data. **The hypothesis (that the two 2026-08-16 bugs were one "no
+  data" class with more instances hiding) came back clean:** all five terminals render honest empty
+  states under empty list payloads, zero crashes, zero JS errors, controls reachable. The Ops deadlock
+  was the only instance. **But the audit surfaced something bigger:** `ExecutiveTerminal` — the most
+  stakeholder-facing screen — was serving `fixtures.json` as live governance KPIs *with trend deltas
+  implying a historical baseline that does not exist*, including **142 active users against 3 real
+  accounts**, 8 open findings against 3 real gaps, 98% coverage, a fabricated 6-month trend chart,
+  invented budget figures, a hardcoded `UNIT_HEALTH: OPTIMAL`, a frozen `Q3_FY2026`, and
+  `1M/3M/6M/YTD` buttons with no `onClick`. Same class as the ComplianceTerminal (2026-08-06) and
+  Framework_Mappings (2026-08-13) fixes — the last and largest instance. Fixed per the user's chosen
+  approach (*wire what's real, label the rest*): three footer metrics now live-computed and badged
+  **Live**, four unbackable panels badged **Reference** with honest captions, `UNIT_HEALTH` reading the
+  real `/readiness` endpoint, `FISCAL_CONTEXT` computed, dead period buttons removed. The two genuinely
+  real sections (identity audit, policy engine) untouched. `policy_coverage` now honestly reads **0%** —
+  true, and matching `policy-analyzer`'s independent finding. See `ExecutiveHonesty_refactor.md`.
+  **Verified:** new `tests/test_executive.py` (**pytest 33 → 38**), smoke **43/43**, 15/15 browser
+  checks, audit re-run clean. **One self-correction worth carrying:** a verification check gave a false
+  pass (`"READY" in page_text` matched the unrelated AUDIT_STATE card while the tile actually rendered
+  `--`); a screenshot caught it. That is the **second** false pass from whole-page assertions in two
+  days — recorded in `MEMORY.md` gotchas.
+
 - [x] **TPRM dogfooding pass (UI/browser layer) + both bugs it found, fixed** *(2026-08-16/17)*:
   closed the open item above. **The "no browser tooling" conclusion from 2026-08-13 was wrong** — the
   host's Python `playwright` package works with zero setup (Chromium 141); check that before

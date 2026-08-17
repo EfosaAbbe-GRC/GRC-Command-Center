@@ -44,7 +44,24 @@ hand-curated control-mapping content — a legitimate GRC artifact). Added a one
 ("Hand-curated reference mapping — not live-computed.") under the panel header so it's unambiguous
 even standalone, not relying on the neighboring panels' labels by inference. See
 `FrameworkMappings_Honesty_refactor.md`. Frontend-only, browser-verified (5/5 checks, zero console
-errors).
+errors). **`ExecutiveTerminal` was the last and largest instance of this same class, closed
+2026-08-17** (`ExecutiveHonesty_refactor.md`) — found by a 5-terminal empty-state audit. Its
+`/executive/stats` and `/executive/dashboard` were pure `fixtures.json` passthroughs presented as live
+governance KPIs *with trend deltas*, including **142 active users against 3 real accounts**. Now: the
+three footer metrics are live-computed (unresolved TPRM gaps / policy `source_doc` coverage / user
+count) and badged **Live**; the four panels with no possible real source (KPI cards, posture trend
+chart, capital allocation, strategic indicators) are badged **Reference** with honest captions;
+`UNIT_HEALTH` reads the real `/readiness` endpoint instead of a hardcoded "OPTIMAL" and
+`FISCAL_CONTEXT` is computed rather than frozen at `Q3_FY2026`; and the non-functional
+`1M/3M/6M/YTD` period buttons were removed (same call as ComplianceTerminal's misleading buttons).
+`SECURITY_IDENTITY_AUDIT` and `STRATEGIC_POLICY_ENGINE` were always real and are untouched.
+**`policy_coverage` now honestly reads 0%** (0 of 13 policies cite a framework source) — that is
+correct, matches `policy-analyzer`'s independent finding, and is not a bug to "fix".
+
+**The 5-terminal empty-state audit itself came back clean** (2026-08-17): all five terminals render
+honest empty states under empty list payloads, zero crashes, zero JS errors, action controls
+reachable. The hypothesis behind it — that the two 2026-08-16 bugs were one "no data" class with more
+instances hiding — is **closed**; the Ops deadlock was the only one.
 
 ## Project direction (durable — read before proposing what's next)
 
@@ -223,6 +240,16 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   bugs. Worse, one such check passed **vacuously** (its `"Notes" in before` precondition was itself
   false), which would have hidden a real data-loss bug. Compare `.upper()`, and assert preconditions
   explicitly — a green check whose precondition never held is worse than a red one.
+- **Whole-page text assertions are too coarse to trust on these terminals — this has now produced a
+  false pass twice.** 2026-08-16: a vacuous precondition nearly hid the evidence-notes data loss.
+  2026-08-17: `"READY" in page_text`, meant to confirm `UNIT_HEALTH` was wired to real `/readiness`,
+  was satisfied by the unrelated `AUDIT_STATE` KPI card that also reads "READY" — the tile was actually
+  rendering `--`, and only a **screenshot** caught it. Assert against the specific DOM node
+  (`label.parentElement.lastElementChild.textContent`), not the page body. Screenshots are worth taking
+  even when checks are green.
+- **`/readiness` resolves after first paint**, so `UNIT_HEALTH` legitimately shows its `--` placeholder
+  for a moment before settling on `READY`. Not a bug — but browser checks on it need an explicit wait,
+  or they race the fetch.
 - **The search/grep tool's output renders `/` as `\` in some content lines on this Windows setup.**
   This made `api.post('/run-agent', …)` look like `api.post('\run-agent', …)` — which would have been
   a genuine bug (`\r` = carriage return, breaking the endpoint) had it been real. It isn't: the file
@@ -313,9 +340,10 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 - Corpus: 158 valid PDFs, 17,088 splits @ 1000/100 chars. Unchanged by Golden Mapping — no
   re-ingestion, no FAISS rebuild; that change touches the query path only.
 - Smoke test: **43** checks (grew from 27 pre-TPRM), includes live DB-trigger immutability probes via
-  `docker exec`. Pytest: **33** checks (5 IAM + 28 TPRM) — grew from 32 on 2026-08-17 with
-  `test_tprm_stage_restatus_preserves_existing_notes`, the regression test for the evidence-notes
-  wipe. Run from `backend/`, not the repo root.
+  `docker exec`. Pytest: **38** checks — grew 32 → 33 with
+  `test_tprm_stage_restatus_preserves_existing_notes` (evidence-notes wipe regression), then 33 → 38
+  with the new `tests/test_executive.py` (5 tests pinning `/executive/dashboard` to real computed
+  values instead of fixture fabrications). Both 2026-08-17. Run from `backend/`, not the repo root.
 - 4 open benchmark failures (post-correction), **all confirmed genuine via the 2026-08-05 judge
   calibration exercise** (not diagnostic artifacts): #50 (CISA booklet — source absent from corpus
   entirely), #6 (CSF tiers table — structured-content extraction gap, names the tiers but never
