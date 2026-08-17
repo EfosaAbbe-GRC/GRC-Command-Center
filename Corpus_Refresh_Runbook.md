@@ -35,11 +35,11 @@ Move to `GRC_Analyst/Excluded Docs/`:
 - `ISO_27001_2022_the_significance_of_Clause_4.pdf` (38.9 MB)
 - `Owasp Gen AI security project.pdf` (3.6 MB)
 - `AI_Data_and_Scale_Transforming_Cyber_Defense_1760960000.pdf` (2.0 MB)
-- `best-practices-to-elevate-your-policy-and-procedure-management.pdf` (0.5 MB)
+- `best-practices-to-elevate-your-policy-and-procedure-management-assets.pdf` (0.5 MB)
 
 *Cert-prep textbooks (not GRC source material):*
 
-- `B0DF8Z5HTT.pdf` (45.4 MB — CompTIA Security+ Study Guide)
+- ~~`B0DF8Z5HTT.pdf` (45.4 MB — CompTIA Security+ Study Guide)~~ ✅ **moved 2026-08-17**
 - `Security plus study guide.pdf` (35.3 MB)
 - `Cloud_Security_for_Dummies_Oracle_3rdEdition.pdf` (4.2 MB)
 
