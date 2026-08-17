@@ -11,7 +11,7 @@ export const OpsTerminal = () => {
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
     const [selectedJob, setSelectedJob] = useState(null);
-    const [stats, setStats] = useState({ running: 2, queued: 0, failed: 2 });
+    const [stats, setStats] = useState({ running: 0, queued: 0, failed: 0 });
     const [showGovernance, setShowGovernance] = useState(false);
     const [selectedAgent, setSelectedAgent] = useState('active-auditor');
     const [triggering, setTriggering] = useState(false);
@@ -42,15 +42,15 @@ export const OpsTerminal = () => {
 
     const { data: jobs, loading, error, refresh } = useApiData('/ops/jobs', {
         onSuccess: (resData) => {
-            if (resData.length > 0) {
-                if (!selectedJob) setSelectedJob(resData[0].id);
-                
-                // Calculate real stats
-                const running = resData.filter(j => j.status === 'RUNNING').length;
-                const queued = resData.filter(j => j.status === 'QUEUED').length;
-                const failed = resData.filter(j => j.status === 'FAILED').length;
-                setStats({ running, queued, failed });
-            }
+            if (resData.length > 0 && !selectedJob) setSelectedJob(resData[0].id);
+
+            // Always recompute from real data -- an empty run list means real zeros,
+            // not "keep whatever was on screen before".
+            setStats({
+                running: resData.filter(j => j.status === 'RUNNING').length,
+                queued: resData.filter(j => j.status === 'QUEUED').length,
+                failed: resData.filter(j => j.status === 'FAILED').length,
+            });
         }
     });
 
@@ -101,15 +101,6 @@ export const OpsTerminal = () => {
                 >
                     RETRY_CONNECTION
                 </button>
-            </div>
-        );
-    }
-
-    if (!activeJob) {
-        return (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[var(--layer-0)] text-[var(--text-tertiary)] opacity-30">
-                <Monitor className="mb-4" size={64} strokeWidth={1} />
-                <span className="text-[11px] font-bold tracking-[0.4em] font-mono uppercase">Operational_Wait_State</span>
             </div>
         );
     }
@@ -176,6 +167,11 @@ export const OpsTerminal = () => {
                         </div>
 
                         <div className="divide-y divide-[var(--border-subtle)]">
+                            {(jobs || []).length === 0 && (
+                                <div className="px-6 py-8 text-center text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-[var(--text-tertiary)] opacity-40">
+                                    No_Agent_Runs_Recorded
+                                </div>
+                            )}
                             {(jobs || []).map((job, idx) => (
                                 <div
                                     key={job.id}
@@ -215,7 +211,7 @@ export const OpsTerminal = () => {
                     <div className="h-10 bg-[var(--layer-2)] border-b border-[var(--border-default)] flex items-center justify-between px-6 shrink-0 relative z-10 shadow-sm">
                         <div className="flex items-center gap-4">
                             <span className="font-bold text-[var(--text-primary)] flex items-center gap-2.5 text-[10px] tracking-[0.2em] font-display uppercase">
-                                <Terminal size={14} className="text-[var(--accent)]" /> OPERATIONAL_CONSOLE // <span className="text-[var(--accent)] font-mono">{activeJob.id}</span>
+                                <Terminal size={14} className="text-[var(--accent)]" /> OPERATIONAL_CONSOLE // <span className="text-[var(--accent)] font-mono">{activeJob?.id ?? 'NO_ACTIVE_RUN'}</span>
                             </span>
                              <div className={`px-2 py-0.5 rounded text-[8px] font-bold shadow-sm ${connected ? 'bg-[var(--accent-subtle)] border border-[var(--accent-glow)] text-[var(--accent)] animate-pulse' : 'bg-[var(--danger-subtle)] border border-[var(--danger)] text-[var(--danger)]'}`}>
                                 {connected ? 'ACTIVE_STREAM' : 'STREAM_OFFLINE'}
@@ -252,6 +248,15 @@ export const OpsTerminal = () => {
                         </div>
                         
                         <div className="relative z-10">
+                            {!activeJob ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-[var(--text-tertiary)] opacity-30">
+                                    <Monitor className="mb-4" size={64} strokeWidth={1} />
+                                    <span className="text-[11px] font-bold tracking-[0.4em] font-mono uppercase">Operational_Wait_State</span>
+                                    <span className="mt-3 text-[10px] font-mono tracking-widest opacity-80">
+                                        Select an agent above and press run to begin.
+                                    </span>
+                                </div>
+                            ) : (
                             <div className="space-y-1.5">
                                 <div className="text-[var(--text-tertiary)] opacity-60 mb-4 font-bold"># {activeJob.task} — agent '{activeJob.agent}' — {activeJob.id}</div>
 
@@ -281,6 +286,7 @@ export const OpsTerminal = () => {
                                 )}
                                 <div className="opacity-20 mt-8 pt-4 border-t border-[var(--border-default)] text-[9px] font-bold tracking-[0.3em] text-center">END_OF_EVENT_LOG</div>
                             </div>
+                            )}
                         </div>
                     </div>
                 </div>
