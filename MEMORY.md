@@ -7,12 +7,14 @@ For the live task board, read `task.md`. For governance rules, read `GOVERNANCE.
 
 GRC.OS / GRC Command Center — agentic GRC platform. FastAPI backend (:8001) + React 19 frontend
 (:3006, Nginx) + PostgreSQL 16 + FAISS RAG over the `../GRC_Analyst/` PDF corpus. 4 containers via
-`docker compose -f docker-compose-v2.yml`. LLM is **Groq** (`llama-3.3-70b-versatile`) as of
-2026-08-13 — migrated off Gemini after the user stopped paying for it, see
-`LLM_Groq_Migration_2026-08-13.md`. **RAG accuracy is UNVERIFIED under Groq — do not quote a number
-until `rag_benchmark.py` is re-run.** The last known figure, **92%** on the 50-query suite
-(2026-08-05, Golden Mapping metadata + a scorer-bug fix — see `RAG_Benchmark_Report_v6.md` §3/§3a),
-was measured against Gemini 2.5 Flash and may not hold under the new model. **TPRM (Third-Party Risk
+`docker compose -f docker-compose-v2.yml`. LLM is **Groq (`openai/gpt-oss-120b`)** as of 2026-08-17.
+History worth knowing: Gemini → Groq `llama-3.3-70b-versatile` on 2026-08-13 (the user stopped paying
+for Gemini, see `LLM_Groq_Migration_2026-08-13.md`), then **Groq retired that Llama model within four
+days** and named `openai/gpt-oss-120b` its successor — see `RAG_Model_Outage_refactor.md`. The model
+id now lives in one place, `core/rag.py`'s `GROQ_MODEL` constant, and `/readiness` validates it
+against Groq's live model list. **RAG accuracy is now MEASURED under Groq: 90.0% (45/50), v7,
+2026-08-17** (`RAG_Benchmark_Report_v7.md`, archive `rag_benchmark_results.v7_groq_gptoss120b.json`).
+Quote **90%**, not the older 92% — that was Gemini 2.5 Flash-era. **TPRM (Third-Party Risk
 Management) module —
 Tier 1, 2, and 3 all complete as of 2026-08-04**: 13-stage vendor egress/ingress assessment, risk
 acceptances, vendor-level risk rollup, WebSocket-pushed reassessment surfacing, CSV export, and
@@ -162,6 +164,19 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 
 ## Hard-won gotchas
 
+- **Hosted-model retirement is a live failure mode, and it took out the core feature for ~4 days
+  silently (2026-08-17).** Groq retired `llama-3.3-70b-versatile` — every RAG call 404'd — while
+  `/readiness` said "ready", `smoke_test.py` reported 43/43 twice, and `active-auditor` returned
+  *"NIST AI RMF Audit Complete — 4/4 core functions substantiated, severity LOW"* from four failed
+  queries. **All four checks were shape-checks, not substance-checks.** Now fixed:
+  `/readiness` resolves `GROQ_MODEL` against Groq's live model list (cheap GET, not a generation
+  call); the smoke test fails on the generic error string or zero sources; `active-auditor` returns
+  `status: "error"` when the engine fails instead of a severity; and `/run-agent` records `FAILED`
+  when a handler self-reports `status: "error"` (it previously only detected an `"error"` *key*, so a
+  dead-engine audit was logged `COMPLETED`). All four verified with **deliberate negative tests**
+  against a bogus model id — do the same if you touch them. See `RAG_Model_Outage_refactor.md`.
+  **This is the second provider-side breakage in five days;** local Ollama remains the standing
+  zero-external-dependency fallback if it recurs.
 - **Ingestion blocks the entire API** for its duration (sync work on the async event loop). Monitor
   via `docker logs grc-backend`, not HTTP. JWTs expire during the wait — re-login per poll.
 - **A struggling Gemini API key turned `active-auditor`'s documented ~43s full-backend block into
@@ -311,12 +326,22 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 
 ## Key numbers to not re-derive
 
-- Benchmark trajectory (**corrected 2026-08-05** — see below): 42 (v1, Apr 11) → 70 → 76 → 80 → 84
-  (v5, Jul 18) → **92** (v6, Aug 5 — Golden Mapping). Archives in `rag_benchmark_results.v*.json`;
-  query list lives inside `backend/tests/rag_benchmark.py`. **This entire trajectory is Gemini
-  2.5 Flash-era.** The LLM changed to Groq (`llama-3.3-70b-versatile`) 2026-08-13 — a re-run under
-  Groq is a new data point to add to this list, not a replacement for it, but don't assume 92% still
-  holds until it's actually measured.
+- Benchmark trajectory (**corrected 2026-08-05**): 42 (v1, Apr 11) → 70 → 76 → 80 → 84 (v5, Jul 18)
+  → 92 (v6, Aug 5 — Golden Mapping, **Gemini 2.5 Flash**) → **90 (v7, Aug 17 — `openai/gpt-oss-120b`,
+  first Groq-era measurement)**. Archives in `rag_benchmark_results.v*.json`; query list lives inside
+  `backend/tests/rag_benchmark.py`. **v1–v6 are Gemini-era; only v7 reflects the current stack.**
+- **v7's headline (90% vs 92%) is one query and understates the change — read
+  `RAG_Benchmark_Report_v7.md` before drawing conclusions.** The failure *set* churned: #6/#50 still
+  fail (both have documented non-model root causes, so that's expected); **#36 and #45 recovered** —
+  #36 was a confirmed Gemini *hallucination*, a real quality win the number hides; and **#4/#12/#18
+  newly fail, all three "list/enumerate" queries that refused despite successful retrieval.**
+  `gpt-oss-120b` appears stricter about completeness — arguably better auditor behaviour, but the
+  binary ANSWERED/INSUFFICIENT_DATA scorer cannot tell a correct refusal from a failure.
+- **v7 latency (16.86s avg vs v6's 6.6s) is NOT established as a model property — do not quote it as
+  one.** Isolated calls to this model ran 1.0-1.3s, and in the benchmark queries #1-3 took 3-5s
+  before jumping to a 13-28s band — the shape of free-tier rate limiting, not per-token cost.
+  `active-auditor` (4 chained queries) measured 31s right after the swap, consistent with the fast
+  end. Needs a paced re-run to settle.
 - **A scorer bug (`answer.startswith("INSUFFICIENT_DATA")` instead of a substring check) inflated
   every single one of these numbers by exactly 1 query/2pts** — the model would answer part of a
   multi-part question and state `INSUFFICIENT_DATA` inline for the rest, which the strict prefix
@@ -339,7 +364,8 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   EU AI Act query called a failure when it was actually `ANSWERED`).
 - Corpus: 158 valid PDFs, 17,088 splits @ 1000/100 chars. Unchanged by Golden Mapping — no
   re-ingestion, no FAISS rebuild; that change touches the query path only.
-- Smoke test: **43** checks (grew from 27 pre-TPRM), includes live DB-trigger immutability probes via
+- Smoke test: **44** checks (grew from 27 pre-TPRM; 43 → 44 on 2026-08-17 with a real *substance*
+  assertion on `/chat` — see gotchas), includes live DB-trigger immutability probes via
   `docker exec`. Pytest: **38** checks — grew 32 → 33 with
   `test_tprm_stage_restatus_preserves_existing_notes` (evidence-notes wipe regression), then 33 → 38
   with the new `tests/test_executive.py` (5 tests pinning `/executive/dashboard` to real computed

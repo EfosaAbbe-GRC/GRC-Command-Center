@@ -174,6 +174,33 @@ defect). HANDOFF.md refreshed at session close.
   the actual React UI — a real browser pass against this same data is still an open item.
   → **CLOSED 2026-08-16/17**, see the next item.
 
+- [x] **RAG outage: Groq retired the model; fixed, plus the four checks that missed it; benchmark v7
+  run** *(2026-08-17)*: went to re-run `rag_benchmark.py` (oldest open item) and found the **core RAG
+  engine had been dead for up to four days** — Groq retired `llama-3.3-70b-versatile`, 404 on every
+  call. The user confirmed Groq had sent advance notice naming `openai/gpt-oss-120b` as successor, so
+  the outage was foreseeable; **the real failure is that nothing noticed.** `/readiness` said "ready"
+  (key-string check only), `smoke_test.py` said 43/43 twice (field-presence check only), `pytest`
+  doesn't cover `/chat`, and `active-auditor` reported *"4/4 core functions substantiated, severity
+  LOW"* from four failed queries. Fixed all four + a fifth found by the negative test (`/run-agent`
+  detected only an `"error"` *key*, so a self-reported `status: "error"` still logged `COMPLETED`).
+  Model id centralised as `GROQ_MODEL` in `core/rag.py`; `/readiness` validates it against Groq's live
+  model list; smoke asserts substance; `active-auditor` refuses to issue an opinion when the engine
+  fails. **Model chosen by testing four candidates against the module's own prompt before knowing
+  Groq's recommendation — both converged.** Every fix proven with a **deliberate negative test**
+  against a bogus model id. See `RAG_Model_Outage_refactor.md`. **Verified:** smoke **43 → 44**
+  (44/44), pytest 38/38, live `/chat` with real citations, `active-auditor` 31s with 4 real sources.
+  → **Then the benchmark ran: `RAG_Benchmark_Report_v7.md`, 90.0% (45/50)** — first Groq-era number,
+  archived `rag_benchmark_results.v7_groq_gptoss120b.json`. vs v6's Gemini 92% that's one query
+  (noise), but the failure set churned: #36 (a confirmed Gemini **hallucination**) and #45 recovered;
+  #4/#12/#18 newly fail, all "list/enumerate" queries that **refused despite successful retrieval** —
+  `gpt-oss-120b` looks stricter about completeness, arguably better auditing but invisible to a binary
+  scorer. **Open from this run:** (a) **#18 retrieves only 1 source** on a doc added specifically to
+  fix it — reads as a retrieval regression, most actionable; (b) latency 6.6s → 16.86s is
+  **unconfirmed as a model property** (isolated calls ran 1.0-1.3s; the run's shape suggests free-tier
+  rate limiting) — needs a paced re-run; (c) three answers with **zero sources** (#35/#39/#45) can't be
+  classified because `validate_diagnostic.py` is still Gemini-pinned and dead — that gap has now
+  blocked analysis twice.
+
 - [x] **5-terminal empty-state audit + Executive fabricated-KPI honesty fix** *(2026-08-17)*: ran a
   hypothesis-driven audit before writing the requested screen tests — deliberately in that order, since
   tests written against untested code encode current behaviour as correct, and this codebase has a

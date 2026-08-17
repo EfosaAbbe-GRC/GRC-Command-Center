@@ -1,3 +1,63 @@
+# Session Log — 2026-08-17c ("The Benchmark That Found the Engine Was Dead")
+
+**Outcome:** Set out to run the oldest open item — re-run `rag_benchmark.py` against Groq. The
+benchmark never got started: the warmup query came back empty, and the investigation turned up that
+**the core RAG engine had been dead for up to four days.** Groq retired
+`llama-3.3-70b-versatile` (404 `model_not_found` on every call) sometime after the 2026-08-13
+migration verified it working. The user later confirmed Groq had sent advance notice naming
+`openai/gpt-oss-120b` as the successor — so the outage was *foreseeable*, and the real failure is
+that nothing in the system noticed.
+
+**Four independent checks reported green through a total outage:** `/readiness` said "ready" (it only
+checked a key string existed), `smoke_test.py` reported 43/43 twice today (its `/chat` check asserted
+only that the fields `response` and `sources` were *present* — an error string and `[]` satisfied it),
+`pytest` doesn't cover `/chat`, and worst of all **`active-auditor` returned "NIST AI RMF Audit
+Complete — 4/4 core functions substantiated from corpus, severity LOW"** from four failed queries,
+because its severity logic only counts a function unsubstantiated when the answer contains
+`INSUFFICIENT_DATA` — and an error string contains no such marker. A GRC tool issuing a favourable
+audit opinion from a dead engine. Same class as the fabricated Executive KPIs fixed hours earlier,
+except generated at runtime rather than hardcoded.
+
+**Fixed all four, plus a fifth found by testing.** Model swapped to `openai/gpt-oss-120b` — chosen by
+running four candidates against the module's *own* `PRODUCTION_PROMPT_TEMPLATE` on both scored
+behaviours, before knowing Groq had designated it; the two agreed independently. Model id now lives in
+one place (`GROQ_MODEL` in `core/rag.py`) so `/readiness` validates the same string the chain uses.
+`/readiness` now resolves that model against Groq's live model list. The smoke test now fails on the
+generic error string or zero sources. `active-auditor` returns `status: "error"` with an explicit "no
+audit conclusion is available" message. **The fifth:** the negative test revealed `/run-agent` decided
+success by looking for an `"error"` *key*, so my handler's `status: "error"` still recorded
+`COMPLETED` — Part D was honest in its payload and dishonest in its envelope. Caught only by running
+the negative test instead of trusting the code.
+
+**Every fix verified with a deliberate negative test** against a bogus model id (patched inside the
+container, reverted by force-recreating from the image): readiness → `error` naming the model;
+smoke → **43/44 with a precise diagnostic** where it previously reported all-green; agent → `failed`,
+no severity, `AgentRun` row `FAILED` with the explanation. Then restored: **smoke 44/44** (the new
+substance check is the +1), **pytest 38/38**, live `/chat` answering with real citations,
+`active-auditor` back to its 31s baseline with 4 real sources.
+
+**Then the original task finally ran — `RAG_Benchmark_Report_v7.md`, the first Groq-era measurement:
+90.0% (45/50).** Against v6's Gemini-era 92% that is one query, comfortably inside noise. But the
+failure set churned and the composition is the real story: #6/#50 still fail (both have documented
+non-model root causes — a good sign the diagnosis was right), **#36 and #45 recovered** (#36 was a
+confirmed Gemini *hallucination*, a quality win the number hides), and **#4/#12/#18 newly fail —
+all three "list/enumerate" queries that refused despite successful retrieval.** `gpt-oss-120b` looks
+stricter about completeness, which is arguably better auditor behaviour but costs points under a
+binary scorer that cannot distinguish a correct refusal from a failure.
+
+**Two things deliberately left as hypotheses, not conclusions:** the latency shift (6.6s → 16.86s
+avg) is probably free-tier rate limiting, not the model — isolated calls ran 1.0-1.3s and the run's
+first three queries took 3-5s before jumping to a 13-28s band; and three answers came back with
+**zero retrieved sources** (#35/#39/#45), the signature of unguarded generation, which cannot be
+classified because `validate_diagnostic.py`'s calibrated judge is *still Gemini-pinned and dead*.
+That tooling gap has now blocked analysis twice.
+
+**Most actionable follow-up:** #18 retrieves only **1 source** and refuses — on a document (OWASP Top
+10 for LLMs 2025) that was added to the corpus *specifically to fix #18*. That reads as a retrieval
+regression rather than model conservatism.
+
+---
+
 # Session Log — 2026-08-17b ("The Audit Before the Tests: Executive Was Serving Fiction")
 
 **Outcome:** The user asked for automated screen tests, given that both 2026-08-16 bugs were

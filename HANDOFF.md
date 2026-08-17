@@ -9,6 +9,13 @@
 > `OpsTerminal_EmptyState_refactor.md`. Read `SESSION.md`'s 2026-08-16/17 entry (top of file) for the
 > narrative.
 >
+> **Update 2026-08-17 (later):** the RAG benchmark below is **done** — and running it uncovered that
+> Groq had retired `llama-3.3-70b-versatile`, leaving the core engine dead for ~4 days while four
+> separate checks reported green. Model is now **`openai/gpt-oss-120b`**; readiness/smoke/agent checks
+> were all hardened and proven with negative tests. **Current baselines: smoke 44/44, pytest 38/38,
+> RAG accuracy 90.0% (v7).** See `RAG_Model_Outage_refactor.md` and `RAG_Benchmark_Report_v7.md`.
+> Top follow-up: **query #18 retrieves only 1 source** on a document added specifically to serve it.
+>
 > **Corrections to the text below:**
 >
 > - "if browser-automation tooling is available this session" — **it is.** The host's Python
