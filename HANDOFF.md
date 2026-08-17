@@ -11,6 +11,14 @@
 >
 > ## ▶ NEXT SESSION — start here (set 2026-08-17)
 >
+> **These are ordered by value, NOT by dependency — items 1-3 are independent and none blocks
+> another.** Golden Mapping and the content filter are both query-time changes needing no re-index;
+> the corpus review is the only item requiring a re-ingest (~11 min). The user can therefore start
+> the corpus review at any time, in parallel, without waiting on any code change. **What does need
+> sequencing is measurement**: benchmark between changes (v8/v9/v10) so each lever's effect is
+> attributable, per the standing one-variable-per-run convention — or bundle deliberately and accept
+> a single unattributable reading.
+>
 > 1. **Golden Mapping entries for the enumeration queries (#4, #6, #12, #18).** Highest-value lever on
 >    RAG accuracy. These four are **one root cause**: 1000-char chunking shatters multi-page
 >    enumerations, so "list/explain the whole framework" queries retrieve fragments and the model
