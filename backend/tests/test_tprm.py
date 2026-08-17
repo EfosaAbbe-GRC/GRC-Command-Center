@@ -332,6 +332,41 @@ def test_tprm_stage_readback_includes_review_metadata():
     assert updated["reviewed_at"] is not None
 
 
+def test_tprm_stage_restatus_preserves_existing_notes():
+    """Re-marking a stage WITHOUT sending evidence_notes must not erase the note.
+
+    Regression test for the data-loss bug found 2026-08-16 during UI dogfooding
+    (see StageNotes_Preservation_refactor.md): the frontend omits evidence_notes
+    entirely for pass/gap/in_review, and the handler used to assign it
+    unconditionally -- turning "field not sent" into "erase the audit rationale".
+    An explicit null must still clear it, so both halves are asserted here.
+    """
+    h = _headers("admin")
+    iid = _create_integration(h)["id"]
+    target = _stages(h, iid)[0]["stage_id"]
+
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/stages/{target}", headers=h,
+                      json={"status": "pass", "evidence_notes": "original rationale"}, timeout=30)
+    assert r.status_code == 200, r.text
+
+    # status-only submission -- the exact request shape the UI sends
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/stages/{target}", headers=h,
+                      json={"status": "gap"}, timeout=30)
+    assert r.status_code == 200, r.text
+
+    updated = next(s for s in _stages(h, iid) if s["stage_id"] == target)
+    assert updated["status"] == "gap", "status should still update"
+    assert updated["evidence_notes"] == "original rationale", (
+        "omitting evidence_notes must leave the existing note untouched")
+
+    # an EXPLICIT null is still a deliberate clear
+    r = requests.post(f"{V1}/tprm/integrations/{iid}/stages/{target}", headers=h,
+                      json={"status": "gap", "evidence_notes": None}, timeout=30)
+    assert r.status_code == 200, r.text
+    cleared = next(s for s in _stages(h, iid) if s["stage_id"] == target)
+    assert cleared["evidence_notes"] is None, "explicit null must still clear the note"
+
+
 def test_tprm_expiring_acceptances_endpoint_smoke():
     """Behavioral smoke test only — a real expiry can't elapse inside a test run."""
     h = _headers("admin")

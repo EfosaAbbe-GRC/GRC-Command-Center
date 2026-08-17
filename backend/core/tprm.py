@@ -450,7 +450,12 @@ async def submit_stage_response(
             detail="A justification note is required to mark a stage Not Applicable")
 
     stage_response.status = payload.status
-    stage_response.evidence_notes = payload.evidence_notes
+    # An OMITTED evidence_notes means "don't touch the existing rationale"; only an
+    # explicitly-sent value (including an explicit null) may overwrite it. The UI omits
+    # this field for pass/gap/in_review, and treating that as NULL silently destroyed
+    # the assessment rationale on every status click (found 2026-08-16, UI dogfooding).
+    if "evidence_notes" in payload.model_fields_set:
+        stage_response.evidence_notes = payload.evidence_notes
     stage_response.reviewed_by = current_user["username"]
     stage_response.reviewed_at = _utcnow()
     await db.commit()
