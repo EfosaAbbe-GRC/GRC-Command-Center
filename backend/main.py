@@ -538,7 +538,10 @@ def get_executive_stats():
 
 @app.get("/api/v1/executive/dashboard", response_model=DashboardStats, dependencies=[Depends(authorize("RAG_QUERY"))])
 def get_dashboard_stats():
-    return data_service.get_dashboard_stats()
+    # Real metrics override the fixture values; trend_data stays fixture-backed and is
+    # labelled ILLUSTRATIVE in the UI (no historical KPI storage exists to compute it).
+    # See ExecutiveHonesty_refactor.md.
+    return {**data_service.get_dashboard_stats(), **audit_logger.get_dashboard_metrics()}
 
 # --- KNOWLEDGE ENDPOINTS ---
 

@@ -9,6 +9,26 @@ import {
     Search, Filter, ShieldCheck, FileKey, AlertOctagon, AlertCircle
 } from 'lucide-react';
 
+// Calendar-quarter label, computed rather than frozen at "Q3_FY2026" (which happened to
+// be correct in Aug 2026 and silently becomes wrong in October). Assumes fiscal year =
+// calendar year. See ExecutiveHonesty_refactor.md.
+const fiscalQuarter = () => {
+    const d = new Date();
+    return `Q${Math.floor(d.getMonth() / 3) + 1}_FY${d.getFullYear()}`;
+};
+
+// Honesty label for panels with no live data source behind them. Same treatment as
+// ComplianceTerminal's REFERENCE_CATALOG badge and the Framework_Mappings caption.
+const ReferenceLabel = ({ note }) => (
+    <div className="flex items-center gap-3 flex-wrap">
+        <span className="px-2 py-0.5 rounded-sm border text-[9px] font-bold uppercase font-mono shrink-0"
+            style={{ borderColor: 'var(--warning)', color: 'var(--warning)', backgroundColor: 'var(--warning-subtle)' }}>
+            Reference
+        </span>
+        <span className="text-[10px] font-mono text-[var(--text-tertiary)]">{note}</span>
+    </div>
+);
+
 export const ExecutiveTerminal = () => {
     const { user } = useAuth();
     const { data: stats, loading, error, refresh } = useApiData('/executive/stats', {
@@ -30,6 +50,11 @@ export const ExecutiveTerminal = () => {
             trend_data: []
         }
     });
+
+    // Real system health -- /readiness already reports DB/FAISS/LLM-key/JWT status.
+    // Replaces a hardcoded "OPTIMAL" that was true regardless of actual state.
+    const { data: readinessData } = useApiData('/readiness', { initialData: null });
+    const readiness = readinessData?.overall ?? null;
 
     const [filterUser, setFilterUser] = useState('');
     const [filterType, setFilterType] = useState('');
@@ -108,12 +133,16 @@ export const ExecutiveTerminal = () => {
                         <div className="bg-[var(--layer-1)] border border-[var(--border-default)] px-10 py-4 rounded-xl flex items-center gap-6 shadow-xl relative overflow-hidden group">
                             <div className="text-right">
                                 <div className="text-[10px] text-[var(--text-tertiary)] font-bold tracking-[0.2em] mb-1.5">UNIT_HEALTH</div>
-                                <div className="text-[var(--success)] font-bold text-2xl flex items-center justify-end gap-3 font-mono">
+                                <div className="font-bold text-2xl flex items-center justify-end gap-3 font-mono"
+                                    style={{ color: readiness === 'ready' ? 'var(--success)' : readiness ? 'var(--warning)' : 'var(--text-tertiary)' }}>
                                     <div className="relative flex h-3 w-3">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--success)] opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--success)]"></span>
+                                        {readiness === 'ready' && (
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--success)] opacity-75"></span>
+                                        )}
+                                        <span className="relative inline-flex rounded-full h-3 w-3"
+                                            style={{ backgroundColor: readiness === 'ready' ? 'var(--success)' : readiness ? 'var(--warning)' : 'var(--text-tertiary)' }}></span>
                                     </div>
-                                    OPTIMAL
+                                    {readiness ? readiness.toUpperCase() : '--'}
                                 </div>
                             </div>
                             {/* Accent highlight */}
@@ -122,13 +151,14 @@ export const ExecutiveTerminal = () => {
                         <div className="bg-[var(--layer-1)] border border-[var(--border-default)] px-10 py-4 rounded-xl flex items-center gap-6 shadow-xl">
                              <div className="text-right">
                                 <div className="text-[10px] text-[var(--text-tertiary)] font-bold tracking-[0.2em] mb-1.5">FISCAL_CONTEXT</div>
-                                <div className="text-[var(--text-primary)] font-bold text-2xl font-mono">Q3_FY2026</div>
+                                <div className="text-[var(--text-primary)] font-bold text-2xl font-mono">{fiscalQuarter()}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 2. Primary KPI Cards */}
+                <ReferenceLabel note="Illustrative reference figures -- not live-computed. No historical baseline exists in this system, so the trend deltas are illustrative too." />
                 <div className="grid grid-cols-4 gap-6">
                     <KPICard
                         title="GOVERNANCE_POSTURE"
@@ -173,14 +203,14 @@ export const ExecutiveTerminal = () => {
                                     SECURITY_POSTURE_TRENDING
                                 </h3>
                                 <p className="text-[var(--text-tertiary)] text-[11px] font-mono mt-2 font-bold opacity-60">Aggregate compliance score variance over time.</p>
+                                <div className="mt-3">
+                                    <ReferenceLabel note="Illustrative series -- no historical KPI storage exists to compute a real trend." />
+                                </div>
                             </div>
-                            <div className="flex gap-2 bg-[var(--layer-2)] p-1.5 rounded-lg border border-[var(--border-default)]">
-                                {['1M', '3M', '6M', 'YTD'].map(p => (
-                                    <button key={p} className={`px-5 py-2 rounded-md text-[11px] font-bold font-mono transition-all ${p === 'YTD' ? 'bg-[var(--accent-emphasis)] text-white shadow-lg' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--layer-3)]'}`}>
-                                        {p}
-                                    </button>
-                                ))}
-                            </div>
+                            {/* Period selector removed 2026-08-17: the 1M/3M/6M/YTD buttons had no
+                                onClick and no state -- they permanently highlighted YTD while doing
+                                nothing, and there is no time-series data for a range to filter.
+                                Same call as ComplianceTerminal's misleading buttons. */}
                         </div>
 
                         {/* Professional Visual Chart Container */}
@@ -242,7 +272,11 @@ export const ExecutiveTerminal = () => {
                                     {stats.budget.total > 0 ? Math.round((stats.budget.spent / stats.budget.total) * 100) : 0}% UTILIZED
                                 </div>
                             </div>
-                            
+
+                            <div className="mb-8">
+                                <ReferenceLabel note="Illustrative budget figures -- this system holds no financial data." />
+                            </div>
+
                             <div className="space-y-8 relative">
                                 <div className="flex justify-between text-[var(--text-secondary)] font-mono font-bold text-xs tracking-widest pl-1">
                                     <span>EXPENDED: ${stats.budget.spent}M</span>
@@ -273,6 +307,9 @@ export const ExecutiveTerminal = () => {
                                 <AlertTriangle size={20} className="text-[var(--warning)]" />
                                 STRATEGIC_INDICATORS
                             </h3>
+                            <div className="mb-6 shrink-0">
+                                <ReferenceLabel note="Illustrative indicators -- not generated from live events. Real security events are in the identity audit below." />
+                            </div>
                             <div className="space-y-4 overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-[var(--layer-4)]">
                                 {stats.alerts.map((alert, i) => (
                                     <AlertItem key={i} level={alert.level} msg={alert.msg} time={alert.time} />
@@ -362,6 +399,19 @@ export const ExecutiveTerminal = () => {
                 </div>
 
                 {/* 5. Strategic Footers Metrics */}
+                {/* Counterpart to the Reference labels above: these three ARE live-computed
+                    (real TPRM gaps / policy source-doc coverage / user count) as of
+                    2026-08-17. Without this the honest tiles read as ambiguous now that
+                    the fabricated panels are explicitly badged. */}
+                <div className="flex items-center gap-3 flex-wrap">
+                    <span className="px-2 py-0.5 rounded-sm border text-[9px] font-bold uppercase font-mono shrink-0"
+                        style={{ borderColor: 'var(--success)', color: 'var(--success)', backgroundColor: 'var(--success-subtle)' }}>
+                        Live
+                    </span>
+                    <span className="text-[10px] font-mono text-[var(--text-tertiary)]">
+                        Computed from current system state.
+                    </span>
+                </div>
                 <div className="grid grid-cols-3 gap-8 mb-8">
                     <FootMetricCard 
                         title="UNRESOLVED_AUDIT_FINDINGS" 

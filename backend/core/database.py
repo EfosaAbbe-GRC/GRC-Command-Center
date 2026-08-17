@@ -642,6 +642,47 @@ class AuditLogger:
     def list_policies(self):
         return _run_async(self._list_policies_async())
 
+    async def _dashboard_metrics_async(self):
+        """Real counts behind the Executive footer metrics.
+
+        These three used to be served straight from fixtures.json (8 open findings,
+        98% coverage, 142 active users -- against 3 real accounts). See
+        ExecutiveHonesty_refactor.md.
+
+        The TPRM gap count uses raw SQL on purpose: core.tprm imports core.database,
+        so importing the TPRM ORM models here would be a circular import.
+        User/Policy are already imported at module level.
+        """
+        try:
+            async with AsyncSessionLocal() as session:
+                users = await session.scalar(select(func.count()).select_from(User))
+                pol_total = await session.scalar(select(func.count()).select_from(Policy))
+                pol_sourced = await session.scalar(
+                    select(func.count()).select_from(Policy).where(
+                        Policy.source_doc.isnot(None), Policy.source_doc != ""
+                    )
+                )
+                unresolved = (await session.execute(text("""
+                    SELECT COUNT(*) FROM stage_responses sr
+                    WHERE sr.status = 'GAP'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM risk_acceptances ra
+                          WHERE ra.stage_id = sr.stage_id
+                            AND ra.integration_id = sr.integration_id
+                      )
+                """))).scalar()
+                return {
+                    "open_findings": int(unresolved or 0),
+                    "policy_coverage": round((pol_sourced / pol_total) * 100) if pol_total else 0,
+                    "active_users": int(users or 0),
+                }
+        except Exception as e:
+            logger.error("Dashboard metrics query failed", error=str(e))
+            return {"open_findings": 0, "policy_coverage": 0, "active_users": 0}
+
+    def get_dashboard_metrics(self):
+        return _run_async(self._dashboard_metrics_async())
+
 
 # ─── Singleton ────────────────────────────────────────────────────────────────
 audit_logger = AuditLogger()
