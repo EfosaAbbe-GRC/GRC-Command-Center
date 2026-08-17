@@ -68,10 +68,61 @@ plausible-looking output. But it costs benchmark points, and the benchmark's bin
 ANSWERED/INSUFFICIENT_DATA scorer cannot tell "correctly refused an under-supported question" from
 "failed."
 
-**#18 is the exception worth chasing.** The OWASP Top 10 for LLM Applications 2025 PDF was added to the
-corpus *specifically to fix #18* (see `task.md`, corpus expansion). It now retrieves only **1 source**
-and refuses. That looks like a retrieval problem on that document, not model conservatism — the most
-concrete follow-up from this run.
+### Correction: #18 is NOT a retrieval regression — investigated the same session
+
+This report originally flagged #18 ("retrieves only 1 source") as a probable retrieval regression and
+the most actionable follow-up. **That was wrong, and the investigation inverted the conclusion.**
+Recorded here rather than quietly amended.
+
+Dumping the actual reranked chunks (retrieval only, no LLM call) shows #18's retrieval is the
+*strongest* in the whole comparison:
+
+- All 10 chunks come from the correct document (`OWASP Top 10 for LLM Applications 2025.pdf`) — the
+  "1 source" figure is the **deduplicated file count**, not a thin result. It means retrieval was
+  perfectly concentrated on the right file.
+- Its rerank scores are the highest of any query tested — **8.56 / 7.75 / 7.74 / 7.34** versus **5.58**
+  for a control query on the same document that answers correctly.
+- 7,491 characters of context were supplied.
+
+**The model refused correctly.** Of the 10 chunks: two are front-matter ("Letter from the Project
+Leads", "Moving Forward"), three are scenario fragments, one is a 147-char stub of MITRE ATLAS links,
+one is a 137-char appendix header, one is **520 characters of pure mojibake** (a sponsors page whose
+glyphs extracted as `˯뾽˯뾽…qīďþÐÆĴĮķĨĨďīĴÐīĮ`), and only **two contain actual Top-10 entries**
+(LLM08 and LLM10). Asked to explain a list of ten, the context contains two of them. There is no
+honest way to answer, and `INSUFFICIENT_DATA` is the correct output.
+
+**#4 shows the identical shape.** "List the core outcomes of the GOVERN function" retrieves two
+`Table 1 … (Continued)` fragments containing GOVERN 1.5 and GOVERN 4.2 — two arbitrary subcategories
+out of ~19 — plus the List of Tables index. Again: a partial list would be wrong; refusing is right.
+
+### The real root cause, and it is not new
+
+**1000-character chunking shatters multi-page enumerations.** Tables and top-N lists that span pages
+(AI RMF Table 1, the OWASP Top 10, ISO 27001's mandatory-documentation list) cannot survive intact in
+any single chunk, so a "list/explain the whole thing" query retrieves scattered fragments no matter
+how good the ranking is. Neither a larger `k` nor a better re-ranker fixes this — the complete answer
+does not exist in any retrievable unit.
+
+This is **the same root cause already documented for #6** ("CSF tiers table — structured-content
+extraction gap; names the tiers but never defines them", `MEMORY.md`). So #6, #4, #12 and #18 are
+**one problem, not four.**
+
+Which reframes the headline: **Gemini masked this defect by confabulating partial answers that scored
+ANSWERED; `gpt-oss-120b` surfaces it by refusing.** Part of the 92% → 90% "drop" is the new model
+being more honest about a corpus/chunking limitation that was always there.
+
+### Two concrete, separable follow-ups
+
+1. **Golden Mapping is the established fix for exactly this.** It already solved the EU AI Act cluster
+   (#16/#19/#49) by supplying hand-curated, source-cited canonical context for known compliance
+   identifiers, bypassing fuzzy retrieval. The OWASP Top 10 list, AI RMF's GOVERN subcategories and
+   ISO 27001's mandatory-documentation list are precisely that kind of stable, enumerable, citable
+   content. This is the highest-value next lever on RAG accuracy.
+2. **The pipeline has no minimum-content or quality filter before re-ranking.** In #18 roughly 30% of
+   the 10-chunk context budget went to a mojibake sponsors page and two sub-150-character stubs. A
+   cheap length threshold plus a non-ASCII-ratio guard would reclaim those slots for real content, and
+   would help every query, not just enumerations. (The mojibake is the same class of PDF-extraction
+   defect already documented for `EU AI ACT 2024_Doc.pdf`.)
 
 ## Latency: 6.6s → 16.86s (2.6x), and probably not the model's fault
 
@@ -108,11 +159,15 @@ content happens to be correct.
 
 ## Open items from this run
 
-1. **#18's retrieval collapse** (1 source, on a document added specifically to serve it) — the most
-   actionable finding.
-2. **Establish whether the latency is rate limiting** before treating it as a model property.
-3. **Migrate `diagnose_rag.py` / `validate_diagnostic.py` off Gemini** — without them, the zero-source
-   answers and the enumeration refusals cannot be properly classified. This has now blocked analysis
-   twice.
-4. **Consider whether the binary scorer still fits.** It cannot distinguish a correct refusal from a
-   failure, which is precisely the distinction this model change surfaced.
+1. **Golden Mapping entries for the enumeration queries** (#4, #6, #12, #18) — one root cause, one
+   established fix, highest-value next lever on accuracy. ~~#18's retrieval collapse~~ — investigated
+   and disproved, see the correction above.
+2. **A minimum-content / quality filter before re-ranking** — ~30% of #18's context budget was
+   mojibake and sub-150-char stubs.
+3. **Establish whether the latency is rate limiting** before treating it as a model property.
+4. **Migrate `diagnose_rag.py` / `validate_diagnostic.py` off Gemini** — without them the three
+   zero-source answers cannot be classified. This has now blocked analysis twice.
+5. **The binary scorer no longer fits the model's behaviour.** It cannot distinguish a *correct
+   refusal on an under-served question* from a failure — and this run shows that distinction is now
+   load-bearing: #4/#12/#18 are all correct refusals scored as failures, while Gemini's confabulated
+   partial answers scored as passes. The metric currently rewards the less honest model.

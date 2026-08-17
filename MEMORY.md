@@ -331,12 +331,23 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   first Groq-era measurement)**. Archives in `rag_benchmark_results.v*.json`; query list lives inside
   `backend/tests/rag_benchmark.py`. **v1–v6 are Gemini-era; only v7 reflects the current stack.**
 - **v7's headline (90% vs 92%) is one query and understates the change — read
-  `RAG_Benchmark_Report_v7.md` before drawing conclusions.** The failure *set* churned: #6/#50 still
-  fail (both have documented non-model root causes, so that's expected); **#36 and #45 recovered** —
-  #36 was a confirmed Gemini *hallucination*, a real quality win the number hides; and **#4/#12/#18
-  newly fail, all three "list/enumerate" queries that refused despite successful retrieval.**
-  `gpt-oss-120b` appears stricter about completeness — arguably better auditor behaviour, but the
-  binary ANSWERED/INSUFFICIENT_DATA scorer cannot tell a correct refusal from a failure.
+  `RAG_Benchmark_Report_v7.md` before drawing conclusions.** #36 and #45 **recovered** (#36 was a
+  confirmed Gemini *hallucination* — a real quality win the number hides). #4/#12/#18 newly fail.
+- **#4, #6, #12 and #18 are ONE root cause, not four — verified by dumping the retrieved chunks
+  (2026-08-17).** 1000-char chunking shatters multi-page enumerations (AI RMF Table 1, the OWASP Top
+  10, ISO 27001's mandatory-documentation list), so "list/explain the whole framework" queries
+  retrieve scattered fragments and the model **correctly refuses**. Bigger `k` or a better re-ranker
+  cannot fix it — the complete answer exists in no retrievable unit. **Gemini masked this by
+  confabulating partial answers that scored ANSWERED; gpt-oss-120b surfaces it by refusing, so part
+  of the "drop" is the new model being more honest.** Do **not** re-diagnose #18 as a retrieval
+  failure: its retrieval is the *strongest* measured (all 10 chunks from the right file, top rerank
+  scores 8.56 vs 5.58 for a working control) — an early call of "retrieval regression" was
+  investigated and disproved, see that report's Correction section. **Established fix: Golden
+  Mapping entries** (the same mechanism that closed the EU AI Act cluster).
+- **No minimum-content/quality filter runs before re-ranking.** In #18, ~30% of the 10-chunk context
+  budget went to a **mojibake sponsors page** (glyph-corrupted, same extraction-defect class as
+  `EU AI ACT 2024_Doc.pdf`) plus two sub-150-char stubs. A length threshold + non-ASCII-ratio guard
+  would reclaim those slots for every query.
 - **v7 latency (16.86s avg vs v6's 6.6s) is NOT established as a model property — do not quote it as
   one.** Isolated calls to this model ran 1.0-1.3s, and in the benchmark queries #1-3 took 3-5s
   before jumping to a 13-28s band — the shape of free-tier rate limiting, not per-token cost.
