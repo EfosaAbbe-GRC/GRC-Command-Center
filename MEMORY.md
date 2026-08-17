@@ -66,13 +66,36 @@ session. **This is the right thing to propose once the backlog runs dry of clear
 whenever production-readiness comes up as a live question** — not something to wait to be asked for
 explicitly, and not a checklist of the known gaps to start silently closing.
 
-**First TPRM dogfooding pass done 2026-08-13, API layer only** — one realistic fictional vendor
-(`Meridian Cloud Storage`, two integrations, 26 individually-reasoned stages, real risk-acceptance
-sign-offs) driven through the real backend on the dev stack. Zero application bugs found. See
-`TPRM_Dogfooding_Pass_2026-08-13.md`. **Explicitly incomplete:** no browser-automation tool was
-available that session, so the actual React UI was never clicked through against this data — do
-that (Playwright or manual) before calling the dogfooding ask fully satisfied. This vendor's data is
-real dev-stack state now, not test noise — don't purge it in a future Tier-4-style cleanup.
+**TPRM dogfooding done in two halves — API layer 2026-08-13, UI/browser layer 2026-08-16/17. The
+standing "genuine hands-on personal-use pass" ask is now SATISFIED for TPRM.** One realistic
+fictional vendor (`Meridian Cloud Storage`, two integrations, 26 individually-reasoned stages, real
+risk-acceptance sign-offs). The API half found **zero** application bugs
+(`TPRM_Dogfooding_Pass_2026-08-13.md`); the UI half found **two real ones the API half structurally
+could not see**, both since fixed and verified (`TPRM_Dogfooding_UI_Pass_2026-08-16.md`):
+
+- **Stage evidence-notes wipe (data loss)** — clicking `pass`/`gap`/`review` erased that stage's
+  `evidence_notes`, because the UI omits the field for those statuses and `tprm.py` assigned it
+  unconditionally ("not sent" → NULL). Fixed via `payload.model_fields_set` gating; omission now
+  preserves, explicit null still clears. Covered by a pytest regression test —
+  **pytest is now 33/33, not 32/32.** See `StageNotes_Preservation_refactor.md`. Note the structural
+  point: `stage_responses` is *not* protected by the immutability triggers covering `audit_logs`/
+  `evidence_chain`/`risk_acceptances`.
+- **Operations terminal deadlock** — `OpsTerminal.jsx`'s `!activeJob` early return sat above the
+  **Run Agent** button, so zero `agent_runs` meant no UI path to create the first run. Fixed by
+  scoping the empty state to the console pane; the same fix removed a **fabricated `stats` default**
+  (`{running: 2, failed: 2}`, only recomputed when `jobs.length > 0`) that the early return had been
+  hiding. See `OpsTerminal_EmptyState_refactor.md`.
+
+This vendor's data is real dev-stack state, not test noise — don't purge it in a future Tier-4-style
+cleanup; it was CSV-backed-up and diffed byte-identical after both passes. `agent_runs` holds 3 real
+rows for the same reason (they keep Operations reachable).
+
+**Two things still open from that work:** no *frontend* regression test for either bug (zero frontend
+component tests exist project-wide — both bugs were frontend-triggered, so this gap now demonstrably
+costs something), and **the UI has no way to author a stage note for `pass`/`gap`/`in_review` at
+all** — notes are read-only in the panel and only the N/A prompt ever creates one, so a
+browser-only analyst cannot record why a control passed. Needs a UI decision; deliberately kept out
+of the data-loss fix.
 
 ## Boot & verify (the ritual)
 
@@ -190,7 +213,27 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   `PATH` — browser verification used Python's `playwright` package directly instead (already
   installed, `p.chromium.launch(headless=True)` worked with no setup). Worth generating a proper
   project skill via `/run-skill-generator` next time browser-driving this app comes up, so this
-  discovery doesn't repeat.
+  discovery doesn't repeat. **Re-confirmed working 2026-08-16 (Chromium 141) — and note that the
+  2026-08-13 session wrongly concluded "no browser-automation tool was available" without checking
+  this package, which is what left the UI dogfooding half undone for three days. Check `python -c
+  "import playwright"` before ever concluding browser verification isn't possible here.**
+- **The UI CSS-uppercases most labels, so Playwright `inner_text()` returns `NOTES` / `GUIDANCE` /
+  `RISK ACCEPTED`, not the casing in the JSX.** Case-sensitive substring assertions silently fail
+  against a perfectly working UI — 7 of 28 checks in the first 2026-08-16 run were this, not app
+  bugs. Worse, one such check passed **vacuously** (its `"Notes" in before` precondition was itself
+  false), which would have hidden a real data-loss bug. Compare `.upper()`, and assert preconditions
+  explicitly — a green check whose precondition never held is worse than a red one.
+- **The search/grep tool's output renders `/` as `\` in some content lines on this Windows setup.**
+  This made `api.post('/run-agent', …)` look like `api.post('\run-agent', …)` — which would have been
+  a genuine bug (`\r` = carriage return, breaking the endpoint) had it been real. It isn't: the file
+  has `U+002F`, confirmed by character codes and by watching the live browser request succeed. Same
+  artifact makes `border-white/10` look like `border-white\10` and `/>` look like `\>`. **Confirm any
+  backslash-escape finding against raw bytes or live behaviour before reporting it.**
+- **`docker-compose.test.yml` has no frontend service**, and the `:3006` frontend is built against the
+  dev backend (`:8001`) — so there is **no browser path to the test stack**. Browser-verifying a
+  frontend state that depends on backend data (e.g. an empty `agent_runs` table) can't be done by
+  "just point the browser at :8002". Use Playwright `page.route()` interception to fulfil the endpoint
+  with the payload you need instead; it isolates the frontend change and destroys no dev-stack data.
 - **`GET /ops/jobs` used to always return exactly 3 hardcoded fixture rows regardless of state;
   since Execution Monitor UI (2026-08-06) it reads real `AgentRun` rows and returns genuinely
   empty on a fresh boot with zero agent executions.** `fixtures.json`'s `jobs` array and
@@ -269,8 +312,10 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   EU AI Act query called a failure when it was actually `ANSWERED`).
 - Corpus: 158 valid PDFs, 17,088 splits @ 1000/100 chars. Unchanged by Golden Mapping — no
   re-ingestion, no FAISS rebuild; that change touches the query path only.
-- Smoke test: 42 checks (grew from 27 pre-TPRM), includes live DB-trigger immutability probes via
-  `docker exec`. Pytest: 32 checks (5 IAM + 27 TPRM) — run from `backend/`, not the repo root.
+- Smoke test: **43** checks (grew from 27 pre-TPRM), includes live DB-trigger immutability probes via
+  `docker exec`. Pytest: **33** checks (5 IAM + 28 TPRM) — grew from 32 on 2026-08-17 with
+  `test_tprm_stage_restatus_preserves_existing_notes`, the regression test for the evidence-notes
+  wipe. Run from `backend/`, not the repo root.
 - 4 open benchmark failures (post-correction), **all confirmed genuine via the 2026-08-05 judge
   calibration exercise** (not diagnostic artifacts): #50 (CISA booklet — source absent from corpus
   entirely), #6 (CSF tiers table — structured-content extraction gap, names the tiers but never

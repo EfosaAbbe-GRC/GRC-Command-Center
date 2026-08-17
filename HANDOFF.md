@@ -1,5 +1,34 @@
 # GRC Command Center — Session Handoff (v1.4.0)
 
+> ⚠️ **This file is stale as of 2026-08-17 — read the update block first, then treat the rest as
+> historical.** Its "Recommended order for next session" is largely done.
+>
+> **What changed 2026-08-16/17:** the UI/browser dogfooding pass (its Step 2) **is complete**, and the
+> two real bugs it found are **both fixed, verified, and documented** —
+> `TPRM_Dogfooding_UI_Pass_2026-08-16.md`, `StageNotes_Preservation_refactor.md`,
+> `OpsTerminal_EmptyState_refactor.md`. Read `SESSION.md`'s 2026-08-16/17 entry (top of file) for the
+> narrative.
+>
+> **Corrections to the text below:**
+>
+> - "if browser-automation tooling is available this session" — **it is.** The host's Python
+>   `playwright` package works with zero setup (Chromium 141). The claim that it wasn't available on
+>   2026-08-13 was simply wrong and cost three days.
+> - **pytest is now 33/33, not 32/32** (new regression test for the notes-wipe bug).
+> - Step 1 (**re-run `rag_benchmark.py` against Groq**) is **still not done** — it remains the single
+>   most useful quick item, and RAG accuracy is still officially UNKNOWN post-migration. Don't quote
+>   92%.
+> - Step 3's optional items are all still open and still optional.
+>
+> **New open items from the 2026-08-16/17 work:** (a) no *frontend* regression test for either fixed
+> bug — zero frontend component tests exist project-wide, and both bugs were frontend-triggered;
+> (b) the UI has **no way to author a stage note** for `pass`/`gap`/`in_review` (read-only display;
+> only the N/A prompt creates one), so a browser-only analyst cannot record why a control passed —
+> needs a UI decision, deliberately not bundled into the data-loss fix.
+>
+> **Uncommitted:** everything from 2026-08-16/17 is in the working tree, **not committed** — the repo
+> convention is one commit per refactor doc; see the end of `SESSION.md`'s newest entry.
+
 ## Continue from this point in a new chat
 
 **Date:** August 13, 2026

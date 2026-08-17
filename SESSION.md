@@ -1,3 +1,72 @@
+# Session Log — 2026-08-16/17 ("Closing the UI Dogfooding Gap: Two Real Bugs, Both Fixed")
+
+**Outcome:** Closed the open item the 2026-08-13 pass left behind — the browser/UI half of the
+dogfooding ask. **First correction of the session: 2026-08-13's "no browser-automation tool was
+available" was wrong.** The host's Python `playwright` package works with zero setup (Chromium 141);
+nothing needed installing. Drove the real React UI as `admin` against the *same*
+`Meridian Cloud Storage` data rather than throwaway records, having first confirmed the dataset was
+intact (2 integrations, 21/3/2 pass/gap/N-A split, 3 acceptances, 2 evidence links) and dumped all 26
+stage evidence notes to CSV *before* any mutating click.
+
+**Two real bugs found, both invisible to the API-layer pass, both fixed and verified the same
+session** (drafted per `GOVERNANCE.md` §4.A, EXECUTEd on approval):
+
+1. **Stage evidence-notes wipe — silent data loss.** Clicking `pass`/`gap`/`review` on a stage
+   destroyed that stage's `evidence_notes` and reassigned `reviewed_by`, with no warning or undo. The
+   UI omits `evidence_notes` for those three statuses (only the N/A branch sets it), `JSON.stringify`
+   drops the undefined key, and `tprm.py` assigned it unconditionally — so "field not sent" became
+   "erase the audit rationale". Confirmed at the DB layer (notes 26 → 25 on one click) *and* as a
+   user-visible symptom. Worth naming: `stage_responses` is not covered by the immutability triggers
+   protecting `audit_logs`/`evidence_chain`/`risk_acceptances`, so the sign-off artifacts are
+   append-only while the reasoning justifying them was overwritable. Fixed by gating on
+   `payload.model_fields_set` (omission preserves, explicit null still clears) + a new pytest
+   regression test. `StageNotes_Preservation_refactor.md`.
+2. **Operations terminal deadlock.** `OpsTerminal.jsx`'s `!activeJob` early return sat *above* the
+   **Run Agent** button — the only UI control that can create an agent run — so zero runs meant no way
+   to start one, permanently. Reachable precisely *because* of legitimate recent work (Tier 4 hygiene
+   + a restart left `agent_runs` genuinely empty). Fixed by scoping the empty state to the console
+   pane. **The fix also had to remove a fabricated stats default** (`{running: 2, failed: 2}`, only
+   recomputed when `jobs.length > 0`): invisible today *only because* the early return hid the header,
+   so shipping the obvious fix alone would have displayed invented operational activity — the same
+   class of dishonesty the ComplianceTerminal work existed to remove.
+   `OpsTerminal_EmptyState_refactor.md`.
+
+**Everything else passed:** zero console errors, zero failed requests, zero 4xx/5xx across every run.
+CSV export downloads end-to-end from the browser (the control that previously carried a dead-auth-header
+bug), the RISK ACCEPTED block renders with signer + expiry, evidence shows hash/uploader, tier badges
+and N/A stages render correctly, and the 2026-08-06 panel-collapse fix still holds.
+**Verification after the fixes:** smoke **43/43**, pytest **33/33** (was 32 — the new regression test),
+plus a 16/16 browser pass. Meridian dataset diffed **byte-identical** to its pre-pass backup at the
+end.
+
+**Three method notes worth carrying forward, all self-corrections:**
+
+- **A green check whose precondition never held is worse than a red one.** Run 1's "notes preserved"
+  check *passed vacuously* — the UI CSS-uppercases text, so `inner_text()` returns `NOTES`, and the
+  case-sensitive precondition was itself false. That green would have hidden the data-loss bug
+  entirely. All 7 of run 1's "failures" were likewise script bugs, not app bugs.
+- **A phantom bug, caught before reporting.** `api.post('\run-agent', …)` appeared to contain a `\r`
+  escape that would break the endpoint. It doesn't — the file has a real forward slash (`U+002F`),
+  verified by character codes *and* by watching the live request succeed. The search tool's output
+  renders `/` as `\` in some content lines on this Windows setup (same artifact made
+  `border-white/10` look like `border-white\10`). Verify that class of finding against raw bytes.
+- **A planned verification step that had to change.** The Ops fix was meant to be verified against the
+  isolated test stack (boots with zero runs), but `docker-compose.test.yml` has no frontend and
+  `:3006` points at the dev backend; deleting the dev stack's `agent_runs` was correctly blocked as a
+  destructive write. Substituted Playwright route-interception of `/ops/jobs` → `[]`, which isolates
+  the frontend change and destroys nothing — arguably better, but a real deviation, so it's on the
+  record in the refactor doc.
+
+**Left deliberately:** `agent_runs` holds 3 real rows (seeded to break the deadlock, plus the runs the
+verification created) — they keep Operations reachable, not test noise. **Still open:** no frontend
+regression test for either bug (zero frontend component tests project-wide; both bugs this pass were
+frontend-triggered, which is a fair argument the gap now costs something), and the UI still has no way
+to *author* a stage note for pass/gap/review — read-only display, only the N/A prompt creates one, so
+a browser-only analyst cannot write the rationale for a control they just passed. Needs a UI decision;
+deliberately not bundled into a data-loss fix.
+
+---
+
 # Session Log — 2026-08-13 ("Committing a Half-Closed Session, a Genuine TPRM Dogfooding Pass, and a Forced LLM Migration")
 
 **Outcome:** Picked up mid-stream from a prior session (2026-08-13) that had left work executed but

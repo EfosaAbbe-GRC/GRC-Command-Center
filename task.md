@@ -172,6 +172,43 @@ defect). HANDOFF.md refreshed at session close.
   not just API responses trusted. See `TPRM_Dogfooding_Pass_2026-08-13.md`. **Explicitly partial:**
   no browser-automation tool was available this session, so this covers the API surface only, not
   the actual React UI — a real browser pass against this same data is still an open item.
+  → **CLOSED 2026-08-16/17**, see the next item.
+
+- [x] **TPRM dogfooding pass (UI/browser layer) + both bugs it found, fixed** *(2026-08-16/17)*:
+  closed the open item above. **The "no browser tooling" conclusion from 2026-08-13 was wrong** — the
+  host's Python `playwright` package works with zero setup (Chromium 141); check that before
+  concluding otherwise. Drove the real React UI as `admin` against the *same* `Meridian Cloud Storage`
+  data (no throwaway data created). **Zero console errors, zero failed requests, zero 4xx/5xx across
+  every run.** Verified good: vendor strip tier colour-coding, both integrations' tier badges,
+  `13/13 STAGES REVIEWED` + open-gap count, `approved_with_exceptions` → PARTIAL badge, all 26 stage
+  rows, both genuine N/A stages, the RISK ACCEPTED block with signer + expiry, evidence rendering with
+  hash/uploader, **CSV export downloading end-to-end from the browser**, and the 2026-08-06
+  panel-collapse fix still holding. See `TPRM_Dogfooding_UI_Pass_2026-08-16.md`.
+  **Two real bugs found — both invisible to the API-layer pass, both now fixed and verified:**
+  - **Stage evidence-notes wipe (data loss).** Clicking `pass`/`gap`/`review` silently destroyed that
+    stage's `evidence_notes` — the UI omits the field for those statuses, and the handler assigned it
+    unconditionally, turning "not sent" into "erase the audit rationale". Confirmed at the DB layer
+    (26 → 25 notes) *and* as a user-visible symptom. Fixed by gating on `payload.model_fields_set`, so
+    omission preserves and an explicit null still clears. New pytest regression test →
+    **pytest 33/33**. See `StageNotes_Preservation_refactor.md`.
+  - **Operations terminal deadlock.** `OpsTerminal.jsx`'s `!activeJob` early return sat *above* the
+    **Run Agent** button, so with zero agent runs there was no UI path to create the first one —
+    permanently stuck. Reachable precisely because Tier 4 + a restart left `agent_runs` genuinely
+    empty. Fixed by scoping the empty state to the console pane. **That fix also had to remove a
+    fabricated stats default** (`{running: 2, failed: 2}`, only recomputed when `jobs.length > 0`)
+    which was invisible *only because* the early return hid the header — shipping the obvious fix
+    alone would have put invented operational activity on screen, the same class of problem the
+    ComplianceTerminal honesty work removed. See `OpsTerminal_EmptyState_refactor.md`.
+  **Verification:** smoke **43/43**, pytest **33/33**, plus a 16/16 browser pass covering both fixes
+  (notes surviving a status click on real data; zero-run Ops rendering a working runner with honest
+  0/0/0 stats; the non-empty path unregressed and Run Agent creating a real COMPLETED run). Meridian
+  dataset backed up to CSV before any mutation and diffed **byte-identical** afterwards.
+  **Still open:** no *frontend* regression test for either bug (zero frontend component tests exist
+  project-wide — both bugs here were frontend-triggered, which is a fair argument that gap now costs
+  something); and a follow-up the notes fix surfaced — **the UI has no way to author a note for a
+  pass/gap/review stage at all** (read-only display; only the N/A prompt creates one), so an analyst
+  working purely in the browser cannot write the rationale for a control they just passed. Needs a UI
+  decision, deliberately not bundled into a data-loss fix.
 
 - [x] **LLM provider migration: Gemini → Groq** *(2026-08-13)*: user stopped paying for the Google
   Cloud project behind `GOOGLE_API_KEY`, which had started returning `403 PERMISSION_DENIED` and the
