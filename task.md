@@ -174,6 +174,38 @@ defect). HANDOFF.md refreshed at session close.
   the actual React UI — a real browser pass against this same data is still an open item.
   → **CLOSED 2026-08-16/17**, see the next item.
 
+- [x] **Corpus refresh (user-led) + the benchmark scorer that reported a fake 96%** *(2026-08-17)*:
+  the user proposed cleaning the corpus manually, wanting "original standardized documents." Auditing
+  it validated that hard (`Corpus_Audit_2026-08-17.md`): **90 MB yielded ZERO retrievable text** —
+  image/carousel exports that look healthy in a listing and are invisible to RAG, including a file
+  named `ISO_27001_2022_the_significance_of_Clause_4.pdf` that was clearly added to serve query #14
+  and contributed nothing. Eleven more were text-starved (50-300 chars/page) with queries pointing at
+  them, and several "framework" files were commentary — `Nist Csf 2.0.pdf` was a third-party **audit
+  checklist**, which explained why #6 had failed since v1. Ran as a gated procedure
+  (`Corpus_Refresh_Runbook.md`): remove the provably useless → stage in `_incoming/` → **validate at
+  the gate** (valid PDF, `%%EOF`, >300 chars/page, page 1 confirms publication not summary) → retire
+  superseded only once replacements are in → **one** ingest. **12 authoritative docs admitted** (NIST
+  CSF 2.0 CSWP 29, SP 800-61 r2+r3, SP 800-171r3, GDPR regulation text, AICPA TSC, IIA Three Lines,
+  PCI DSS 4.0.1, CMMC, ENISA NIS2, both EU Implementing Regulation parts). Net **158 → 153 files,
+  684 → 460 MB, but chunks UP 17,088 → 17,498** — dense text replacing images. Index rebuilt,
+  integrity signed, readiness green.
+  → **Then the measurement lied.** v8 reported **96.0%, the best score ever — and it was false.**
+  Groq's free tier caps at **200k tokens/day**; the run exhausted it at query #11 and every query
+  after returned `429`. `/chat` returns HTTP **200 with the error in the body**, so `status_code == 200`
+  passed and the 44-char error string satisfied `len(answer) > 20` → **ANSWERED**. **32 errors scored
+  as correct.** Same defect class fixed twice earlier the same day (`active-auditor`, `smoke_test.py`)
+  — all three asked *"is there a response?"* instead of *"is the response real?"* Fixed
+  (`Benchmark_Scorer_Honesty_refactor.md`): errors checked first → ERROR, 3 consecutive failures abort,
+  any error stamps `"valid": false` + DO-NOT-QUOTE banner, script **exits non-zero**. **Verified by
+  reproducing the failure first** (bogus-model trick, zero tokens): old code 96%, new code aborts at
+  query 3 and exits 1.
+  → **STATE: the corpus refresh is done and sound; its measurement does not exist.** **v7's 90%
+  remains the current figure.** Bad archive quarantined as
+  `rag_benchmark_results.v8_INVALID_rate_limited.json` — never cite it. Only #1-10 salvageable:
+  **9/10 vs v7's 8/10, #6 recovered** (confirmed live, citing the new CSF doc). #4 still fails, as
+  predicted — enumeration/chunking, needs Golden Mapping. **Also confirmed v7's open latency
+  hypothesis:** 6.6s → 16.86s was throttling, not a slower model.
+
 - [x] **RAG outage: Groq retired the model; fixed, plus the four checks that missed it; benchmark v7
   run** *(2026-08-17)*: went to re-run `rag_benchmark.py` (oldest open item) and found the **core RAG
   engine had been dead for up to four days** — Groq retired `llama-3.3-70b-versatile`, 404 on every
