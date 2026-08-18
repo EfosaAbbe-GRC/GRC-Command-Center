@@ -65,6 +65,17 @@ honest empty states under empty list payloads, zero crashes, zero JS errors, act
 reachable. The hypothesis behind it — that the two 2026-08-16 bugs were one "no data" class with more
 instances hiding — is **closed**; the Ops deadlock was the only one.
 
+**TPRM Interview Simulator, Tier 1, built 2026-08-18** (`backend/core/interview_sim.py`, new
+`INTERVIEW_RUN` capability, `InterviewSimTerminal.jsx`): a mock-interview practice tool grounded in
+this project's own real TPRM stage content and real seeded vendor data (`Meridian Cloud Storage`'s
+actual open GAP stages), not synthesized scenarios — question count genuinely varies with real
+data instead of a fixed number. Live Groq grading with an explicit `grading_failed` state, same
+honesty discipline as `_is_engine_failure`/ExecutiveHonesty. Full design + Tier 2/3 backlog
+(Framework Mapper hook, more scenario sources, session analytics) in
+`Interview_Simulator_Roadmap.md`. Verified smoke 44/44, pytest 50/50, browser-confirmed — see
+`task.md` for the full verification detail, including the screenshot evidence that the grader
+genuinely scores against reference content rather than rubber-stamping.
+
 ## Project direction (durable — read before proposing what's next)
 
 This is a **progressive** project. The eventual goal is shipping to production, but **not soon** —
@@ -126,8 +137,8 @@ stack (`docker-compose.test.yml`, port 8002) instead of the dev/dogfooding stack
 docker compose -f docker-compose-v2.yml up -d           # boot dev stack (no --build unless code changed)
 docker compose -f docker-compose.test.yml up -d         # boot isolated test stack (own DB, port 8002,
                                                           # reuses the real FAISS index read-only)
-$env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # hits :8002 by default -- expect 43/43
-cd backend; python -m pytest -v; cd ..                  # hits :8002 by default -- expect 32/32,
+$env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # hits :8002 by default -- expect 44/44
+cd backend; python -m pytest -v; cd ..                  # hits :8002 by default -- expect 50/50,
                                                           # MUST run from backend/ (pyproject.toml's
                                                           # smoke_test.py --ignore only applies from
                                                           # that rootdir)
@@ -411,10 +422,11 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   re-ingestion, no FAISS rebuild; that change touches the query path only.
 - Smoke test: **44** checks (grew from 27 pre-TPRM; 43 → 44 on 2026-08-17 with a real *substance*
   assertion on `/chat` — see gotchas), includes live DB-trigger immutability probes via
-  `docker exec`. Pytest: **38** checks — grew 32 → 33 with
-  `test_tprm_stage_restatus_preserves_existing_notes` (evidence-notes wipe regression), then 33 → 38
-  with the new `tests/test_executive.py` (5 tests pinning `/executive/dashboard` to real computed
-  values instead of fixture fabrications). Both 2026-08-17. Run from `backend/`, not the repo root.
+  `docker exec`. Pytest: **50** checks — grew 32 → 33 with
+  `test_tprm_stage_restatus_preserves_existing_notes` (evidence-notes wipe regression), 33 → 38
+  with the new `tests/test_executive.py` (2026-08-17), then 38 → 50 with the new
+  `tests/test_interview_sim.py` (2026-08-18, 12 tests, deliberately calls the live Groq grading
+  endpoint only once given the shared daily token budget). Run from `backend/`, not the repo root.
 - 4 open benchmark failures (post-correction), **all confirmed genuine via the 2026-08-05 judge
   calibration exercise** (not diagnostic artifacts): #50 (CISA booklet — source absent from corpus
   entirely), #6 (CSF tiers table — structured-content extraction gap, names the tiers but never

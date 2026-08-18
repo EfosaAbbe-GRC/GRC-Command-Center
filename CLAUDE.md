@@ -2,8 +2,10 @@
 
 ## System Reference for AI-Assisted Development
 
-**Version:** 1.4.0 (Retrieval-Tuned & Re-Ranked)
-**Last Updated:** 2026-07-18 (Retrieval Sprint Complete — RAG accuracy 86%)
+**Version:** 1.5.0 (TPRM Interview Simulator)
+**Last Updated:** 2026-08-18 — RAG accuracy is **90.0%** under Groq/`openai/gpt-oss-120b` (the
+86% below is a stale, pre-correction, pre-provider-migration figure; see `MEMORY.md` for the
+current number and full trajectory, never quote this line).
 
 > Cold-start order: read `MEMORY.md` (durable facts) → `SESSION.md` (last session) → `task.md` (live board).
 
@@ -20,7 +22,8 @@ GRC.OS is an agentic Governance, Risk, and Compliance platform that orchestrates
 ```text
 GRC Command Center v1.2.0
 ├── Backend: FastAPI (Python 3.11, port 8001)
-│   ├── LLM: Groq (Llama 3.3 70B Versatile) — migrated from Gemini 2.5 Flash 2026-08-13
+│   ├── LLM: Groq (`openai/gpt-oss-120b`) — migrated from Gemini 2.5 Flash 2026-08-13; Groq retired
+│   │        `llama-3.3-70b-versatile` days later, re-pinned 2026-08-17, see MEMORY.md
 │   ├── Embeddings: all-MiniLM-L6-v2 (local HuggingFace)
 │   ├── Re-Ranker: cross-encoder/ms-marco-MiniLM-L-6-v2 (k=20 → top 10)
 │   ├── Vector Store: FAISS (with SHA-256 integrity hashing)
@@ -59,6 +62,7 @@ GRC_Command_Center/
 │   │   ├── logger.py              # Structured JSON logging with Correlation IDs
 │   │   ├── rag.py                 # RAGEngine: Vector Indexing & LLM Orchestration
 │   │   ├── tprm.py                # TPRM: 13-stage vendor egress/ingress assessment, risk acceptances
+│   │   ├── interview_sim.py       # TPRM Interview Simulator: mock-interview sessions grounded in real TPRM stage content, live-graded
 │   │   └── ws.py                  # Sync Event Bus: WebSocket stream management
 │   ├── data/
 │   │   ├── fixtures.json          # Initial GRC seeding data (policies, KPIs, framework mappings)
@@ -83,7 +87,8 @@ GRC_Command_Center/
 │       ├── ExecutiveTerminal.jsx   # High-level KPIs
 │       ├── OpsTerminal.jsx        # Job oversight (WebSocket synced)
 │       ├── KnowledgeTerminal.jsx  # Vector store and document metadata
-│       └── VendorRiskTerminal.jsx # TPRM: vendor risk register, stage review, sign-off (minRole analyst)
+│       ├── VendorRiskTerminal.jsx # TPRM: vendor risk register, stage review, sign-off (minRole analyst)
+│       └── InterviewSimTerminal.jsx # TPRM Interview Simulator: mock-interview practice, live grading (minRole analyst)
 │
 ├── Dockerfile.backend             # Production backend build
 ├── Dockerfile.frontend            # Production frontend build (Nginx)
@@ -126,6 +131,10 @@ GRC_Command_Center/
 
 ## Audit History
 
+- **Interview Simulator Sprint (Aug 18)**: TPRM Interview Simulator Tier 1 shipped
+  (`interview_sim.py` + `InterviewSimTerminal.jsx`) — mock-interview practice grounded in real
+  seeded TPRM stage content and real vendor GAP data, live Groq grading with an honest
+  `grading_failed` state (never a fabricated score). Smoke 44/44, pytest 50/50, browser-verified.
 - **Retrieval Sprint (Jul 18)**: RAG accuracy 44% → **86%** (k=10, 1000-char chunks, corpus repaired/expanded to 158 official docs, cross-encoder re-ranker). Fixed latent `.integrity` signer bug (true root cause of FAISS-INT-001). Corpus pinned against OneDrive dehydration; 7 truncated PDFs quarantined and substituted with official NIST/SEC/OWASP sources.
 - **Hardening Sprint (Apr 11)**: PostgreSQL 16 migration complete. Baseline smoke test reached **27/27 GREEN**. Implemented NullPool stability and independent user seeding.
 - **Zero-Trust (Apr 10)**: Registry pattern implemented in `agent.py`. All subprocess paths neutralized. 

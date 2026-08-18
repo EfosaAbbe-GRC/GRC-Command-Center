@@ -1,3 +1,57 @@
+# Session Log — 2026-08-18 ("The Interview Simulator, and What It's Actually Grading")
+
+**Outcome:** a new module shipped — the TPRM Interview Simulator — and the strongest evidence it
+works isn't the test count, it's a screenshot of it correctly failing a bad answer.
+
+**Where this came from:** the user surfaced a "GRC Analyst Agent" blueprint from an earlier
+claude.ai conversation that had never been recorded in this project's doc chain (three modules:
+a job-sourcing engine, an interview-prep simulator, a hands-on GRC mentor lab). Two decisions
+confirmed before any code: build the interview simulator first (not the sourcing engine — the
+existing Indeed/Dice cloud routine already does that job), and build it *inside*
+`GRC_Command_Center` rather than as a standalone project, reusing the existing stack instead of
+the blueprint's proposed OpenRouter/Crawl4AI one.
+
+**The reuse argument turned out to be the actual finding.** The blueprint assumed synthesizing
+mock-interview content from scratch. This project already had it: the 26 seeded TPRM stages carry
+real `guidance`/`review_questions`/`evidence_to_collect`, and `Meridian Cloud Storage` (seeded for
+the 2026-08-13 dogfooding pass) is a real mock vendor with real open GAP stages. Tier 1's whole
+design is assembling already-verified platform capability into a new surface, not building new
+infrastructure — see `Interview_Simulator_Roadmap.md` for the full "why this is smaller than it
+looks" case, drafted and EXECUTE-approved before any code (per `GOVERNANCE.md` §4.A).
+
+**Built:** `backend/core/interview_sim.py` (new router + two tables, mirrors `tprm.py`'s pattern of
+keeping its own models local rather than in shared `models.py`), a new `INTERVIEW_RUN` capability,
+`InterviewSimTerminal.jsx`. Session length genuinely varies by real data rather than a fixed
+question count — vendor-scoped sessions use however many GAP/IN_REVIEW stages a vendor actually
+has open; method-scoped sessions reuse `create_integration`'s own `applies_to_methods` filtering.
+Grading is a live Groq call (same bounded client config as `rag.py`) with an explicit
+`grading_failed` state — a failed call is surfaced honestly, never turned into a fabricated score.
+That design choice was deliberate from the start, not a fix found later: this project has a real,
+repeated history (the Groq-outage incident, ExecutiveTerminal's fixture KPIs) of a failure state
+quietly reporting as a clean result, and this module was built to not repeat it.
+
+**Verification, and why the screenshot matters more than the numbers:** smoke 44/44 (no
+regression), full pytest 50/50 (38 prior + 12 new — kept deliberately LLM-call-frugal, only one
+test in the new file actually hits the live Groq grading endpoint, given the documented shared
+200k-token/day budget). A Playwright browser pass came back 9/9, zero console errors, zero failed
+requests — but the number that actually proves the feature *works as intended*, not just that it
+runs without crashing, is that an intentionally weak, off-topic test answer was graded **5/100**
+across all three rubric dimensions with specific, non-generic feedback naming exactly what was
+missing. A grader that gives everything a high score would still pass all 9 browser checks; this
+one doesn't, which is the whole point.
+
+**Committed and pushed** (`0e60631`) — draft → EXECUTE → verify → commit → push, same loop as
+every other change in this project.
+
+**Separately, the same session:** the user asked for guidance on building hands-on GRC experience
+more broadly (not just tooling), which led to auditing `GRC resources/`'s Career Lab and finding
+its own tracker had drifted (a fully-drafted project marked "Not Started"); then to a
+workspace-wide doc-chain standardization pass across the whole `GRC Inspector` parent folder. Both
+are recorded in that parent workspace's own `SESSION.md`/`CLAUDE.md`, not duplicated here — this
+project's own state didn't change as a result of that pass beyond what's recorded above.
+
+---
+
 # Session Log — 2026-08-17d ("The Corpus Refresh, and a Fake 96%")
 
 **Outcome:** the user ran a full corpus curation pass, and the measurement of it exposed the same

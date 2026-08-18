@@ -311,3 +311,26 @@ defect). HANDOFF.md refreshed at session close.
   the architecture). **Open:** `diagnose_rag.py`/`validate_diagnostic.py` (parked RAG-diagnostic
   tooling) still pinned to Gemini and now non-functional, not migrated (out of scope, low priority);
   `rag_benchmark.py`'s 92% figure not yet re-run against Groq to confirm it still holds.
+
+- [x] **TPRM Interview Simulator, Tier 1** *(2026-08-18)*: new module, not a fix to an existing one.
+  Picked up a "GRC Analyst Agent" idea from an earlier claude.ai conversation (never recorded in
+  this project's own doc chain, which is why it wasn't in `MEMORY.md`) — scoped down from that
+  blueprint's OpenRouter/Crawl4AI stack to reuse what this repo already has. New
+  `backend/core/interview_sim.py`: two tables (`interview_sessions`, `interview_turns`), questions
+  drawn from the real 26 seeded TPRM stages' `guidance`/`review_questions`/`evidence_to_collect`
+  (vendor-scoped sessions interview against a vendor's actual open GAP/IN_REVIEW stages; method-
+  scoped sessions use the real `applies_to_methods` filtering `create_integration` already uses —
+  session length varies by real data, no fixed question count). Live Groq grading (same
+  `max_retries=2, timeout=30` client config as `rag.py`) returns a 3-dimension rubric + feedback;
+  an explicit `grading_failed` state means a failed grading call is never reported as a fabricated
+  score — same honesty pattern as `_is_engine_failure`/ExecutiveHonesty. New `INTERVIEW_RUN`
+  capability (analyst role), new `InterviewSimTerminal.jsx` registered in `App.jsx` +
+  `TerminalSwitcher.jsx`. Full design rationale, the "why this is smaller than it looks" reuse
+  argument, and the Tier 2/3 backlog (Framework Mapper hook, more scenario sources, session
+  analytics) are in `Interview_Simulator_Roadmap.md`.
+  **Verified, not just claimed:** smoke **44/44** (no regression), full pytest **50/50** (38 prior +
+  12 new — deliberately LLM-call-frugal given the shared Groq daily token budget), and a Playwright
+  browser pass (9/9 checks, zero console errors, zero failed requests) — the meaningful evidence
+  there is a *screenshot*: an intentionally weak, off-topic test answer was graded **5/100** across
+  all three rubric dimensions with specific feedback naming exactly what was missing, not a
+  rubber-stamped high score. Committed and pushed (`0e60631`).
