@@ -39,6 +39,7 @@ from core.auth import (
 )
 from core.ws import manager
 from core.tprm import router as tprm_router   # also registers TPRM models on Base.metadata
+from core.interview_sim import router as interview_sim_router   # also registers Interview Simulator models on Base.metadata
 from schemas import (
     StatusResponse, GRCQuery, ChatResponse, PolicyItem, 
     JobItem, ExecutiveStats, NotebookItem, AgentResult, HealthResponse,
@@ -87,6 +88,7 @@ async def lifespan(app):
             ("TPRM_VIEW",       "View third-party risk assessments",                 "analyst"),
             ("TPRM_ASSESS",     "Create/score integrations and submit stages",       "analyst"),
             ("TPRM_SIGNOFF",    "Sign risk acceptances and approve integrations",    "admin"),
+            ("INTERVIEW_RUN",   "Run TPRM interview-simulator practice sessions",    "analyst"),
         ]
         for name, desc, role in policies:
             result = await session.execute(select(PolicyModel).where(PolicyModel.name == name))
@@ -140,6 +142,9 @@ app.add_middleware(
 
 # --- TPRM MODULE ROUTER ---
 app.include_router(tprm_router, prefix="/api/v1/tprm", tags=["tprm"])
+
+# --- TPRM INTERVIEW SIMULATOR ROUTER ---
+app.include_router(interview_sim_router, prefix="/api/v1/interview-sim", tags=["interview-sim"])
 
 # --- WEBSOCKET STREAM ---
 
