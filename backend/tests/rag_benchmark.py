@@ -16,6 +16,27 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "grc-admin-2026"
 OUTPUT_FILE = "rag_benchmark_results.json"
 
+# /chat returns HTTP 200 with an error message in the BODY when the LLM call fails, so
+# status_code alone cannot detect failure. Keep in sync with core/agent.py's
+# _ENGINE_FAILURE_MARKERS -- deliberately duplicated rather than imported, because this
+# script runs on the HOST against the container's exposed port and cannot import core.*
+# (that pulls in langchain and the whole backend stack). Four rarely-changing strings;
+# the duplication is the cheaper risk. See Benchmark_Scorer_Honesty_refactor.md.
+ENGINE_FAILURE_MARKERS = (
+    "i encountered an error processing your request",
+    "security alert: knowledge base integrity check failed",
+    "error loading index:",
+    "rag engine not initialized",
+)
+
+
+def is_engine_failure(answer: str) -> bool:
+    """An engine failure is neither a refusal nor an answer."""
+    if not answer or not answer.strip():
+        return True
+    low = answer.lower()
+    return any(m in low for m in ENGINE_FAILURE_MARKERS)
+
 # 50 Targeted GRC Queries
 QUERIES = [
     # NIST AI RMF / CSF 2.0
@@ -104,9 +125,11 @@ def run_benchmark():
     token = authenticate()
     if not token:
         sys.exit(1)
-        
+
     headers = {"Authorization": f"Bearer {token}"}
     results = []
+    consecutive_errors = 0
+    aborted_at = None
     summary = {
         "total": len(QUERIES),
         "answered": 0,
@@ -143,7 +166,16 @@ def run_benchmark():
                 # a strict prefix check let those slip through as false ANSWERED
                 # (found 2026-08-05, present in every prior run, see
                 # RAG_Benchmark_Report_v6.md and MEMORY.md).
-                if "INSUFFICIENT_DATA" in answer:
+                # Checked BEFORE the INSUFFICIENT_DATA / length branches: an engine
+                # failure is neither a refusal nor an answer. /chat returns HTTP 200
+                # with the error in the BODY, so status_code cannot detect it, and the
+                # 44-char error string satisfied `len(answer) > 20` -- which scored 32
+                # rate-limit errors as correct and produced a fake 96% on 2026-08-17.
+                # See Benchmark_Scorer_Honesty_refactor.md.
+                if is_engine_failure(answer):
+                    outcome = "ERROR (Engine Failure)"
+                    summary["error"] += 1
+                elif "INSUFFICIENT_DATA" in answer:
                     outcome = "INSUFFICIENT_DATA"
                     summary["insufficient_data"] += 1
                 elif len(answer) > 20:
@@ -174,12 +206,35 @@ def run_benchmark():
         # Live feedback
         print(f"{i+1:<3} | {outcome:<18} | {latency:<8} | {sources_count:<8}")
 
+        # Once the backend is down or the daily token budget is exhausted, every
+        # remaining query fails too. Stop rather than manufacture dozens of
+        # meaningless rows and a polluted archive (2026-08-17: 40 such rows).
+        if outcome.startswith("ERROR"):
+            consecutive_errors += 1
+            if consecutive_errors >= 3:
+                print(f"\n!! ABORTING after {i+1} queries -- 3 consecutive engine failures.")
+                print("!! Check GET /api/v1/readiness and the backend logs (rate limit?).")
+                aborted_at = i + 1
+                break
+        else:
+            consecutive_errors = 0
+
     # Calculate final accuracy
     accuracy_pct = round((summary["answered"] / summary["total"]) * 100, 2)
     avg_latency = round(summary["total_latency"] / summary["total"], 2)
-    
+
     summary["accuracy_percentage"] = accuracy_pct
     summary["avg_latency"] = avg_latency
+
+    # A run containing ANY engine error is not a comparable measurement: the
+    # denominator is intact but the numerator is contaminated. Flag it in the JSON so
+    # a future reader cannot mistake it for a real data point.
+    summary["valid"] = (summary["error"] == 0 and aborted_at is None)
+    if not summary["valid"]:
+        summary["invalid_reason"] = (
+            f"{summary['error']} engine failure(s)"
+            + (f"; aborted at query {aborted_at}/{summary['total']}" if aborted_at else "")
+        )
     
     # Save to file
     final_output = {
@@ -197,6 +252,15 @@ def run_benchmark():
     print(f"System Errors: {summary['error']}")
     print(f"Full results saved to {OUTPUT_FILE}")
     print("=" * 50)
+
+    if not summary["valid"]:
+        print("!! RUN INVALID -- DO NOT QUOTE THIS ACCURACY FIGURE")
+        print(f"!! {summary['invalid_reason']}")
+        print("!! Engine failures are NOT answers. Re-run once the backend is healthy;")
+        print("!! on Groq's free tier the daily token budget (200k TPD) allows roughly")
+        print("!! one full 50-query run per day, shared with all other LLM features.")
+        print("=" * 50)
+        sys.exit(1)
 
 if __name__ == "__main__":
     run_benchmark()

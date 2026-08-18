@@ -1,3 +1,60 @@
+# Session Log — 2026-08-17d ("The Corpus Refresh, and a Fake 96%")
+
+**Outcome:** the user ran a full corpus curation pass, and the measurement of it exposed the same
+defect class for the third time in one day.
+
+**The corpus work (user-led, and it was the right call).** He proposed manually cleaning the corpus
+and wanting "original standardized documents". Auditing what was actually there validated that hard
+(`Corpus_Audit_2026-08-17.md`): **90 MB of the corpus yielded zero retrievable text** — image/carousel
+exports that look healthy in a file listing and are invisible to RAG. The sharpest case: a file named
+`ISO_27001_2022_the_significance_of_Clause_4.pdf`, clearly added to serve benchmark query #14,
+contributing nothing. Eleven more files were text-starved (50-300 chars/page) and benchmark queries
+pointed straight at several. And several "framework" files turned out to be commentary — `Nist Csf
+2.0.pdf` was a third-party **audit checklist**, which directly explained why #6 had always failed
+("names the tiers but never defines them").
+
+Ran it as a gated procedure (`Corpus_Refresh_Runbook.md`): remove the provably useless first, stage
+downloads in `_incoming/`, **validate at the gate before admission** (valid PDF, `%%EOF`, >300
+chars/page, and page 1 confirming it is the publication not a summary), retire superseded files only
+once their replacement is in, then one ingest. 12 files admitted — NIST CSF 2.0 (CSWP 29), SP 800-61
+r2+r3, SP 800-171r3, the GDPR regulation text, AICPA Trust Services Criteria, IIA Three Lines Model,
+PCI DSS 4.0.1, CMMC, ENISA NIS2 guidance and both EU Implementing Regulation parts. Net across the
+session: **158 → 153 files, 684 MB → 460 MB**, but **chunks went UP (17,088 → 17,498)** — dense text
+replacing images. Two useful catches along the way: `B0DF8Z5HTT.pdf` was a 45 MB CompTIA Security+
+textbook hiding behind a meaningless filename, and NIST now ships 800-61r2 with a **withdrawn**
+notice, so it was renamed to carry that status into any citation.
+
+**Then the measurement lied.** v8 reported **96.0% (48/50)** — the best score ever recorded. It was
+false. Groq's free tier caps at **200,000 tokens/day**; the run exhausted it at query #11 ("Used
+199,902") and every subsequent query returned `429`. `/chat` returns **HTTP 200 with the error in the
+body**, so the scorer's `status_code == 200` passed and the 44-character error string satisfied
+`len(answer) > 20` → **ANSWERED**. 32 errors were scored as correct.
+
+**This is the same defect class found and fixed twice earlier the same day** — `active-auditor`
+reporting "4/4 substantiated" from four failed queries, and `smoke_test.py` reporting 43/43 through a
+total outage. Both were fixed hours before; the benchmark was not checked. Every instance asks *"is
+there a response?"* instead of *"is the response real?"*
+
+Fixed (`Benchmark_Scorer_Honesty_refactor.md`): engine failures checked first and scored ERROR, three
+consecutive failures abort the run, any run with an error is stamped `"valid": false` with a
+DO-NOT-QUOTE banner, and the script **exits non-zero**. **Verified by reproducing the failure first**
+— using the bogus-model trick so it consumed zero tokens — where the old code gave 96%, the new code
+aborts after 3 queries and exits 1.
+
+**What is and isn't known now.** The corpus refresh is done, verified and sound. Its *measurement does
+not exist*: **v7's 90% remains the current figure**, the contaminated archive is quarantined as
+`rag_benchmark_results.v8_INVALID_rate_limited.json`, and a clean v8 is the first task next session.
+The only salvageable signal is queries #1-10: **9/10 vs v7's 8/10 with #6 recovered** — confirmed
+independently by a live query citing the new CSF document. #4 still fails, exactly as predicted, since
+it is the enumeration/chunking problem that corpus curation was never going to fix.
+
+**A useful side-effect:** this confirms v7's unproven latency hypothesis. The 6.6s → 16.86s
+"regression" was throttling as the token budget depleted, not a slower model. And it establishes a
+hard operational constraint: **one benchmark run per day, and running it can take the app's AI
+features down for the rest of that day.**
+
+---
+
 # Session Log — 2026-08-17c ("The Benchmark That Found the Engine Was Dead")
 
 **Outcome:** Set out to run the oldest open item — re-run `rag_benchmark.py` against Groq. The

@@ -9,6 +9,22 @@
 > `OpsTerminal_EmptyState_refactor.md`. Read `SESSION.md`'s 2026-08-16/17 entry (top of file) for the
 > narrative.
 >
+> ## 🔴 FIRST THING NEXT SESSION: run a clean v8 benchmark
+>
+> The corpus refresh **is complete and verified** — 153 PDFs / 460 MB, 17,498 chunks, integrity
+> manifest signed, readiness green, and the newly-added `NIST CSF 2.0 (CSWP 29).pdf` demonstrably
+> answers the CSF Tier question that had been failing since v1. **What does not exist is its
+> measurement.** The v8 run hit Groq's 200k/day token cap at query #11 and the (then-unfixed) scorer
+> counted 32 rate-limit errors as correct answers, reporting a fake 96%.
+>
+> - Scorer is now fixed (`Benchmark_Scorer_Honesty_refactor.md`) — errors abort the run, mark it
+>   `"valid": false`, and exit non-zero. Verified by reproducing the failure.
+> - Bad archive quarantined as `rag_benchmark_results.v8_INVALID_rate_limited.json` — **never cite it**.
+> - **Current accuracy figure is still v7's 90%.**
+> - **Budget the day around it:** a 50-query run consumes most of the 200k daily allowance, and every
+>   other LLM feature draws from the same pool. Run the benchmark FIRST, before interactive chat or
+>   agent runs, or it will fail partway again.
+>
 > ## ▶ NEXT SESSION — start here (set 2026-08-17)
 >
 > **These are ordered by value, NOT by dependency — items 1-3 are independent and none blocks

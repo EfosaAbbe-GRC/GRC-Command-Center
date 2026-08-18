@@ -1,0 +1,413 @@
+{
+    "summary": {
+        "total": 50,
+        "answered": 48,
+        "insufficient_data": 2,
+        "error": 0,
+        "total_latency": 385.47999999999996,
+        "accuracy_percentage": 96.0,
+        "avg_latency": 7.71
+    },
+    "results": [
+        {
+            "id": 1,
+            "query": "What are the four core functions of the NIST AI Risk Management Framework?",
+            "outcome": "ANSWERED",
+            "latency": 2.99,
+            "sources_count": 1,
+            "answer": "The NIST AI Risk Management Framework defines four core functions:\n\n1. **GOVERN** \u2013 establishes cross\u2011cutting governance structures and processes for AI risk management.  \n2. **MAP** \u2013 identifies and contextualizes AI risks, including the broader contributing factors.  \n3. **MEASURE** \u2013 applies quantitative, qualitative, or mixed\u2011method approaches to assess, benchmark, and monitor AI risks and impacts.  \n4. **MANAGE** \u2013 prioritizes, responds to, and continuously monitors AI risks, including post\u2011deployment monitoring, incident handling, and continual improvement."
+        },
+        {
+            "id": 2,
+            "query": "What is the difference between AI-specific risks and traditional IT risks according to NIST AI RMF?",
+            "outcome": "ANSWERED",
+            "latency": 3.56,
+            "sources_count": 3,
+            "answer": "**Difference between AI\u2011specific risks and traditional IT (software) risks according to the NIST AI RMF**\n\nThe NIST AI RMF (Appendix\u202fB) states that, while AI systems can exhibit many of the same risk dimensions as traditional software (e.g., enterprise\u2011wide impact, potential societal consequences), they also introduce a set of **new or heightened risks** that are not comprehensively addressed by existing risk frameworks for conventional software. The AI\u2011specific risks highlighted include:\n\n| AI\u2011specific risk (new or increased) | Why it differs from traditional software risk |\n|--------------------------------------|----------------------------------------------|\n| **Data representation mismatch** \u2013 The data used to build an AI system may not accurately represent the intended context or use case, and the ground truth may be missing or unavailable. | Traditional software typically relies on deterministic inputs and well\u2011defined specifications; AI models depend on statistical patterns in training data, making data quality and relevance a distinct risk factor. |\n| **Difficulty performing regular AI\u2011based testing** \u2013 Determining what to test and how to test AI systems is challenging because they are not subject to the same controls as conventional code development. | Conventional software testing follows established code\u2011level test suites and coverage metrics; AI models require testing of model behavior, performance drift, and emergent properties, which lack standardised methods. |\n| **Privacy risk from enhanced data aggregation** \u2013 AI systems can combine large, diverse datasets, increasing the potential for privacy breaches. | Traditional applications may handle limited or well\u2011scoped data; AI\u2019s ability to aggregate and infer from massive data sets creates a higher\u2011impact privacy exposure. |\n| **Underdeveloped software testing standards and documentation** \u2013 There is a lack of mature standards for documenting AI\u2011specific development practices, except for the simplest cases. | Traditional software benefits from long\u2011standing standards (e.g., ISO/IEC 12207, CMMI) that prescribe documentation and testing rigor; such standards are still emerging for AI. |\n| **Harmful bias and related data issues** \u2013 Training data may embed bias, leading to unfair or discriminatory outcomes. | Conventional software bugs are typically functional or performance\u2011related; bias is a socio\u2011technical risk unique to data\u2011driven AI models. |\n| **Ground\u2011truth absence** \u2013 In many AI contexts, a definitive \u201ccorrect\u201d answer does not exist, complicating validation. | Traditional software can often be validated against explicit functional specifications; AI validation must contend with probabilistic or subjective outcomes. |\n\nIn summary, **AI\u2011specific risks** arise from the **data\u2011centric, statistical, and adaptive nature of AI systems**, leading to challenges in testing, documentation, privacy, and bias that are **not prevalent or are less pronounced in traditional IT/software risk landscapes**. The NIST AI RMF emphasizes that these differences require distinct risk\u2011identification, assessment, and management approaches beyond those used for conventional software."
+        },
+        {
+            "id": 3,
+            "query": "How does NIST CSF 2.0 address supply chain risk management?",
+            "outcome": "ANSWERED",
+            "latency": 3.77,
+            "sources_count": 5,
+            "answer": "NIST\u202fCSF\u202f2.0 incorporates supply\u2011chain risk management throughout the **Governance (GV) \u2013 Cybersecurity Supply Chain (SC)** set of subcategories.  The framework establishes a structured, repeatable approach that includes the following elements:\n\n| CSF Subcategory | How it addresses supply\u2011chain risk management |\n|-----------------|-----------------------------------------------|\n| **GV.SC\u201101** \u2013 \u201cA cybersecurity supply chain risk management program, strategy, objectives, policies, and processes are established and agreed to by organizational stakeholders.\u201d | Requires the organization to create and obtain stakeholder approval for a formal C\u2011SCRM program that defines its overall strategy, goals, policies, and supporting processes. |\n| **GV.SC\u201102** \u2013 \u201cCybersecurity roles and responsibilities for suppliers, customers, and partners are established, communicated, and coordinated internally and externally.\u201d | Mandates clear assignment and communication of supply\u2011chain\u2011related security duties to both internal teams and external parties. |\n| **GV.SC\u201105** \u2013 \u201cRequirements to address cybersecurity risks in supply chains are established, prioritized, and integrated into contracts and other types of agreements with suppliers and other relevant third parties.\u201d | Calls for the inclusion of security\u2011performance criteria, vulnerability/ threat/ incident\u2011disclosure, and information\u2011sharing requirements directly in supplier contracts and agreements. |\n| **GV.SC\u201106** \u2013 \u201cPlanning and due diligence are performed to reduce risks before entering into formal supplier or other third\u2011party relationships.\u201d | Requires pre\u2011engagement activities such as risk\u2011based due\u2011diligence assessments and planning to mitigate supply\u2011chain risks prior to contract award. |\n| **GV.SC\u201107** \u2013 \u201cThe risks posed by a supplier, their products and services, and other third parties are understood, recorded, prioritized, assessed, responded to, and monitored over the course of the relationship.\u201d | Establishes continuous risk\u2011management activities (identification, documentation, prioritization, assessment, response, and ongoing monitoring) for all suppliers throughout the lifecycle of the relationship. |\n| **GV.SC\u201108** \u2013 \u201cRelevant suppliers and other third parties are included in incident planning, response, and recovery activities.\u201d | Integrates suppliers into the organization\u2019s incident\u2011response and recovery processes, ensuring coordinated actions when a supply\u2011chain\u2011related incident occurs. |\n| **GV.SC\u201109** \u2013 \u201cSupply chain security practices are integrated into cybersecurity and \u2026\u201d *(text truncated in the source)* | Directs the organization to embed supply\u2011chain security controls within its broader cybersecurity program, aligning C\u2011SCRM with overall security governance. |\n\nIn addition to the subcategories, the context cites **best\u2011practice guidance** that supports these CSF elements:\n\n* Development and maintenance of a **Supply Chain Risk Management Plan** (SR\u20112) covering the full system lifecycle\u2014from research and development through disposal\u2014and protecting that plan from unauthorized disclosure or modification.  \n* Alignment of CSF with other NIST resources (e.g., RMF, SP\u202f800\u2011161, SP\u202f800\u2011160) to embed supply\u2011chain considerations into risk\u2011management, privacy, and secure\u2011software\u2011development processes.  \n* Use of automated, centralized platforms (e.g., Mitratech) to collect, analyze, remediate, and report on supplier controls, thereby scaling the CSF\u2011based C\u2011SCRM program.\n\nCollectively, NIST\u202fCSF\u202f2.0 addresses supply\u2011chain risk management by **defining governance\u2011level expectations, embedding security requirements into contracts, enforcing pre\u2011engagement due diligence, maintaining continuous risk monitoring, and ensuring supplier participation in incident handling**, all of which are supported by detailed implementation examples and cross\u2011referenced NIST special publications."
+        },
+        {
+            "id": 4,
+            "query": "List the core outcomes of the 'Govern' function in NIST AI RMF.",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 16.9,
+            "sources_count": 3,
+            "answer": "INSUFFICIENT_DATA: The provided compliance frameworks do not contain this information."
+        },
+        {
+            "id": 5,
+            "query": "Explain the 'Map' function in NIST AI RMF 1.0.",
+            "outcome": "ANSWERED",
+            "latency": 15.37,
+            "sources_count": 1,
+            "answer": "**Explanation of the \u201cMAP\u201d Function in NIST AI RMF\u202f1.0**\n\nThe MAP function is one of the four core functions of the NIST AI Risk Management Framework (AI\u202fRMF) and is designed to help organizations **identify, document, and understand the context\u2011specific risks and contributing factors associated with an AI system**. Its primary purpose is to provide the knowledge base that enables effective risk assessment, measurement, and management throughout the AI lifecycle.\n\n### Core Objectives\n1. **Establish and Understand Context** \u2013 Capture the intended purposes, beneficial uses, applicable laws, norms, expectations, and deployment settings of the AI system (MAP\u202f1.1). This includes documenting user groups, potential positive/negative impacts on individuals, communities, organizations, society, and the planet, as well as assumptions and limitations related to the system\u2019s purpose and risks.\n\n2. **Incorporate Interdisciplinary Perspectives** \u2013 Ensure that the actors, competencies, skills, and capacities involved in establishing context reflect demographic diversity and broad domain expertise (MAP\u202f1.2). Participation of these actors is documented, and opportunities for interdisciplinary collaboration are prioritized.\n\n3. **Define AI Capabilities, Goals, and Benefits/Costs** \u2013 Clarify the AI system\u2019s capabilities, targeted usage, expected benefits, and associated costs (both monetary and non\u2011monetary) relative to benchmarks (MAP\u202f3 and its subcategories). This includes documenting potential benefits (MAP\u202f3.1), potential costs from errors or trustworthiness issues (MAP\u202f3.2), and the scoped application based on capability and context (MAP\u202f3.3).\n\n4. **Identify Scientific Integrity and TEVV (Traceability, Explainability, Validity, and Verifiability) Considerations** \u2013 Document aspects of experimental design, data collection, representativeness, suitability, system trustworthiness, and construct validation (MAP\u202f2.3).\n\n5. **Engage Ongoing Stakeholder Feedback** \u2013 Establish practices and personnel for regular engagement with relevant AI actors, integrating feedback about positive, negative, and unanticipated impacts (MAP\u202f5.2).\n\n### Relationship to Other Functions\n- **Input to MEASURE** \u2013 The contextual knowledge and risk identification performed in MAP serve as the foundation for the MEASURE function, which evaluates safety, security, transparency, accountability, and other trustworthiness metrics.\n- **Input to MANAGE** \u2013 MAP outcomes inform the prioritization and response planning performed in the MANAGE function.\n- **Support for GOVERN** \u2013 By defining roles, responsibilities, and processes, MAP contributes to the cross\u2011cutting governance activities that span all stages of AI risk management.\n\n### Implementation Enhancements\n- **Diverse Interdisciplinary Participation** \u2013 Actively involve actors from varied demographics and expertise areas to capture a comprehensive view of context and risk.\n- **Documentation** \u2013 Systematically record all contextual elements, assumptions, intended uses, and stakeholder inputs to create a traceable evidence base.\n- **Continuous Updating** \u2013 As the AI system evolves or is deployed in new settings, MAP activities should be revisited to refresh contextual understanding and risk identification.\n\nIn summary, the MAP function **provides the organization with a structured process to map the AI system\u2019s context, purposes, stakeholders, and risk factors**, thereby enabling informed decision\u2011making, risk prioritization, and responsible AI governance throughout the system\u2019s lifecycle."
+        },
+        {
+            "id": 6,
+            "query": "What are the Tier 1 thru Tier 4 implementation levels in NIST CSF 2.0?",
+            "outcome": "ANSWERED",
+            "latency": 18.47,
+            "sources_count": 5,
+            "answer": "**NIST CSF\u202f2.0 Tier Implementation Levels**\n\n| Tier | Designation (implementation level) | Brief characterization (as defined in the CSF 2.0 context) |\n|------|-----------------------------------|-----------------------------------------------------------|\n| **Tier\u202f1** | **Partial** | Cybersecurity risk governance and management are performed in an ad\u2011hoc, irregular manner. Prioritization is not formally based on objectives or the threat environment, and awareness of cybersecurity risks at the organizational level is limited. |\n| **Tier\u202f2** | **Risk\u2011Informed** | (Name of the tier is provided in the framework; detailed characteristics are not included in the supplied excerpt.) |\n| **Tier\u202f3** | **Repeatable** | (Name of the tier is provided in the framework; detailed characteristics are not included in the supplied excerpt.) |\n| **Tier\u202f4** | **Adaptive** | (Name of the tier is provided in the framework; detailed characteristics are not included in the supplied excerpt.) |\n\n**Summary**\n\n- **Tier\u202f1 \u2013 Partial:** Minimal, ad\u2011hoc governance and management of cybersecurity risk.  \n- **Tier\u202f2 \u2013 Risk\u2011Informed:** A higher level of rigor where risk considerations are formally incorporated into governance and management activities.  \n- **Tier\u202f3 \u2013 Repeatable:** Established, repeatable processes for risk governance and management across the organization.  \n- **Tier\u202f4 \u2013 Adaptive:** Continuous improvement and adaptive capabilities that evolve with changing risks and business objectives.  \n\n*Note: The context supplies the tier names and a detailed description for Tier\u202f1; the framework defines Tier\u202f2, Tier\u202f3, and Tier\u202f4 primarily by their designations (Risk\u2011Informed, Repeatable, Adaptive).*"
+        },
+        {
+            "id": 7,
+            "query": "How should organizations manage bias in AI models according to NIST?",
+            "outcome": "ANSWERED",
+            "latency": 22.9,
+            "sources_count": 4,
+            "answer": "**Management of bias in AI models \u2013 NIST guidance**\n\n1. **Identify the three bias categories**  \n   * **Systemic bias** \u2013 originates in data sets, organizational norms, processes, and the broader societal context.  \n   * **Computational and statistical bias** \u2013 arises from non\u2011representative samples or systematic errors in data and algorithmic processes.  \n   * **Human\u2011cognitive bias** \u2013 reflects how individuals or groups perceive AI outputs, fill information gaps, or form expectations about AI purposes and functions.\n\n2. **Incorporate bias considerations throughout the AI lifecycle**  \n   * **Design & development** \u2013 evaluate data provenance and representativeness; assess organizational practices that may embed systemic bias; apply privacy\u2011enhancing technologies (PETs) while monitoring trade\u2011offs with accuracy and fairness.  \n   * **Implementation & operation** \u2013 monitor system logs for anomalous patterns that could indicate biased behavior; conduct continuous performance, fairness, explainability, and transparency reviews.  \n   * **Maintenance & governance** \u2013 periodically reassess bias controls, update AI policies and procedures, and document outcomes.\n\n3. **Apply explicit risk\u2011management activities**  \n   * **Bias testing & fairness audits** \u2013 perform systematic bias testing and fairness metric calculations as part of a continuous\u2011improvement cycle.  \n   * **Transparency documentation** \u2013 maintain and audit documentation that explains data sources, model assumptions, and fairness\u2011related decisions.  \n   * **Metrics & indicators** \u2013 use the AI RMF\u2019s mapping, measuring, and managing processes to establish bias\u2011related indicators and track remediation effectiveness.\n\n4. **Mitigate harmful bias while recognizing limits**  \n   * Reduce harmful bias through targeted mitigation strategies (e.g., rebalancing data, adjusting model thresholds) but recognize that a system with \u201charmful bias managed\u201d is not automatically \u201cfair.\u201d  \n   * Consider cultural and domain\u2011specific perceptions of fairness; tailor risk\u2011management approaches to reflect these differences.\n\n5. **Governance and accountability**  \n   * Assign responsibility for bias management to senior leadership, organizational management, and the Board of Directors.  \n   * Ensure third\u2011party providers are evaluated for alignment with the organization\u2019s bias\u2011management tolerances and that their contributions are included in bias\u2011assessment activities.\n\n6. **Continuous evaluation of the AI RMF**  \n   * Periodically evaluate whether the AI RMF has improved the organization\u2019s ability to manage bias (e.g., through policy effectiveness, process enhancements, and measured outcomes).  \n   * Incorporate lessons learned from audits, regulatory changes, and evolving risk landscapes into updated bias\u2011management controls.\n\n**Summary:**  \nNIST directs organizations to systematically identify systemic, computational/statistical, and human\u2011cognitive biases; embed bias\u2011identification and mitigation activities across the entire AI lifecycle; conduct regular bias testing, fairness audits, and transparency documentation; assign clear governance responsibility; and continuously evaluate the effectiveness of these controls using the AI Risk Management Framework."
+        },
+        {
+            "id": 8,
+            "query": "What is the role of 'Measure' in the AI RMF lifecycle?",
+            "outcome": "ANSWERED",
+            "latency": 20.3,
+            "sources_count": 2,
+            "answer": "**Role of \u201cMeasure\u201d in the AI RMF lifecycle**\n\nThe **MEASURE** function is the analytical and monitoring component of the AI Risk Management Framework. Its role is to:\n\n1. **Apply measurement methods** \u2013 Use quantitative, qualitative, or mixed\u2011method tools, techniques, and methodologies to **analyze, assess, benchmark, and monitor AI risks and related impacts**.  \n2. **Leverage MAP outputs** \u2013 Draw on the risk information and trustworthiness characteristics identified during the **MAP** function to select appropriate metrics and approaches.  \n3. **Generate evidence for management** \u2013 Produce documented measurement results (e.g., safety, security, transparency, accountability, explainability, fairness) that **inform the MANAGE function** and support decisions about mitigation, remediation, and ongoing governance.  \n4. **Support continuous risk oversight** \u2013 Conduct regular testing and evaluation of AI systems before deployment and throughout operation, documenting system functionality, trustworthiness, and performance trends (including improvements or declines).  \n5. **Integrate stakeholder feedback** \u2013 Incorporate input from domain experts, end\u2011users, and other AI actors to validate that the system is performing consistently as intended and to refine measurement approaches.  \n\nIn summary, **MEASURE** provides the systematic, evidence\u2011based assessment of AI risks that bridges risk identification (MAP) and risk mitigation/operational control (MANAGE) across the AI system lifecycle."
+        },
+        {
+            "id": 9,
+            "query": "What are the key changes in ISO 27001:2022 compared to the 2013 version?",
+            "outcome": "ANSWERED",
+            "latency": 18.68,
+            "sources_count": 3,
+            "answer": "**Key changes in ISO\u202fIEC\u202f27001:2022 compared with ISO\u202fIEC\u202f27001:2013 (as described in the provided context)**  \n\n1. **Adoption of the ISO \u201cHarmonized Structure\u201d (Annex\u202fSL)**  \n   * The 2022 edition aligns with the revised Annex\u202fSL of the ISO/IEC Directives (2021).  \n   * Because the overall clause structure of Annex\u202fSL changed, the main chapters of ISO\u202fIEC\u202f27001 have been **re\u2011organized and renamed** to fit the new uniform layout used by other management\u2011system standards (e.g., ISO\u202f9001, ISO\u202f14001, ISO\u202f22301).\n\n2. **Resulting changes to the main chapters**  \n   * The restructuring of the standard\u2019s primary sections is the direct outcome of the Harmonized Structure adoption. (The specific chapter titles or numbering are not listed in the excerpt.)\n\n3. **Transition and certification requirements**  \n   * The International Accreditation Forum\u2019s \u201cTransition Requirements for ISO\u202fIEC\u202f27001:2022\u201d defines a **three\u2011year transition period** (until\u202f31\u202fOct\u202f2025) for organizations with an existing ISO\u202fIEC\u202f27001:2013\u2011certified ISMS to adapt their controls to the 2022 version.  \n   * Certification bodies must begin issuing certificates to the 2022 edition **no later than 31\u202fOct\u202f2023**.\n\nThese points constitute the changes explicitly mentioned in the supplied material. No additional detail on specific clause or control modifications is provided in the context."
+        },
+        {
+            "id": 10,
+            "query": "Explain the purpose of Annex A.5.7 (Threat Intelligence) in ISO 27001.",
+            "outcome": "ANSWERED",
+            "latency": 21.39,
+            "sources_count": 7,
+            "answer": "**Purpose of Annex\u202fA.5.7 (Threat Intelligence) in ISO\u202f27001**\n\nAnnex\u202fA.5.7 defines the \u201cThreat intelligence\u201d control. Its purpose is to require the organization to **collect, evaluate, and maintain information about its specific threat environment** so that it can **take appropriate reactive measures** against identified threats. By establishing a structured threat\u2011intelligence process, the organization gains awareness of emerging and existing threats, enabling timely and effective mitigation actions that support the overall information\u2011security objectives of ISO\u202f27001."
+        },
+        {
+            "id": 11,
+            "query": "What is ISO/IEC 42001 and how does it relate to AI Management Systems?",
+            "outcome": "ANSWERED",
+            "latency": 11.45,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 12,
+            "query": "List the mandatory documentation required for ISO 27001 certification.",
+            "outcome": "ANSWERED",
+            "latency": 3.18,
+            "sources_count": 6,
+            "answer": "**Mandatory documentation required for ISO\u202f27001 certification (as specified in the provided context):**\n\n- **Information security guideline** \u2013 the minimum required document referenced in ISO/IEC\u202f27001:2022, Section\u202f5.2\u202f(e)."
+        },
+        {
+            "id": 13,
+            "query": "How does ISO 27001:2022 address cloud security controls?",
+            "outcome": "ANSWERED",
+            "latency": 17.63,
+            "sources_count": 3,
+            "answer": "ISO\u202f27001:2022 includes a specific control for cloud environments \u2013 **Control\u202f5.23\u202fInformation security for use of cloud services**.  \nThe control requires the organization to **specify and manage information\u2011security requirements for cloud services** and outlines a set of implementation activities, namely:\n\n* **Assess security capabilities of cloud providers** \u2013 evaluate the provider\u2019s security posture before and during use.  \n* **Define data\u2011protection requirements for cloud services** \u2013 establish contractual and technical safeguards for the data stored or processed in the cloud.  \n* **Implement access controls and monitoring** \u2013 enforce appropriate authentication, authorization, and continuous monitoring of cloud\u2011based assets.  \n* **Establish backup and recovery procedures** \u2013 ensure that cloud data is regularly backed up, encrypted where required, and that restoration processes are tested.  \n* **Create a cloud\u2011service exit strategy** \u2013 plan for secure migration or termination of services, including data sanitisation and transfer of assets.  \n* **Monitor cloud\u2011service security performance** \u2013 track security metrics, service\u2011level agreements, and incident trends specific to the cloud.  \n* **Document cloud\u2011security responsibilities** \u2013 assign and record roles and duties for both the organization and the cloud provider.  \n* **Train users on secure cloud usage** \u2013 provide awareness and procedural training to personnel who interact with cloud services.\n\nThrough this control, ISO\u202f27001:2022 directly addresses cloud security by mandating a comprehensive, risk\u2011based approach that covers provider assessment, data protection, access management, continuity, governance, monitoring, documentation, and user training."
+        },
+        {
+            "id": 14,
+            "query": "What is the significance of Clause 4 (Context of the Organization) in ISO 27001?",
+            "outcome": "ANSWERED",
+            "latency": 18.5,
+            "sources_count": 6,
+            "answer": "Clause\u202f4 \u2013\u202fContext of the Organization \u2013 is the foundational element of an ISO\u202f27001\u2011based Information Security Management System.\u202fAccording to the provided material, its significance lies in the following points:\n\n1. **Establishes the internal and external backdrop** \u2013 The organization must identify external and internal issues that are relevant to its purpose and that affect its ability to achieve the intended outcomes of the ISMS (4.1).  \n\n2. **Defines interested parties and their requirements** \u2013 Clause\u202f4.2 requires the organization to determine who the relevant interested parties are, what their expectations and legal/regulatory obligations are, and which of those requirements will be addressed by the ISMS.  \n\n3. **Informs the determination of ISMS scope** \u2013 When setting the scope (4.3), the organization must consider the issues identified in 4.1, the interested\u2011party requirements from 4.2, and any interfaces or dependencies with other organisations. The scope is then documented as formal, bounded applicability of the ISMS.  \n\n4. **Supports integration with other management systems** \u2013 The context work for the ISMS is aligned with the Business Continuity Management System (BCMS) under ISO\u202f22301, creating a unified understanding of stakeholders, assets, and requirements (Integration section).  \n\n5. **Provides the basis for all subsequent ISMS activities** \u2013 Understanding the context is described as the basis for risk analysis, organizational structure, work\u2011package definition, project planning, and resource estimation. It is therefore essential for the effective establishment, implementation, maintenance, and continual improvement of the ISMS (4.4).  \n\nIn summary, Clause\u202f4 ensures that the ISMS is built on a clear, shared understanding of the organization\u2019s environment, its interested parties, and the legal/regulatory landscape, which in turn drives accurate scoping, risk treatment, and alignment with other management systems."
+        },
+        {
+            "id": 15,
+            "query": "What are the key AI governance controls specified in ISO 42001?",
+            "outcome": "ANSWERED",
+            "latency": 21.8,
+            "sources_count": 3,
+            "answer": "**Key AI\u2011governance controls defined in ISO\u202f42001 (as presented in the provided material)**  \n\n| Governance\u2011related control | Description (as stated in the context) |\n|----------------------------|----------------------------------------|\n| **AI Governance Committee** | Establish a dedicated AI governance committee that provides oversight of AI initiatives. |\n| **Roles & Responsibilities** | Assign clear roles (e.g., executive leadership, AI governance committee, AI project teams) and document responsibilities for AI\u2011related decisions and activities. |\n| **AI Policies** | Approve, publish, and maintain AI\u2011specific policies that address ethical use, risk handling, and compliance. |\n| **AI\u2011Specific Risk Assessment** | Perform risk assessments that are tailored to AI systems and maintain an AI risk register (risk\u2011management control). |\n| **Ethical Design & Bias Controls** | Integrate ethical design principles, conduct bias testing, and produce explainability documentation during design & development. |\n| **Secure Deployment & Access Controls** | Apply secure deployment practices, enforce access\u2011control mechanisms for AI assets, and provide user training. |\n| **Continuous Monitoring & Incident Response** | Implement continuous monitoring of AI performance, schedule model retraining, and maintain an incident\u2011response plan for AI\u2011related events. |\n| **Documentation & Audit Trails** | Keep comprehensive audit trails, retain compliance evidence, and regularly update records related to AI systems. |\n| **Human\u2011Oversight Mechanism** | Apply the control defined in ISO/IEC\u202f42001\u202fB.9.3 for human oversight and decision\u2011making regarding AI autonomy. |\n| **Access Control for AI** | Map AI access\u2011control requirements to ISO\u202f27001\u202fA.9 (Access Control) and ISO\u202f27701\u202f7.4.7 (Access Control), ensuring that only authorized entities can interact with AI models and data. |\n\nThese controls collectively constitute the core governance requirements of ISO\u202f42001 for establishing, implementing, maintaining, and continually improving an Artificial Intelligence Management System (AIMS)."
+        },
+        {
+            "id": 16,
+            "query": "What are the four risk categories defined in the EU AI Act?",
+            "outcome": "ANSWERED",
+            "latency": 21.0,
+            "sources_count": 5,
+            "answer": "The EU AI Act defines four risk categories:\n\n1. **Unacceptable risk** \u2013 \u201cProhibited AI practices\u201d (Article\u202f5, Title\u202fII); AI systems that are banned outright (e.g., subliminal manipulation, social scoring).  \n2. **High risk** \u2013 Classification rules for high\u2011risk AI systems (Article\u202f6, plus Annex\u202fIII triggers); these systems must undergo conformity assessment, risk\u2011management, and human\u2011oversight obligations.  \n3. **Limited risk** \u2013 Transparency obligations for limited\u2011risk systems (Article\u202f50), such as chatbots and deep\u2011fakes, and other narrowly scoped tasks that pose only limited risk.  \n4. **Minimal/\u200bno risk** \u2013 Voluntary Codes of Conduct (Article\u202f95); the residual tier where compliance is encouraged but not mandated."
+        },
+        {
+            "id": 17,
+            "query": "What constitutes a 'High-Risk' AI system under the EU AI Act?",
+            "outcome": "ANSWERED",
+            "latency": 20.02,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 18,
+            "query": "Explain the OWASP Top 10 for LLMs (Large Language Models).",
+            "outcome": "INSUFFICIENT_DATA",
+            "latency": 5.34,
+            "sources_count": 1,
+            "answer": "**OWASP\u202fTop\u202f10\u202ffor\u202fLLM\u202fApplications\u202f(v2.0 \u2013\u202f2025)**  \n\nThe OWASP\u202fTop\u202f10 for Large Language Model (LLM) applications is a community\u2011driven list that identifies the most critical security\u2011risk categories specific to LLM\u2011enabled software. The 2025 version (v2.0) expands on the 2023 list and is organized around numbered \u201cLLM\u2011xx\u201d entries. The source material provided describes several of those entries in detail; the remaining entries are not included in the supplied context.\n\nBelow is a concise explanation of each OWASP\u202fLLM\u202fTop\u202f10 entry that is explicitly described in the provided documentation, followed by a note on the entries for which no information is available in the excerpt.\n\n| OWASP ID | Title (as given) | Core Risk Description | Primary Mitigations Mentioned in the Context |\n|----------|------------------|-----------------------|----------------------------------------------|\n| **LLM10:2025 \u2013 Unbounded Consumption** | Unbounded Consumption | Allows users to issue unlimited or uncontrolled inference requests. This can lead to denial\u2011of\u2011service (DoS), excessive cloud\u2011resource consumption, economic loss, model theft, and service degradation. | \u2022 Enforce rate\u2011limiting and quotas per user or API key.<br>\u2022 Monitor usage patterns for anomalies.<br>\u2022 Apply cost\u2011control mechanisms in cloud environments. |\n| **LLM08:2025 \u2013 Vector and Embedding Weaknesses** | Vector and Embedding Weaknesses | Weaknesses in generation, storage, or retrieval of vectors/embeddings (used in Retrieval\u2011Augmented Generation \u2013 RAG) can be exploited to inject malicious content, manipulate outputs, or leak sensitive data. | \u2022 Implement strict access\u2011control policies for embedding stores.<br>\u2022 Validate and sanitize data before it is embedded.<br>\u2022 Secure the vector database against unauthorized queries. |\n| **(Unnumbered) Model Extraction / Functional Model Replication** | Functional Model Replication & Side\u2011Channel Attacks | Attackers can collect enough model outputs to recreate a functional replica (shadow model) or harvest model weights/architecture via side\u2011channel techniques, resulting in intellectual\u2011property theft and exposure of proprietary model details. | \u2022 Input validation to limit query size and frequency.<br>\u2022 Rate\u2011limit and monitor query patterns.<br>\u2022 Deploy watermarking or other fingerprinting techniques to detect stolen copies. |\n| **(Unnumbered) Direct Tampering** | Direct Tampering | Adversaries modify a published model (e.g., via a repository such as Hugging\u202fFace) to remove safety controls or embed malicious behavior, enabling misinformation or targeted attacks. | \u2022 Verify model integrity with cryptographic signatures.<br>\u2022 Conduct AI red\u2011team evaluations before deployment.<br>\u2022 Maintain a Software Bill of Materials (SBOM) to track model provenance. |\n| **(Unnumbered) Finetuning Popular Model** | Finetuning Popular Model | An attacker fine\u2011tunes an open\u2011access model to suppress safety features while preserving benchmark scores, then distributes it to victims who trust the benchmark results. | \u2022 Perform comprehensive AI red\u2011team testing on any fine\u2011tuned model.<br>\u2022 Validate safety performance in the specific intended use\u2011case.<br>\u2022 Require provenance verification for any third\u2011party model. |\n| **(Unnumbered) Pre\u2011Trained Model Deployment without Vetting** | Pre\u2011Trained Models | Deploying pre\u2011trained models from public repositories without thorough security review can introduce hidden vulnerabilities or backdoors. | \u2022 Apply the same security controls (vulnerability scanning, SBOM, red\u2011team testing) used for internal components.<br>\u2022 Maintain an up\u2011to\u2011date inventory of all model assets. |\n| **(Unnumbered) Vulnerable & Outdated Components** | Vulnerable and Outdated Components (referencing A06:2021) | Use of outdated libraries, frameworks, or model components can expose known CVEs and increase attack surface. | \u2022 Conduct regular vulnerability scanning and patch management.<br>\u2022 Keep a current SBOM to track component versions.<br>\u2022 Apply patches promptly in both development and production environments. |\n| **(Unnumbered) MITRE\u202fATLAS \u2013 Model Extraction / Inversion** | AML.T0024.001 \u2013 Invert ML Model; AML.T0024.002 \u2013 Extract ML Model | Specific ATT&CK\u2011style techniques for model inversion and extraction, which enable an adversary to reconstruct training data or model parameters. | \u2022 Limit query depth and output granularity.<br>\u2022 Employ differential privacy or output perturbation where feasible.<br>\u2022 Monitor for anomalous query patterns indicative of extraction attempts. |\n\n### Entries Not Covered by the Provided Excerpt\nThe OWASP\u202fTop\u202f10 for LLMs consists of ten distinct risk categories. The source text only supplies detailed information for the items listed above (LLM10, LLM08, and several unnumbered scenarios). For the remaining entries, the documentation does not contain sufficient detail.\n\n**Result:**  \n- For the items described above, the explanation includes the risk focus and the mitigation concepts explicitly mentioned in the context.  \n- For any of the ten OWASP LLM categories not referenced in the excerpt, the answer must acknowledge the lack of information.\n\n**Conclusion**  \nThe OWASP\u202fTop\u202f10 for LLM Applications v2.0 highlights critical risks such as uncontrolled inference consumption, weaknesses in vector/embedding handling, model extraction, direct model tampering, insecure fine\u2011tuning, unvetted pre\u2011trained model use, vulnerable components, and specific MITRE\u202fATLAS extraction techniques. Mitigations emphasized across these categories include strict input validation, rate limiting, access\u2011control enforcement, provenance verification, AI red\u2011team testing, SBOM maintenance, and continuous vulnerability management.  \n\n**INSUFFICIENT_DATA:** The provided compliance frameworks do not contain the full list of all ten OWASP LLM risk categories nor their complete descriptions."
+        },
+        {
+            "id": 19,
+            "query": "How does the EU AI Act handle generative AI like ChatGPT?",
+            "outcome": "ANSWERED",
+            "latency": 23.91,
+            "sources_count": 8,
+            "answer": "The EU AI Act does not refer to \u201cChatGPT\u201d or \u201cgenerative AI\u201d by name. Instead, it places such systems within the **\u201cgeneral\u2011purpose AI models\u201d (GPAI)** category covered by Chapter\u202fV, Articles\u202f51\u201156.\n\n**Baseline GPAI obligations (applicable to all general\u2011purpose models, including ChatGPT\u2011type chatbots):**  \n1. **Technical documentation** \u2013 providers must maintain detailed documentation of the model\u2019s design, development, and intended use.  \n2. **Copyright\u2011compliance policy** \u2013 a policy ensuring that the model\u2019s training data respect copyright rules.  \n3. **Training\u2011content summaries** \u2013 a summary of the datasets used for training, indicating the nature and provenance of the content.\n\n**Additional obligations for GPAI models classified as \u201csystemic risk\u201d (Article\u202f51):**  \nA GPAI is deemed to carry systemic risk when it meets defined thresholds (e.g., the cumulative compute power employed during training). Providers of such high\u2011risk GPAI must additionally:  \n1. **Model evaluation** \u2013 conduct thorough assessments of the model\u2019s performance, safety, and reliability.  \n2. **Adversarial testing** \u2013 perform tests that simulate hostile or malicious inputs to identify vulnerabilities.  \n3. **Incident reporting** \u2013 report significant safety or security incidents to the European Commission.  \n4. **Cybersecurity safeguards** \u2013 implement robust technical and organizational measures to protect the model and its data against cyber threats.\n\nIn summary, the EU AI Act regulates generative AI like ChatGPT as a **general\u2011purpose AI model**, imposing baseline documentation and compliance requirements, and, where the model\u2019s scale or impact meets the systemic\u2011risk criteria, imposing extra obligations for evaluation, adversarial testing, incident reporting, and cybersecurity."
+        },
+        {
+            "id": 20,
+            "query": "What are the transparency requirements for AI systems targeting humans?",
+            "outcome": "ANSWERED",
+            "latency": 1.63,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 21,
+            "query": "What are the penalties for non-compliance with the EU AI Act?",
+            "outcome": "ANSWERED",
+            "latency": 2.67,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 22,
+            "query": "List three strategies to mitigate Prompt Injection according to OWASP.",
+            "outcome": "ANSWERED",
+            "latency": 34.53,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 23,
+            "query": "What is 'Model Inversion' in the context of OWASP AI security?",
+            "outcome": "ANSWERED",
+            "latency": 1.99,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 24,
+            "query": "How does GDPR apply to automated decision-making and profiling?",
+            "outcome": "ANSWERED",
+            "latency": 2.02,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 25,
+            "query": "What is a DPIA (Data Protection Impact Assessment) and when is it required?",
+            "outcome": "ANSWERED",
+            "latency": 2.15,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 26,
+            "query": "List the seven core principles of GDPR.",
+            "outcome": "ANSWERED",
+            "latency": 2.11,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 27,
+            "query": "How does 'Privacy by Design' apply to AI model training?",
+            "outcome": "ANSWERED",
+            "latency": 1.59,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 28,
+            "query": "What are the requirements for cross-border data transfers under GDPR?",
+            "outcome": "ANSWERED",
+            "latency": 1.87,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 29,
+            "query": "What are the key steps in the TPRM lifecycle?",
+            "outcome": "ANSWERED",
+            "latency": 1.95,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 30,
+            "query": "How should an organization assess the security of an AI SaaS vendor?",
+            "outcome": "ANSWERED",
+            "latency": 1.93,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 31,
+            "query": "What is a SOC 2 Type II report and why is it important for TPRM?",
+            "outcome": "ANSWERED",
+            "latency": 2.09,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 32,
+            "query": "List the primary risk factors when onboarding a fourth-party vendor.",
+            "outcome": "ANSWERED",
+            "latency": 3.64,
+            "sources_count": 2,
+            "answer": "**Primary risk factors to consider when onboarding a fourth\u2011party vendor (as described in the provided context):**\n\n1. **Type of content required to validate controls** \u2013 What evidence or documentation the vendor must provide to demonstrate that security and compliance controls are in place.  \n2. **Criticality to business performance and operations** \u2013 The extent to which the vendor\u2019s services or products are essential to the organization\u2019s core functions.  \n3. **Location(s) and related legal or regulatory considerations** \u2013 Jurisdictions where the vendor operates and any applicable data\u2011protection, privacy, or other regulatory requirements.  \n4. **Level of reliance on fourth parties** \u2013 Degree of dependence on the vendor\u2019s own sub\u2011vendors (fourth\u2011party relationships) to avoid concentration risk.  \n5. **Exposure to operational or client\u2011facing processes** \u2013 Whether the vendor participates in processes that directly affect operations or end\u2011customers.  \n6. **Interaction with protected data** \u2013 The scope of the vendor\u2019s access to, processing of, or storage of sensitive, confidential, or regulated data.  \n7. **Financial status and health** \u2013 The vendor\u2019s financial stability, including recent performance metrics and overall solvency.  \n8. **Reputation** \u2013 Public and industry perception of the vendor, including past incidents, media coverage, and overall market standing.  \n9. **Demographics and fourth\u2011party technologies** \u2013 Information about the vendor\u2019s corporate structure, ownership, and the technologies it employs, especially those that may introduce additional supply\u2011chain risk.  \n10. **Environmental, Social, and Governance (ESG) scores** \u2013 ESG performance indicators that reflect sustainability, ethical practices, and governance quality.  \n11. **Recent business and reputational insights** \u2013 Up\u2011to\u2011date intelligence on the vendor\u2019s market activities, partnerships, and any notable reputational events.  \n12. **Data breach history** \u2013 Record of past security incidents, breaches, or vulnerabilities that could affect the organization\u2019s risk exposure.  \n\nThese factors collectively form the basis for quantifying inherent risk, tiering the fourth\u2011party vendor, and determining the depth of due\u2011diligence and ongoing monitoring required."
+        },
+        {
+            "id": 33,
+            "query": "How do you verify GDPR compliance for a non-EU third party?",
+            "outcome": "ANSWERED",
+            "latency": 1.77,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 34,
+            "query": "What are ITGC (IT General Controls) and give three examples.",
+            "outcome": "ANSWERED",
+            "latency": 1.79,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 35,
+            "query": "Explain the 'Three Lines of Defense' model in GRC.",
+            "outcome": "ANSWERED",
+            "latency": 3.22,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 36,
+            "query": "How do you perform a gap assessment between NIST CSF and ISO 27001?",
+            "outcome": "ANSWERED",
+            "latency": 3.17,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 37,
+            "query": "What is the difference between a Key Risk Indicator (KRI) and a KPI?",
+            "outcome": "ANSWERED",
+            "latency": 2.07,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 38,
+            "query": "What are the common pitfalls in SOX internal controls implementation?",
+            "outcome": "ANSWERED",
+            "latency": 2.04,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 39,
+            "query": "List the steps for an effective incident response plan per NIST 800-61.",
+            "outcome": "ANSWERED",
+            "latency": 2.2,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 40,
+            "query": "How do you manage evidence chain-of-custody during a compliance audit?",
+            "outcome": "ANSWERED",
+            "latency": 2.78,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 41,
+            "query": "What is 'Shadow AI' and how can organizations detect it?",
+            "outcome": "ANSWERED",
+            "latency": 2.1,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 42,
+            "query": "What are the ethical considerations for using AI in hiring processes?",
+            "outcome": "ANSWERED",
+            "latency": 2.25,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 43,
+            "query": "How can organizations ensure data quality for AI readiness?",
+            "outcome": "ANSWERED",
+            "latency": 2.12,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 44,
+            "query": "Explain 'Adversarial Machine Learning' and its impact on security.",
+            "outcome": "ANSWERED",
+            "latency": 2.2,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 45,
+            "query": "What are the benefits of using AI agents for compliance monitoring?",
+            "outcome": "ANSWERED",
+            "latency": 1.73,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 46,
+            "query": "How does 'Model Poisoning' differ from 'Data Poisoning'?",
+            "outcome": "ANSWERED",
+            "latency": 1.74,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 47,
+            "query": "What is a 'Risk Heat Map' and how is it used in GRC?",
+            "outcome": "ANSWERED",
+            "latency": 1.77,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 48,
+            "query": "What are the 6 pillars for AI-ready security?",
+            "outcome": "ANSWERED",
+            "latency": 1.73,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 49,
+            "query": "How does the EU AI Act impact open-source AI development?",
+            "outcome": "ANSWERED",
+            "latency": 1.53,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        },
+        {
+            "id": 50,
+            "query": "What is the significance of the AI Audit Booklet for CISA auditors?",
+            "outcome": "ANSWERED",
+            "latency": 1.94,
+            "sources_count": 0,
+            "answer": "I encountered an error processing your request."
+        }
+    ]
+}

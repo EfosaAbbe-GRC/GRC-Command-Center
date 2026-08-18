@@ -175,6 +175,23 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 
 ## Hard-won gotchas
 
+- **Groq's free tier caps you at 200,000 tokens/day, which is roughly ONE 50-query benchmark run —
+  shared with every other LLM feature.** Hit 2026-08-17 ("Used 199,902"): the v8 benchmark exhausted
+  the budget at query #11 and every query after returned `429`. Consequences to plan around:
+  benchmarking is a **once-daily** operation, and **running one can take the app's AI features down
+  for the rest of the day**. This also **confirms** what v7 recorded as an unproven hypothesis —
+  its 6.6s → 16.86s "latency regression" was throttling as the budget depleted, *not* a slower model.
+  Paid tier or local Ollama are the options if regular benchmarking is wanted.
+- **The benchmark scored engine errors as correct answers — the SAME defect, in a THIRD place
+  (2026-08-17).** `/chat` returns HTTP 200 with the error in the *body*, so `status_code == 200`
+  passed and the 44-char error string satisfied `len(answer) > 20` → `ANSWERED`. The rate-limited v8
+  run reported **96.0%, its best score ever, from 32 errors**. Fixed
+  (`Benchmark_Scorer_Honesty_refactor.md`): engine failures are checked first and score as ERROR, 3
+  consecutive failures abort the run, any run with an error is stamped `"valid": false` in the JSON
+  and prints a DO-NOT-QUOTE banner, and the script now **exits non-zero**. **The pattern to
+  internalise:** `active-auditor`, `smoke_test.py` and `rag_benchmark.py` all asked *"is there a
+  response?"* instead of *"is the response real?"* — when checking any LLM-backed result, assume the
+  error path returns 200 with plausible-looking text.
 - **Hosted-model retirement is a live failure mode, and it took out the core feature for ~4 days
   silently (2026-08-17).** Groq retired `llama-3.3-70b-versatile` — every RAG call 404'd — while
   `/readiness` said "ready", `smoke_test.py` reported 43/43 twice, and `active-auditor` returned
@@ -339,7 +356,13 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 
 - Benchmark trajectory (**corrected 2026-08-05**): 42 (v1, Apr 11) → 70 → 76 → 80 → 84 (v5, Jul 18)
   → 92 (v6, Aug 5 — Golden Mapping, **Gemini 2.5 Flash**) → **90 (v7, Aug 17 — `openai/gpt-oss-120b`,
-  first Groq-era measurement)**. Archives in `rag_benchmark_results.v*.json`; query list lives inside
+  first Groq-era measurement)**. **There is no valid v8.** The corpus refresh (2026-08-17) is done
+  and sound, but its run hit the token cap at query #11 and the pre-fix scorer reported a **fake
+  96%**; that archive is quarantined as `rag_benchmark_results.v8_INVALID_rate_limited.json` and must
+  never be cited. **v7's 90% remains the current figure until a clean v8 is run.** The only
+  salvageable signal from the void run is queries #1-10: **9/10 vs v7's 8/10, with #6 recovered** —
+  independently confirmed live, the new `NIST CSF 2.0 (CSWP 29).pdf` answers the Tier question with
+  correct citations. Archives in `rag_benchmark_results.v*.json`; query list lives inside
   `backend/tests/rag_benchmark.py`. **v1–v6 are Gemini-era; only v7 reflects the current stack.**
 - **v7's headline (90% vs 92%) is one query and understates the change — read
   `RAG_Benchmark_Report_v7.md` before drawing conclusions.** #36 and #45 **recovered** (#36 was a
