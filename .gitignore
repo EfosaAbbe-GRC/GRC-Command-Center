@@ -24,3 +24,4 @@ phase*_verify.txt
 project_structure.txt
 generate_audit.ps1
 verify_auth.py
+pytest_results.txt

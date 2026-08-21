@@ -4,10 +4,13 @@ An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered docum
 
 ## Highlights
 
-- **RAG accuracy 44% → 86%** on a fixed 50-query benchmark, driven by three
-  measured changes (chunking, retrieval depth, cross-encoder re-ranking) —
-  each kept only after an independent before/after evidence check. Full
-  writeups in `RAG_Benchmark_Report_v2/v3/v5.md`.
+- **RAG accuracy 44% → 90%** on a fixed 50-query benchmark, driven by
+  measured changes (chunking, retrieval depth, cross-encoder re-ranking,
+  golden mapping) — each kept only after an independent before/after
+  evidence check, including catching and reverting a scorer bug that once
+  misreported a fake 96%. Full trajectory and writeups in
+  [`docs/reports/`](docs/reports/), starting with
+  [`RAG_Benchmark_Report_v7.md`](docs/reports/RAG_Benchmark_Report_v7.md).
 - **Immutable audit trail** — PL/pgSQL `SECURITY DEFINER` triggers block
   `UPDATE`/`DELETE` on audit logs, evidence, and TPRM risk acceptances at
   the database layer, not just the application layer.
@@ -78,6 +81,17 @@ This platform operates under the **GRC.OS Prime Directive**:
 - **Synchronous Telemetry**: No polling allowed. All data updates are pushed via the custom `useWebSocket` hook.
 
 For more details, see [GOVERNANCE.md](GOVERNANCE.md).
+
+## Documentation
+
+Working history, versioned benchmark reports, and engineering write-ups live under `docs/`,
+organized so the root stays focused on the project itself:
+
+- [`docs/reports/`](docs/reports/) — versioned RAG benchmark reports, gap analyses, and raw results
+- [`docs/architecture/`](docs/architecture/) — infra, migration, and registry design write-ups
+- [`docs/refactors/`](docs/refactors/) — individual fix/refactor logs, including the honesty-audit fixes
+- [`docs/roadmaps/`](docs/roadmaps/) — forward-looking feature roadmaps
+- [`docs/session-logs/`](docs/session-logs/) — session handoffs and working state (`MEMORY.md`, `SESSION.md`, `task.md`)
 
 ## API Endpoints
 
