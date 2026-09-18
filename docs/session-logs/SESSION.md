@@ -1,3 +1,30 @@
+# Session Log — 2026-09-18 (Close-out catch-up: the 2026-08-21 reorg was never logged)
+
+**Outcome:** found and fixed a real instance of this project's own documented failure mode — a
+session that did real work but skipped the close-out ritual, leaving cold-start docs pointing at
+paths that no longer existed.
+
+**What happened:** commit `bd0fa34` (2026-08-21) reorganized the repo root into
+`docs/{reports,architecture,refactors,roadmaps,session-logs}`, moving `MEMORY.md`, `SESSION.md`,
+`task.md`, and `HANDOFF.md` out of the root into `docs/session-logs/`, and fixed a stale 86% RAG
+figure in `README.md`. That session never wrote a `SESSION.md` entry for itself, never updated
+`HANDOFF.md`'s date or added a note about the move, and left root `CLAUDE.md`'s "Cold-start order"
+line pointing at `MEMORY.md`/`SESSION.md`/`task.md` with no path — i.e. still implying root, which
+is now wrong (`README.md`'s own file-structure section, by contrast, already had the correct
+`docs/session-logs/` path). No code or working state was affected — `git log` confirms `bd0fa34` is
+still the tip, one month later, tree clean, fully pushed — this was pure doc drift, not lost work.
+
+**Fixed this session:** this entry (closing the gap directly); `CLAUDE.md`'s cold-start pointer now
+says `docs/session-logs/`; `HANDOFF.md`'s date line and content reviewed and confirmed still
+accurate (nothing shipped between 2026-08-21 and today) with a note added recording the gap and
+that it's now closed.
+
+**Caught via:** the parent `GRC Inspector` workspace's own anti-drift rule ("verify before
+trusting — spot-check, don't just read") — the user asked to review how the previous session's
+close-out went, which surfaced this on inspection rather than assumption.
+
+---
+
 # Session Log — 2026-08-18 ("The Interview Simulator, and What It's Actually Grading")
 
 **Outcome:** a new module shipped — the TPRM Interview Simulator — and the strongest evidence it

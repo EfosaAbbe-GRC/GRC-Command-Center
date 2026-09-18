@@ -4,6 +4,12 @@
 "update blocks" on top of stale content, which was itself becoming hard to trust. If this file
 ever does that again, rewrite it clean rather than layering another correction on top.
 
+**2026-09-18 note:** the 2026-08-21 reorg (`bd0fa34`) moved this file from root into
+`docs/session-logs/` but never rewrote it or logged itself — caught and closed out 2026-09-18, see
+`SESSION.md`'s entry that date. Content below re-checked against `git log` and confirmed still
+accurate: `bd0fa34` remains the tip, nothing shipped between 2026-08-21 and today, so the queue
+below is still the real next-session queue, unchanged.
+
 ## Continue from this point in a new chat
 
 **Version:** 1.5.0 — TPRM Interview Simulator Tier 1 shipped, verified, and pushed (see

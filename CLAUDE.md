@@ -7,7 +7,10 @@
 86% below is a stale, pre-correction, pre-provider-migration figure; see `MEMORY.md` for the
 current number and full trajectory, never quote this line).
 
-> Cold-start order: read `MEMORY.md` (durable facts) → `SESSION.md` (last session) → `task.md` (live board).
+> Cold-start order: read `docs/session-logs/MEMORY.md` (durable facts) → `docs/session-logs/SESSION.md`
+> (last session) → `docs/session-logs/task.md` (live board) → `docs/session-logs/HANDOFF.md` (what to
+> do first). Moved out of root 2026-08-21 (`bd0fa34`); this line went stale for four weeks before
+> being caught and fixed 2026-09-18 — see `SESSION.md`'s 2026-09-18 entry.
 
 ---
 
