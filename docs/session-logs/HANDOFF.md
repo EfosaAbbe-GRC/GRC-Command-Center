@@ -23,6 +23,43 @@ to 153 valid PDFs.
 `docker-compose.test.yml`, port 8002). RAG accuracy: **90.0% (v7)** — this is the current, citable
 figure. **Everything is pushed** (`0e60631`).
 
+**⚠ 2026-09-21 — THE INDEX HAS CHANGED AND HAS NEVER BEEN BENCHMARKED. Read this before quoting
+any accuracy figure.**
+
+The corpus was re-ingested on 2026-09-21 to apply the curation done on 2026-08-18 (which had
+existed only on disk, never in the index):
+
+| | Before (Aug 17 index) | After (Sep 21 index) |
+|---|---|---|
+| Files | 153 | **148** |
+| Chunks | 17,498 | **17,123** |
+
+Five documents were dropped — four secondary/marketing PDFs and one **byte-identical duplicate**
+(`Implementation Guide ISO_IEC 27001_2022.pdf`, MD5 `8761a1738…`, same file as
+`Implementation Guide ISO 27001.pdf` which remains). The duplicate was load-bearing for benchmark
+query #37; its twin preserves that support. Verified bidirectionally: nothing from `Excluded Docs`
+leaked in, nothing in the corpus is missing from the index. Previous index archived with full
+provenance at `GRC Inspector/_archive/faiss_index_2026-09-21_pre_curation_reingest/` (43 MB, kept
+outside this repo deliberately).
+
+**Consequence: the citable 90.0% (v7) figure now describes an index that no longer exists.** Until
+a fresh benchmark runs, say so when quoting it. Nothing is wrong with the number; it just measures
+a superseded corpus.
+
+**Re-ingest timing correction:** the run took **2,191 s (36.5 minutes)**, not the ~11 minutes
+quoted below and in `task.md` (that figure came from the 2026-07-18 ingest). The backend event loop
+is blocked and the API unresponsive for the whole duration — the triggering HTTP request itself
+times out, which is expected, not a failure.
+
+**Groq rate limits — corrected and expanded 2026-09-21.** Four limits bind simultaneously on
+`openai/gpt-oss-120b` (free tier): **30 RPM · 1,000 RPD · 8,000 TPM · 200,000 TPD.** Only RPD and
+TPM appear in response headers; **there is no TPD header**, so remaining daily token budget cannot
+be checked before a run. Critically, **limits are scoped to the Groq organization, not to a project
+or an API key** — other projects on the same account spend the same 200,000/day, and extra API keys
+do not raise the ceiling. A 50-query benchmark costs ~100–200k tokens, i.e. potentially the entire
+daily budget. Useful pre-flight proxy: `x-ratelimit-remaining-requests` (refills 1 per 86.4 s) —
+if well below 1,000, the account has been busy recently.
+
 **RAG accuracy status, carried forward unresolved:** v7 (90.0%) was measured *before* the
 2026-08-17 corpus refresh (158→153 files, image-only junk removed, 12 official documents added).
 A post-refresh "v8" run was attempted but is **invalid** — it hit Groq's 200k-token/day cap at
@@ -35,6 +72,36 @@ consumes most of the daily 200k allowance — run it before interactive chat, ag
 Interview Simulator grading sessions, or it will fail partway again).
 
 ## ▶ NEXT SESSION — start here
+
+### 0. 🔴 FIRST: the paced benchmark, on a day with a free Groq budget
+
+Everything is staged for this; it was deliberately **postponed on 2026-09-21** because other
+projects on the same Groq organization were consuming tokens that day.
+
+**Prerequisite, not yet applied:** `docs/refactors/Benchmark_Pacing_refactor.md` is drafted and
+awaiting EXECUTE. Without it the run will throttle on the 8,000 TPM cap regardless of the daily
+budget — that is what produced v8's intermittent failures. It adds a configurable inter-query
+delay (default 22 s, `GRC_BENCH_PACING`), records the pacing in the results JSON, and keeps
+`latency` request-only so the figure stays comparable with v1–v7.
+
+**On the day, in order:**
+
+1. Confirm no other project on the Groq account needs tokens that day — the budget is
+   organization-wide and there is no TPD header to check it with.
+2. Pre-flight: `x-ratelimit-remaining-requests` should read at or near 1,000.
+3. Apply the pacing change (EXECUTE), then run
+   `$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py`. Expect ~32 minutes.
+4. Keep everything else Groq-backed off for the duration: no interactive `/chat`, no agent runs,
+   no Interview Simulator grading, no LLM-touching smoke tests.
+5. Archive the result as `rag_benchmark_results.v8_curated_corpus.json` and write the report.
+   **Label it explicitly:** it measures the corpus refresh *and* the 2026-08-18 curation together —
+   a deliberate bundling, accepted because measuring the intermediate state would have cost a
+   second full day's token budget for a corpus state already abandoned. One unattributable
+   reading, recorded as such.
+6. If it aborts, the failure *shape* identifies the limit: intermittent-with-recovery = TPM (raise
+   `GRC_BENCH_PACING`, retry the same day); sustained-with-no-recovery = TPD (needs a fresh day).
+
+### The rest — independent of each other
 
 **These are independent, not sequential, except where a benchmark run is involved** (Golden
 Mapping and the content filter are query-time changes needing no re-index; the corpus review needs

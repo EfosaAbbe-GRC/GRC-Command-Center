@@ -62,7 +62,23 @@ real?"**
 ## What it cost
 
 The v8 run hit Groq's free-tier ceiling (**200,000 tokens/day** — "Used 199,902") at **query #11**.
-Queries #11–50 all returned `429`, and all were scored as correct.
+~~Queries #11–50 all returned `429`, and all were scored as correct.~~
+
+> **Corrected 2026-09-21.** The struck sentence is wrong, and is kept visible rather than
+> overwritten. Counting the archive directly: **32** queries returned engine-error text and were
+> scored as correct (that headline figure is accurate), but **8 queries after #11 succeeded** —
+> #12, #13, #14, #15, #16, #18, #19 and #32. The unbroken failure run begins at **#33**, not #11.
+>
+> The corrected pattern is better explained by **two** limits binding at different timescales, both
+> real and both published by Groq for `openai/gpt-oss-120b`: **8,000 tokens/minute** and **200,000
+> tokens/day**. TPM throttling produced the intermittent failures from #11 (bucket exhausting, then
+> partially refilling, which is why some queries in between succeeded); TPD exhaustion produced the
+> permanent failure from #33 onward. Neither limit alone fits the archive.
+>
+> Also worth recording, since it was not known when this document was written: **Groq applies rate
+> limits at the organization level, not per API key or per project.** Other projects on the same
+> Groq account consume the same 200,000/day budget, and Groq exposes **no TPD header**, so remaining
+> daily token budget cannot be checked before a run. See `Benchmark_Pacing_refactor.md`.
 
 Only **#1–10** are valid, and that slice is genuinely encouraging — **9/10 vs v7's 8/10**, with #6
 recovered (independently confirmed live: the newly-added `NIST CSF 2.0 (CSWP 29).pdf` answers the

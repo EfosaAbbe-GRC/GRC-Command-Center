@@ -1,3 +1,68 @@
+# Session Log — 2026-09-21 ("The index caught up with the curation, and three of my own claims didn't survive")
+
+**Outcome:** the corpus curation from 2026-08-18 is finally *in* the index, and the benchmark that
+was supposed to follow it was deliberately postponed — correctly, on evidence gathered during the
+session rather than on the plan we started with.
+
+**What was actually wrong, and it wasn't what the handoff said.** The handoff's top priority was
+"run a clean v8 benchmark first." Verifying the preconditions instead of trusting them turned up
+something nobody had recorded: the 2026-08-18 curation pass — 22 PDFs moved into
+`GRC_Analyst/Excluded Docs/` — had never been applied, because no re-ingest had happened since.
+The index was still the Aug-17 build. Benchmarking first would have measured a corpus state the
+user had already abandoned, then required a second full day's token budget to measure the one he
+actually wanted. So the sequence was inverted: re-ingest first (free — embeddings are local
+HuggingFace, no Groq tokens), benchmark after.
+
+**Three claims I made during this session did not survive checking, and the user asked for the
+re-check that caught the third.** Recorded because the pattern matters more than the individual
+errors — all three were inferences from partial evidence, stated with more confidence than the
+evidence supported:
+
+1. **"There's a bug pulling excluded documents back in."** `ingest_documents()` does use a
+   recursive `**/*.pdf` glob that would have done exactly that — but it is **dead code, called from
+   nowhere**. The live path is `initialize_index` (wired to `/ingest`), which uses a flat
+   `os.listdir`. The exclusion method works. Worth knowing the dead function is a trap if anyone
+   ever wires it up.
+2. **"22 excluded documents are sitting in the index."** Only **5** were. The other 17 predated the
+   Aug-17 ingest. Verified by unpickling the FAISS docstore and diffing source basenames against
+   the live corpus, rather than reasoning from directory mtimes as I had been.
+3. **"The documented 200k tokens/day figure is stale — the real limit is per-minute."** Wrong, and
+   the most consequential of the three. Groq enforces **30 RPM · 1,000 RPD · 8,000 TPM · 200,000
+   TPD** simultaneously; it simply **returns no TPD header**, and I treated that absence as
+   evidence the limit did not exist. The draft I had written would have **deleted accurate TPD
+   advice** from the benchmark's own failure message. Corrected in place with the original left
+   struck through, per this project's standing correction convention.
+
+**The correction produced a better finding than the error did.** `Benchmark_Scorer_Honesty_refactor.md`
+claimed "queries #11–50 all returned 429." Counting the archive directly: 32 engine errors (that
+headline is right), but **8 queries after #11 succeeded** (#12–16, #18, #19, #32), with unbroken
+failure only from #33. That pattern is explained by *both* limits binding at different timescales —
+TPM throttling causing intermittent failure from #11, TPD exhaustion causing permanent failure
+from #33 onward. Neither limit alone fits the data. Also newly recorded: **Groq scopes limits to the
+organization, not the API key or project**, so the user's other projects spend the same 200,000/day
+and extra keys don't help.
+
+**The re-ingest.** Archived the old index first (43 MB → `GRC Inspector/_archive/`, outside this
+repo deliberately: a differently-named copy *inside* it would not have matched the `faiss_index/`
+ignore rule). Result: **153 files/17,498 chunks → 148 files/17,123 chunks.** The −375 delta matched
+the pre-run prediction exactly. Verified bidirectionally — zero `Excluded Docs` leakage, nothing in
+the corpus missing from the index. Of the five dropped documents, four are secondary/marketing
+material and one is a **byte-identical duplicate** (MD5 match) of a file still present; that
+duplicate was load-bearing for query #37, whose support the surviving twin preserves. Manifest
+re-signed, readiness green, no corrupted-file skips. **Timing: 2,191 s (36.5 min), not the ~11 min
+the docs promised** — my 30-minute watcher timed out just short of the finish.
+
+**Postponed, deliberately.** The benchmark was not run: the user confirmed other projects were
+actively consuming the shared Groq budget, and a 50-query run costs ~100–200k of the 200k daily
+cap. `HANDOFF.md` §0 now carries the full staged procedure. The pacing change
+(`Benchmark_Pacing_refactor.md`) remains **drafted, not applied**, awaiting EXECUTE.
+
+**Net state:** the index and the corpus agree for the first time since 2026-08-18, and the citable
+90.0% (v7) figure now describes a superseded corpus — flagged everywhere it's quoted rather than
+silently left standing.
+
+---
+
 # Session Log — 2026-09-18 (Close-out catch-up: the 2026-08-21 reorg was never logged)
 
 **Outcome:** found and fixed a real instance of this project's own documented failure mode — a

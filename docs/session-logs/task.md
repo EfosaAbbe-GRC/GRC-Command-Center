@@ -50,6 +50,33 @@
 - [x] **Golden Mapping Metadata** *(2026-08-05)* — 3 hand-curated, source-cited entries (`backend/data/golden_mappings.json`) covering the EU AI Act risk-tiers/GPAI-generative/open-source cluster (#16/#19/#49), matched at query time via cosine similarity against the already-loaded `all-MiniLM-L6-v2` embeddings (`rag.py`'s new `_match_golden_mappings`) — no new ML dependency, no re-ingestion. Benchmark went from a corrected 84.0% baseline to **92.0%** (see next item — the 86%/94% numbers originally cited here were later found to be off by one query each; corrected across the whole historical trajectory). Zero regressions. **smoke 42/42**, **pytest 32/32**.
 - [x] **Benchmark scorer bug fix + historical correction** *(2026-08-05)* — found while reviewing Golden Mapping's results: `rag_benchmark.py`'s `.startswith("INSUFFICIENT_DATA")` check missed inline refusals not in the first token, and had done so in **every prior run** (v1 #31, v2 #6, v3/v4/v5 #35, v6 #6) — every historical topline (44/72/78/82/86/94%) was inflated by exactly one query. Fixed the scorer (substring check), corrected every archived `rag_benchmark_results.v*.json` (with an audit-trail `_correction_note` field, nothing silently overwritten) and the `RAG_Benchmark_Report.md`/`_v2`/`_v3`/`_v5` files (correction callouts + true numbers: 42/70/76/80/84/92%). Trend and every inter-run delta unchanged. **Also found and fixed** (separate from the scorer bug, traced and resolved same session): v1's report's category-breakdown table didn't match its own raw archive on 6/7 rows — confirmed isolated to v1 only (v2 matched exactly; v3/v5 don't have this table format), errors summed to zero (estimated-to-total, not computed) — corrected by direct computation from the archive. Still parked: `EU AI ACT 2024_Doc.pdf`'s text-mangling defect (isolated to that one file, confirmed — no other corpus PDF shares its producer).
 
+- [x] **Corpus curation applied to the index** *(2026-09-21)* — the 2026-08-18 curation pass (22 PDFs
+  moved to `GRC_Analyst/Excluded Docs/`) had never reached the index, because no re-ingest had run
+  since. Found by verifying the benchmark's preconditions rather than trusting the handoff. Old
+  index archived with provenance to `GRC Inspector/_archive/faiss_index_2026-09-21_pre_curation_reingest/`
+  (43 MB, outside this repo deliberately), then re-ingested: **153 files/17,498 chunks → 148
+  files/17,123 chunks**, the −375 delta matching the pre-run prediction exactly. Verified
+  bidirectionally (no `Excluded Docs` leakage, nothing in the corpus missing from the index),
+  manifest re-signed, readiness green. Four of the five dropped documents are secondary/marketing;
+  the fifth is a **byte-identical duplicate** (MD5 match) of a file still present, and was
+  load-bearing for query #37 — support preserved by the surviving twin. **Timing correction:
+  2,191 s (36.5 min), not the ~11 min quoted in P1.3 below** (that was the July ingest of 149
+  files); the backend is unresponsive throughout and the triggering HTTP request times out, which
+  is expected.
+- [ ] **Clean v8 benchmark — staged, deliberately postponed** *(2026-09-21)*. Not run because other
+  projects on the same Groq organization were consuming the shared token budget that day.
+  Prerequisite drafted and **awaiting EXECUTE**: `docs/refactors/Benchmark_Pacing_refactor.md`
+  (inter-query pacing; without it the run throttles on the 8,000 TPM cap). Full procedure in
+  `HANDOFF.md` §0. **Rate limits, corrected and expanded:** `openai/gpt-oss-120b` free tier binds
+  **30 RPM · 1,000 RPD · 8,000 TPM · 200,000 TPD** simultaneously; only RPD and TPM appear in
+  response headers, and limits are scoped to the **Groq organization**, not to a project or API key
+  — so other projects spend the same daily budget and extra keys do not raise the ceiling. **Until
+  this runs, the citable 90.0% (v7) figure describes a superseded corpus** — say so when quoting it.
+- [x] **Correction to `Benchmark_Scorer_Honesty_refactor.md`** *(2026-09-21)* — its claim that
+  "queries #11–50 all returned 429" is wrong; 8 queries after #11 succeeded (#12–16, #18, #19, #32)
+  and unbroken failure begins at #33. The headline "32 engine errors scored as correct" is accurate
+  and unchanged. Original left struck through with a dated correction note, per convention.
+
 ## P3 — Platform Debt & Features
 
 - [x] **Execution Monitor UI**: real-time agent job monitor on the WebSocket telemetry bus. **Scoped 2026-08-05, built 2026-08-06** — see `Execution_Monitor_UI_Roadmap.md` for the cold investigation and `ExecutionMonitor_refactor.md` for the executed diff. All three open decisions confirmed with the user (build now not after De-stubbing; stay synchronous; add audit-trail logging). Shipped: new `AgentRun` model with a real PENDING/RUNNING/COMPLETED/FAILED lifecycle, `/run-agent` now persists + calls `log_security_event` (closing a real gap — agent execution previously wrote zero audit-trail entries, confirmed via grep before fixing) + broadcasts `JOB_STATUS`, `GET /ops/jobs` reads real data instead of a hardcoded fixture, `OpsTerminal.jsx`'s console panel renders real `result`/`error` instead of fabricated "SCANNING_RESOURCE"/"CRITICAL_THREAD_ABORT" text, and the "Run Agent" button (previously fully broken — bad field name, unregistered agent id, and even after fixing those, checked for a `stdout` field neither stub handler has ever returned) now actually populates the grid. Verified: smoke 43/43 (grew from 42 — added a real `/run-agent` check since `/ops/jobs` moving off the fixture broke the old "≥1 item" assertion on a fresh boot), pytest 32/32, manual curl round-trip, confirmed real `AGENT_EXECUTE` audit rows, and a two-tab Playwright regression proving the actual real-time claim — triggering a run in tab 1 populated tab 2's grid via WS push with zero manual interaction on tab 2 (5/5 checks, zero console errors either tab).
