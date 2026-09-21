@@ -65,8 +65,13 @@
   is expected.
 - [ ] **Clean v8 benchmark — staged, deliberately postponed** *(2026-09-21)*. Not run because other
   projects on the same Groq organization were consuming the shared token budget that day.
-  Prerequisite drafted and **awaiting EXECUTE**: `docs/refactors/Benchmark_Pacing_refactor.md`
-  (inter-query pacing; without it the run throttles on the 8,000 TPM cap). Full procedure in
+  Prerequisite **EXECUTED 2026-09-21** (`docs/refactors/Benchmark_Pacing_refactor.md`): inter-query
+  pacing is live in `rag_benchmark.py` — default 22 s, `GRC_BENCH_PACING` override,
+  `pacing_seconds` recorded in the results JSON, `latency` left request-only for comparability.
+  Verified token-free: compiles, both config paths resolve, final-query sleep skipped, and the
+  arithmetic lands at 1.56 q/min ≈ 5,500–7,000 tok/min inside the 8,000 TPM cap (v7's unpaced
+  3.56 q/min would have been 12,500–16,000 — over by 1.5–2×, which is the v8 failure explained).
+  **Nothing left to apply; the run itself is the only outstanding step.** Full procedure in
   `HANDOFF.md` §0. **Rate limits, corrected and expanded:** `openai/gpt-oss-120b` free tier binds
   **30 RPM · 1,000 RPD · 8,000 TPM · 200,000 TPD** simultaneously; only RPD and TPM appear in
   response headers, and limits are scoped to the **Groq organization**, not to a project or API key

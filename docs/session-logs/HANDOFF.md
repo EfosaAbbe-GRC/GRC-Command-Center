@@ -78,19 +78,22 @@ Interview Simulator grading sessions, or it will fail partway again).
 Everything is staged for this; it was deliberately **postponed on 2026-09-21** because other
 projects on the same Groq organization were consuming tokens that day.
 
-**Prerequisite, not yet applied:** `docs/refactors/Benchmark_Pacing_refactor.md` is drafted and
-awaiting EXECUTE. Without it the run will throttle on the 8,000 TPM cap regardless of the daily
-budget — that is what produced v8's intermittent failures. It adds a configurable inter-query
-delay (default 22 s, `GRC_BENCH_PACING`), records the pacing in the results JSON, and keeps
-`latency` request-only so the figure stays comparable with v1–v7.
+**Prerequisite — DONE.** `docs/refactors/Benchmark_Pacing_refactor.md` was EXECUTED on 2026-09-21
+and is live in `backend/tests/rag_benchmark.py`: a configurable inter-query delay
+(default 22 s, override with `GRC_BENCH_PACING`), `pacing_seconds` recorded in the results JSON,
+and `latency`/`avg_latency` left as request-time-only so the figures stay comparable with v1–v7.
+Verified without spending tokens — compiles, default and override both resolve, sleep correctly
+skipped on the final query, and the arithmetic puts the run at 1.56 queries/min ≈ 5,500–7,000
+tokens/min against the 8,000 TPM cap (v7's unpaced 3.56 q/min would have been 12,500–16,000, i.e.
+over by 1.5–2×). **Nothing further needs applying — just run it.**
 
 **On the day, in order:**
 
 1. Confirm no other project on the Groq account needs tokens that day — the budget is
    organization-wide and there is no TPD header to check it with.
 2. Pre-flight: `x-ratelimit-remaining-requests` should read at or near 1,000.
-3. Apply the pacing change (EXECUTE), then run
-   `$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py`. Expect ~32 minutes.
+3. Run `$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py`. Expect ~32 minutes. The start
+   banner now prints the pacing in use — confirm it says 22.0s (or whatever you overrode it to).
 4. Keep everything else Groq-backed off for the duration: no interactive `/chat`, no agent runs,
    no Interview Simulator grading, no LLM-touching smoke tests.
 5. Archive the result as `rag_benchmark_results.v8_curated_corpus.json` and write the report.

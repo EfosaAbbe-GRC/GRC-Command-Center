@@ -1,7 +1,24 @@
-# Benchmark Pacing — DRAFT (awaiting EXECUTE)
+# Benchmark Pacing — EXECUTED 2026-09-21
 
 **Date:** 2026-09-21 · **File:** `backend/tests/rag_benchmark.py` · **Effort:** small (one config
-constant, one sleep, one summary field, one corrected message)
+constant, one sleep, one summary field, one expanded message)
+
+**Status: applied and verified.** EXECUTE given 2026-09-21; all five changes below are in the file.
+Verification performed without spending any Groq tokens — the benchmark itself has **not** been run
+yet, deliberately (see "What this fix does NOT solve"). What was checked:
+
+| Check | Result |
+|---|---|
+| `python -m py_compile` | passes |
+| `PACING_SECONDS` default | `22.0` |
+| `GRC_BENCH_PACING=30` override | `30.0` |
+| Sleep skipped on final query | yes — 49 sleeps for 50 queries |
+| Paced rate vs 8,000 TPM | 1.56 q/min → **5,466–7,028 tok/min — inside the cap** |
+| Unpaced rate vs 8,000 TPM (v7's 842.84s) | 3.56 q/min → **12,458–16,017 tok/min — over by 1.5–2×** |
+| Estimated wall clock | ~32 min |
+
+The last two rows are the diagnosis confirmed arithmetically: v7's pace genuinely could not have
+stayed inside today's per-minute ceiling, which is why v8 failed the way it did.
 
 ## Why
 

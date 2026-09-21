@@ -16,6 +16,23 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "grc-admin-2026"
 OUTPUT_FILE = "rag_benchmark_results.json"
 
+# Groq binds four limits at once on openai/gpt-oss-120b (free tier): 30 RPM, 1,000 RPD,
+# 8,000 TPM and 200,000 TPD -- whichever is reached first returns 429. Only RPD and TPM
+# appear in response headers; there is NO TPD header, so remaining daily budget cannot be
+# checked before a run. Limits are scoped to the Groq ORGANIZATION, not to this project or
+# this API key, so other projects on the same account spend the same budget.
+#
+# This delay addresses TPM only. One query costs roughly 3,500-4,500 tokens (k=10 x
+# 1,000-char chunks of context, plus prompt and completion). Unpaced, the loop ran at
+# ~3.5 queries/min in v7 -- about double the 8,000 TPM ceiling -- which is what produced
+# v8's intermittent failures from query #11. At ~17s natural latency plus this delay the
+# run sits near 1.5 queries/min (~6,000-7,000 tokens/min), inside the limit with headroom.
+#
+# It does NOT help with TPD: 50 queries is ~100-200k tokens against a 200k daily cap, so a
+# full run can still consume the entire day's budget for every project on the account.
+# See docs/refactors/Benchmark_Pacing_refactor.md.
+PACING_SECONDS = float(os.getenv("GRC_BENCH_PACING", "22"))
+
 # /chat returns HTTP 200 with an error message in the BODY when the LLM call fails, so
 # status_code alone cannot detect failure. Keep in sync with core/agent.py's
 # _ENGINE_FAILURE_MARKERS -- deliberately duplicated rather than imported, because this
@@ -138,7 +155,8 @@ def run_benchmark():
         "total_latency": 0
     }
     
-    print(f"\n🚀 Starting RAG Benchmark ({len(QUERIES)} queries)...\n")
+    print(f"\n🚀 Starting RAG Benchmark ({len(QUERIES)} queries, "
+          f"pacing {PACING_SECONDS}s between queries)...\n")
     print(f"{'#':<3} | {'Outcome':<18} | {'Latency':<8} | {'Sources':<8}")
     print("-" * 50)
     
@@ -219,12 +237,21 @@ def run_benchmark():
         else:
             consecutive_errors = 0
 
+        # Stay under the 8,000 TPM bucket. Skipped after the final query so pacing never
+        # inflates the wall-clock of the run itself.
+        if PACING_SECONDS > 0 and i < len(QUERIES) - 1:
+            time.sleep(PACING_SECONDS)
+
     # Calculate final accuracy
     accuracy_pct = round((summary["answered"] / summary["total"]) * 100, 2)
     avg_latency = round(summary["total_latency"] / summary["total"], 2)
 
     summary["accuracy_percentage"] = accuracy_pct
     summary["avg_latency"] = avg_latency
+    # Recorded so a future reader can tell a paced run from an unpaced one. `latency` and
+    # `avg_latency` remain REQUEST latency only and exclude this sleep, so they stay
+    # directly comparable with v1-v7.
+    summary["pacing_seconds"] = PACING_SECONDS
 
     # A run containing ANY engine error is not a comparable measurement: the
     # denominator is intact but the numerator is contaminated. Flag it in the JSON so
@@ -259,6 +286,13 @@ def run_benchmark():
         print("!! Engine failures are NOT answers. Re-run once the backend is healthy;")
         print("!! on Groq's free tier the daily token budget (200k TPD) allows roughly")
         print("!! one full 50-query run per day, shared with all other LLM features.")
+        print(f"!! There is ALSO an 8,000 tokens/MINUTE cap. This run paced at {PACING_SECONDS}s")
+        print("!! between queries. The failure SHAPE identifies which limit was hit:")
+        print("!!   intermittent, with some queries recovering -> TPM. Raise the pacing and")
+        print("!!   retry the same day:  GRC_BENCH_PACING=30 python backend/tests/rag_benchmark.py")
+        print("!!   sustained from one query onward, no recovery -> TPD. Needs a fresh day.")
+        print("!! Limits are scoped to the whole Groq ORGANIZATION -- other projects on the")
+        print("!! same account spend the same budget, and there is no TPD header to check.")
         print("=" * 50)
         sys.exit(1)
 
