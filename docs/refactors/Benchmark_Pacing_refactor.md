@@ -20,6 +20,35 @@ yet, deliberately (see "What this fix does NOT solve"). What was checked:
 The last two rows are the diagnosis confirmed arithmetically: v7's pace genuinely could not have
 stayed inside today's per-minute ceiling, which is why v8 failed the way it did.
 
+### Follow-up audit, same day — the token figure was an estimate, now it is derived
+
+The pacing value was originally chosen against a **guessed** 3,500–4,500 tokens/query. That guess
+was load-bearing: if the real number were higher, 22 s would not have been enough and the fix would
+have silently failed on the day it mattered. Re-derived from evidence instead:
+
+- **v7's 50 real answers**: average 1,707 chars, max 5,455 chars.
+- Fixed request parts: 10 reranked chunks × 1,000 chars of context + `PRODUCTION_PROMPT_TEMPLATE`
+  (~520 chars) + the question (avg 63 chars), at ~4 chars/token.
+
+| | Typical | Worst case |
+|---|---|---|
+| Tokens/query | **3,073** | **4,010** |
+| At 22 s pacing (1.54 q/min) | 4,744 tok/min | 6,191 tok/min |
+| vs 8,000 TPM | inside | inside |
+| **Full 50-query run** | **153,650 tokens** | **200,500 tokens** |
+| **vs 200,000 TPD** | **77% of the daily cap** | **100%** |
+
+**Verdict: 22 s holds** — the original guess was high, i.e. wrong in the safe direction. But the
+TPD picture is tighter than "roughly one run per day" conveyed: a single run can consume the
+**entire** organization-wide daily budget. The gate in `HANDOFF.md` §0 is load-bearing, not advice.
+
+**Also found during the audit, not previously recorded:** `ChatGroq` is constructed with
+`max_retries=2` (`rag.py`), so a throttled query can fire up to **three** API calls. That spends
+request budget (1,000 RPD) and retry tokens beyond the figures above, and it partly explains how v8
+burned through the daily cap as fast as it did. Not changed here — bounded retries were a
+deliberate fix for an earlier unbounded-retry incident — but it should be understood when reading a
+failed run.
+
 ## Why
 
 The benchmark fires all 50 queries back-to-back with **no sleep, no backoff, no pacing**. That was

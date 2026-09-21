@@ -89,8 +89,11 @@ over by 1.5–2×). **Nothing further needs applying — just run it.**
 
 **On the day, in order:**
 
-1. Confirm no other project on the Groq account needs tokens that day — the budget is
-   organization-wide and there is no TPD header to check it with.
+1. **Confirm no other project on the Groq account needs tokens that day.** This is a hard gate, not
+   a courtesy. Measured from the v7 archive (not estimated): a query costs **~3,073 tokens typical,
+   ~4,010 worst case**, so a full 50-query run costs **~154,000–200,500 tokens — 77% to 100% of the
+   entire 200,000/day organization-wide budget.** The budget is shared across every project on the
+   account and there is no TPD header to check remaining balance with.
 2. Pre-flight: `x-ratelimit-remaining-requests` should read at or near 1,000.
 3. Run `$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py`. Expect ~32 minutes. The start
    banner now prints the pacing in use — confirm it says 22.0s (or whatever you overrode it to).

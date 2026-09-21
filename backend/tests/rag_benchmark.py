@@ -22,14 +22,22 @@ OUTPUT_FILE = "rag_benchmark_results.json"
 # checked before a run. Limits are scoped to the Groq ORGANIZATION, not to this project or
 # this API key, so other projects on the same account spend the same budget.
 #
-# This delay addresses TPM only. One query costs roughly 3,500-4,500 tokens (k=10 x
-# 1,000-char chunks of context, plus prompt and completion). Unpaced, the loop ran at
-# ~3.5 queries/min in v7 -- about double the 8,000 TPM ceiling -- which is what produced
-# v8's intermittent failures from query #11. At ~17s natural latency plus this delay the
-# run sits near 1.5 queries/min (~6,000-7,000 tokens/min), inside the limit with headroom.
+# This delay addresses TPM only. Cost per query, DERIVED from the v7 archive rather than
+# estimated (50 real answers, avg 1,707 chars, max 5,455) plus the fixed parts of the
+# request -- 10 reranked chunks x 1,000 chars of context, this module's prompt template,
+# the question -- at ~4 chars/token:
+#     ~3,073 tokens typical, ~4,010 worst case.
+# Unpaced, the loop ran at 3.56 queries/min in v7 -- 10,900-14,300 tokens/min against an
+# 8,000 TPM ceiling -- which is what produced v8's intermittent failures from query #11.
+# At ~17s natural latency plus this delay the run sits at 1.54 queries/min:
+#     ~4,744 tokens/min typical, ~6,191 worst case -- inside the limit with headroom.
 #
-# It does NOT help with TPD: 50 queries is ~100-200k tokens against a 200k daily cap, so a
-# full run can still consume the entire day's budget for every project on the account.
+# It does NOT help with TPD. A full 50-query run costs ~154,000 tokens typical and up to
+# ~200,500 worst case, i.e. 77-100% of the entire 200,000/day organization-wide budget.
+# That is why "no other project needs tokens today" is a hard gate, not a nicety.
+#
+# Note: ChatGroq is configured max_retries=2, so a throttled query can fire up to 3 calls,
+# spending request budget (1,000 RPD) and retry tokens beyond the figures above.
 # See docs/refactors/Benchmark_Pacing_refactor.md.
 PACING_SECONDS = float(os.getenv("GRC_BENCH_PACING", "22"))
 
