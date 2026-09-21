@@ -4,6 +4,32 @@
 
 ---
 
+## 🔴 FIRST PRIORITY, NEXT SESSION — run the clean v8 benchmark
+
+*Set as first priority by Efosa, 2026-09-21. Do this before any other Command Center work.*
+
+- [ ] **Run `$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py`** (~32 min). Everything is
+  staged — the pacing prerequisite is applied and pushed (`96502f1`), the corpus and index are in
+  sync as of the 2026-09-21 re-ingest. **Nothing left to build or approve; this is purely the run.**
+  - **Gate before starting:** the Groq budget is **organization-wide**. Confirm no other project
+    needs tokens that day — a 50-query run costs ~100–200k of a 200,000/day cap, and there is no
+    TPD header to check remaining budget with. Pre-flight proxy:
+    `x-ratelimit-remaining-requests` should read at or near 1,000.
+  - **During the run:** nothing else Groq-backed — no interactive `/chat`, no agent runs, no
+    Interview Simulator grading, no LLM-touching smoke tests.
+  - **Why it matters beyond this project:** until it runs, the citable **90.0%** figure describes
+    an index that no longer exists (153 files → 148). That number is on Efosa's resume and in his
+    Workstreet interview prep, so it currently needs a spoken qualifier.
+  - **Afterwards:** archive as `rag_benchmark_results.v8_curated_corpus.json`, write the report,
+    and label it explicitly as measuring the corpus refresh *and* the 2026-08-18 curation together
+    — a deliberate bundling, accepted to avoid spending a second full day's budget on a corpus
+    state already abandoned. One unattributable reading, recorded as such.
+  - **If it aborts:** the failure shape names the limit — intermittent-with-recovery = TPM (raise
+    `GRC_BENCH_PACING`, retry the same day); sustained-with-no-recovery = TPD (needs a fresh day).
+  - Full procedure: `HANDOFF.md` §0.
+
+---
+
 ## P0 — Infrastructure Health Verification (system idle since May 24)
 
 - [x] **Phase 0.1: Container Stack Revival** *(2026-07-18)*
