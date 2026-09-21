@@ -14,7 +14,12 @@ days** and named `openai/gpt-oss-120b` its successor — see `RAG_Model_Outage_r
 id now lives in one place, `core/rag.py`'s `GROQ_MODEL` constant, and `/readiness` validates it
 against Groq's live model list. **RAG accuracy is now MEASURED under Groq: 90.0% (45/50), v7,
 2026-08-17** (`RAG_Benchmark_Report_v7.md`, archive `rag_benchmark_results.v7_groq_gptoss120b.json`).
-Quote **90%**, not the older 92% — that was Gemini 2.5 Flash-era. **TPRM (Third-Party Risk
+Quote **90%**, not the older 92% — that was Gemini 2.5 Flash-era. **⚠ Updated 2026-09-21: 90.0%
+now describes an index that no longer exists.** The corpus was re-ingested on 2026-09-21 to apply
+the 2026-08-18 curation (153 files/17,498 chunks → **148/17,123**). The figure is not wrong, it
+measures a superseded corpus — attach that qualifier wherever it is quoted, including the resume
+and interview prep, until a clean v8 runs. That run is first priority next session; everything for
+it is staged (see `task.md` top section and `HANDOFF.md` §0). **TPRM (Third-Party Risk
 Management) module —
 Tier 1, 2, and 3 all complete as of 2026-08-04**: 13-stage vendor egress/ingress assessment, risk
 acceptances, vendor-level risk rollup, WebSocket-pushed reassessment surfacing, CSV export, and
@@ -187,8 +192,20 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 ## Hard-won gotchas
 
 - **Groq's free tier caps you at 200,000 tokens/day, which is roughly ONE 50-query benchmark run —
-  shared with every other LLM feature.** Hit 2026-08-17 ("Used 199,902"): the v8 benchmark exhausted
-  the budget at query #11 and every query after returned `429`. Consequences to plan around:
+  shared with every other LLM feature.** Hit 2026-08-17 ("Used 199,902"). **Expanded and corrected
+  2026-09-21:** four limits bind at once on `openai/gpt-oss-120b` — **30 RPM · 1,000 RPD · 8,000
+  TPM · 200,000 TPD** — and they are scoped to the whole **Groq organization**, not to this project
+  or this API key, so other projects on the same account spend the same budget and extra keys do
+  not raise the ceiling. Only RPD and TPM have response headers; **there is no TPD header**, so
+  remaining daily budget cannot be checked before a run. Measured cost per query (derived from v7's
+  50 real answers, not estimated): **~3,073 tokens typical, ~4,010 worst case** → a full run is
+  **154,000–200,500 tokens, i.e. 77–100% of the entire daily budget.** `rag_benchmark.py` now paces
+  at 22 s between queries (`GRC_BENCH_PACING`) to stay under the TPM cap; pacing does nothing for
+  TPD. Note also `ChatGroq(max_retries=2)` — a throttled query can fire three calls.
+  ~~the v8 benchmark exhausted the budget at query #11 and every query after returned `429`~~ —
+  **corrected 2026-09-21:** 8 queries after #11 succeeded (#12–16, #18, #19, #32); unbroken failure
+  begins at #33. TPM throttling explains the intermittent phase, TPD exhaustion the permanent one.
+  Consequences to plan around:
   benchmarking is a **once-daily** operation, and **running one can take the app's AI features down
   for the rest of the day**. This also **confirms** what v7 recorded as an unproven hypothesis —
   its 6.6s → 16.86s "latency regression" was throttling as the budget depleted, *not* a slower model.

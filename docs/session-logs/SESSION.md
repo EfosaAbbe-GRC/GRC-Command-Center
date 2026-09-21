@@ -53,9 +53,37 @@ re-signed, readiness green, no corrupted-file skips. **Timing: 2,191 s (36.5 min
 the docs promised** — my 30-minute watcher timed out just short of the finish.
 
 **Postponed, deliberately.** The benchmark was not run: the user confirmed other projects were
-actively consuming the shared Groq budget, and a 50-query run costs ~100–200k of the 200k daily
-cap. `HANDOFF.md` §0 now carries the full staged procedure. The pacing change
-(`Benchmark_Pacing_refactor.md`) remains **drafted, not applied**, awaiting EXECUTE.
+actively consuming the shared Groq budget. `HANDOFF.md` §0 carries the full staged procedure, and
+the user set the run as **first priority for the next session** (recorded at the top of this
+`task.md` and at the workspace level).
+
+**Pacing change EXECUTED later the same session** (`Benchmark_Pacing_refactor.md`, commit
+`96502f1`): configurable inter-query delay (22 s default, `GRC_BENCH_PACING`), `pacing_seconds`
+recorded in the results JSON, `latency` left request-only for comparability with v1–v7, and the
+invalid-run message expanded so the failure *shape* names the limit. No automatic retry —
+`/chat` returns HTTP 200 with a generic error string, so a retry cannot distinguish a rate limit
+from a real fault and could mask one. Verified without spending tokens.
+
+**Then a fourth error surfaced — in the fix itself.** Asked to re-verify the day's work, the
+pacing value turned out to rest on a *guessed* 3,500–4,500 tokens/query. That guess was
+load-bearing: too low, and 22 s would have been insufficient and the fix would have failed
+silently on benchmark day. Re-derived from the v7 archive (50 real answers, avg 1,707 chars, max
+5,455) plus the fixed request parts: **~3,073 tokens typical, ~4,010 worst case.** The guess was
+high, so 22 s holds — but by luck, not method. The same pass produced two findings that were
+missed earlier: a full run costs **154,000–200,500 tokens, 77–100% of the entire
+organization-wide daily budget** (so the "no other projects today" gate is load-bearing, not
+advice), and `ChatGroq` is configured `max_retries=2`, meaning a throttled query can fire three
+calls — which partly explains how v8 burned the daily cap as fast as it did. Commit `affc2b7`.
+
+**Standing rule adopted as a result.** Four errors in one session, all the same shape: an
+inference reported with the confidence of an observation. The user named it directly —
+*"mistakes and assumptions that could have been detrimental to this workspace."* Two were serious:
+calling an accurate handoff figure "drift" in a workspace whose governance model is built on
+catching drift, and a draft that would have **deleted correct operational guidance** from a public
+repo. Recorded in this assistant's memory as `verify-before-claiming`: trace before naming a bug,
+count from the artifact rather than inferring from timestamps, treat absence of evidence as a
+prompt to look harder, default to "the doc was right when written," never delete a documented fact
+(strike through with a dated note instead), and label confidence explicitly.
 
 **Net state:** the index and the corpus agree for the first time since 2026-08-18, and the citable
 90.0% (v7) figure now describes a superseded corpus — flagged everywhere it's quoted rather than
