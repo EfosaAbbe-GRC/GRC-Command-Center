@@ -3,9 +3,13 @@
 ## System Reference for AI-Assisted Development
 
 **Version:** 1.5.0 (TPRM Interview Simulator)
-**Last Updated:** 2026-08-18 — RAG accuracy is **90.0%** under Groq/`openai/gpt-oss-120b` (the
+**Last Updated:** 2026-09-25 — RAG accuracy is **90.0%** under Groq/`openai/gpt-oss-120b` (the
 86% below is a stale, pre-correction, pre-provider-migration figure; see `MEMORY.md` for the
 current number and full trajectory, never quote this line).
+**⚠ 90.0% measures a superseded corpus.** The index was re-ingested 2026-09-21 (153 files/17,498
+chunks → 148/17,123) and has not been benchmarked since; a v8 attempt on 2026-09-25 was lost at
+query 33/50. Quote 90.0% only with that qualifier until a clean v8 runs — see
+`docs/session-logs/HANDOFF.md` §0.
 
 > Cold-start order: read `docs/session-logs/MEMORY.md` (durable facts) → `docs/session-logs/SESSION.md`
 > (last session) → `docs/session-logs/task.md` (live board) → `docs/session-logs/HANDOFF.md` (what to

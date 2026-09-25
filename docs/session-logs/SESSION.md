@@ -1,3 +1,180 @@
+# Session Log — 2026-09-25 ("The benchmark died at query 33; the audit trail brought it back")
+
+**Outcome:** the v8 run was attempted and killed externally at query 33 of 50, writing nothing —
+then recovered in full from `audit_logs` at zero token cost. Two real defects found and fixed, both
+EXECUTED and verified without spending a Groq token. **A clean v8 still has not run** and now needs
+a fresh day's budget.
+
+## Pre-flight was checked, not assumed — and it caught a decoy
+
+Everything the handoff asked for, verified rather than trusted:
+
+| Gate | Result |
+|---|---|
+| Dev stack | backend/db/backup healthy (`grc-frontend` "unhealthy" is the known loopback quirk) |
+| `/readiness` | 4/4 green — DB, index verified, Groq key + model available, JWT active |
+| Groq budget | **999/1000** RPD remaining — org essentially idle |
+| Correct index loaded | proved by byte arithmetic, below |
+
+**The repo's own `faiss_index/` directory is a decoy.** It is dated **2026-04-11** and the
+containerised stack never reads it — the live index lives in the `grc-faiss` Docker volume at
+`/app/faiss_index`, dated 2026-09-21 17:14 (the re-ingest). Anyone eyeballing the repo folder would
+conclude the index had not been touched since April and be badly wrong.
+
+The live index was confirmed to be the curated one **without running anything**: a FAISS flat index
+is linear in vector count at 384 dims × 4 bytes, so
+
+```
+17,123 chunks × 1,536 + 45 byte header = 26,300,973 bytes   <- exactly the live file size
+17,498 chunks × 1,536 + 45 byte header = 26,876,973 bytes   <- exactly the archived Aug-17 file
+```
+
+Both match to the byte. The container is definitively serving the 148-file / 17,123-chunk corpus.
+
+## What killed it — not what the docs predicted
+
+The run started 16:45:36 local, completed **33 queries** (20:46:09 → 20:59:43 UTC), and the process
+died at 21:00:02 UTC, 19 seconds into a 22-second pacing sleep.
+
+| Observation | Evidence |
+|---|---|
+| All 33 returned HTTP 200 | backend log, zero non-200s |
+| **Zero** 429s | the documented failure mode did **not** occur |
+| **Zero** engine failures | re-scored from `audit_logs`: 0 errors in 32 rows |
+| Container never restarted | `StartedAt` 2026-09-23, `ExitCode 0`, `OOMKilled false` |
+| Nothing written | no `rag_benchmark_results*.json` anywhere on the filesystem |
+
+**The run was perfectly healthy when it died.** Every failure mode the codebase had been hardened
+against — TPM throttling, TPD exhaustion, a dead engine, the scorer counting errors as passes —
+behaved correctly or never triggered. The thing that actually cost a day was none of them: the
+script wrote its results **once, after the loop**, so an interruption discarded everything.
+
+Cost: Groq RPD went 999 → 967 across the window; adjusting for the bucket refilling ~11.7 requests,
+the run consumed roughly **43 Groq calls for 33 queries** — about 10 internal retries from
+`ChatGroq(max_retries=2)`. Call it **100,000–130,000 tokens, half to two-thirds of the
+organization-wide daily budget, for no file.**
+
+**Pacing caused this indirectly and nobody priced it in.** The 2026-09-21 pacing fix took the run
+from ~3 minutes to ~32 — widening the interruption window **tenfold** — without anyone revisiting
+the write strategy. The fix was correct; its consequence was not anticipated.
+
+## The recovery — the audit trail held everything
+
+`audit_logs` persists query, response, context and sources for every `/chat` interaction. The run
+window held **32 rows for 33 requests**, and re-scoring them with `rag_benchmark.py`'s **own**
+scorer (imported, not reimplemented) reconstructed the run for **zero tokens**.
+
+Archived as `docs/reports/rag_benchmark_results.v8_PARTIAL_recovered_2026-09-25.json`, deliberately
+written so it cannot be miscited: `valid: false`, `complete: false`,
+**`accuracy_percentage: null`**, plus a `provenance` block stating what it is and is not.
+
+**This is not a v8.** 32 of 50 queries; #34–#50 never ran. The only figure here worth reading is
+the same-subset comparison, which *is* like-for-like:
+
+| | v7 (Aug-17 corpus) | Recovered (curated corpus) |
+|---|---|---|
+| Same 32 query ids | 28/32 — 87.5% | **29/32 — 90.6%** |
+| Engine errors | — | 0 |
+
+## Three findings, each worth more than the run would have been
+
+**1. Two of the four Golden Mapping targets fixed themselves.** `HANDOFF.md` item 2 queues Golden
+Mapping as "the highest-value lever on RAG accuracy," aimed at enumeration queries **#4, #6, #12,
+#18**. The corpus curation alone resolved two of them, with no query-time work:
+
+| # | Query | v7 → recovered |
+|---|---|---|
+| **#6** | NIST CSF 2.0 Tier 1–4 implementation levels | INSUFFICIENT_DATA → **ANSWERED** |
+| **#12** | ISO 27001 mandatory documentation | INSUFFICIENT_DATA → **ANSWERED** |
+| **#26** | Seven core principles of GDPR | ANSWERED → **INSUFFICIENT_DATA** |
+
+#4 and #18 still refuse. **Golden Mapping may now be a two-query problem, not four** — re-scope it
+against a real v8 before building anything.
+
+**2. #26 is a regression the curation caused.** One of the five documents removed on 2026-09-21 was
+evidently carrying the GDPR principles. This is the cost side of the curation and the first
+evidence that it was not purely additive. Investigate *after* v8 confirms it persists — diagnosing
+against a partial reading would be premature.
+
+**3. The v7 latency question is answered.** Inter-row deltas were ~25.5 s against 22 s pacing,
+implying **~3.5 s** request latency versus v7's 16.86 s average. `HANDOFF.md` carried "establish
+whether v7's latency was free-tier rate limiting (not yet proven a model property)" as an open
+item. **It was throttling.** Recorded as a strong observation, not a measurement — latency is not
+stored in `audit_logs`, so this is derived from timestamps.
+
+## A real defect in the audit trail — found by accident
+
+One query of 33 logged:
+
+```
+ERROR  Audit logging failed
+  error: (asyncpg) CharacterNotInRepertoireError:
+         invalid byte sequence for encoding "UTF8": 0x00
+```
+
+Query #13, *"How does ISO 27001:2022 address cloud security controls?"* — **answered normally,
+HTTP 200, and no audit record written at all.** PostgreSQL `text` columns cannot represent `0x00`;
+PDF extraction emits NULs routinely; `context` concatenates ~10 raw chunks so it is the exposed
+field. The `except Exception` correctly kept the user request alive but converted a data-integrity
+failure into a log line nobody reads.
+
+Verified rather than inferred: **32 audit rows against 33 `/chat` requests** — exactly one missing,
+matching exactly one error. On a platform whose headline claim is database-enforced immutable audit
+trails, immutability was never the weak point; **capture** was. It is also the reason query #13 is
+the single unrecoverable result from tonight.
+
+## Both fixes EXECUTED and verified — zero Groq tokens
+
+**`Benchmark_Durability_refactor.md`** — `backend/tests/rag_benchmark.py` now saves after every
+query, flushes progress output, and marks any run that ends early as invalid by construction
+(`len(results) == total` added to the validity test). A partial file carries
+`accuracy_percentage: null` so it can never be read as a measurement. **21/21 checks pass** against
+a stubbed `/chat`: incremental writes, a simulated kill at query 6 leaving exactly 5 saved results,
+a clean 50-query run, and all seven v1–v7 archives still parsing with unchanged accuracy figures.
+
+**`AuditLog_NulByte_refactor.md`** — `_pg_safe()` strips NULs before the INSERT and logs a
+`WARNING` with per-field removal counts, so the trail discloses its own alterations instead of
+silently changing them. **11/11 unit checks pass** against the real source (NULs stripped, unicode
+and other control characters preserved, clean text untouched, no warning on the normal path).
+
+**Deliberately deferred, needs a decision:** the `except Exception` still swallows unknown audit
+failures. Three options are laid out in the draft — keep as-is (A), return `audit_logged: false` in
+the response (B), fail closed (C). **B recommended**, matching this codebase's established honesty
+pattern (`interview_sim.py`'s `grading_failed`, the ComplianceTerminal relabel). Not applied; it is
+a response-schema change and deserves its own draft rather than riding along on a two-line fix.
+
+## What I got wrong this session
+
+**Justified skipping a pre-flight query with reasoning that only covered half the risk.** The
+argument was that the 3-consecutive-error abort guard caps the damage from a dead engine, so a
+~3,000-token probe was not worth it. True as far as it goes — but the guard protects against a
+*failing* engine and does nothing for an *interrupted* one, and interruption is what actually
+happened. The single end-of-run write was visible in the script when I read it and I did not flag
+it. The pre-flight was never the weak point.
+
+**Nearly reported a query artifact as a finding.** A `now() - interval '45 minutes'` window against
+a run that had finished 56 minutes earlier returned "0 audit rows tonight," which looked like total
+audit failure. Caught by checking `max(timestamp)` against `now()` before saying anything. Same
+class of error as the four from 2026-09-21: an inference about to be stated as an observation.
+
+## Environment note, not verified
+
+`docker ps` shows several other stacks running on this machine (`mufasa_*`, `gravity_backend`,
+`optionterminal-governor`, `uts-*`). Groq limits are **organization-wide**, so if any of those call
+Groq they draw from the same 200,000/day budget. **Not checked** — flagged only because the
+"confirm no other project needs tokens today" gate is hard to satisfy honestly without knowing.
+Worth establishing once, since it affects every future benchmark day.
+
+## Next session
+
+1. **Clean v8, fresh budget, run detached** — `Start-Process` with `-u`, per
+   `Benchmark_Durability_refactor.md`. An interruption now costs one query, not the day.
+2. Re-scope **Golden Mapping** against the real v8 — likely #4 and #18 only.
+3. Investigate **#26**'s regression once v8 confirms it.
+4. Decide **A/B/C** on audit-write failure; draft B if chosen.
+
+---
+
 # Session Log — 2026-09-21 ("The index caught up with the curation, and three of my own claims didn't survive")
 
 **Outcome:** the corpus curation from 2026-08-18 is finally *in* the index, and the benchmark that

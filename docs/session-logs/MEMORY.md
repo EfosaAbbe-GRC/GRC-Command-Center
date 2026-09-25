@@ -19,7 +19,14 @@ now describes an index that no longer exists.** The corpus was re-ingested on 20
 the 2026-08-18 curation (153 files/17,498 chunks → **148/17,123**). The figure is not wrong, it
 measures a superseded corpus — attach that qualifier wherever it is quoted, including the resume
 and interview prep, until a clean v8 runs. That run is first priority next session; everything for
-it is staged (see `task.md` top section and `HANDOFF.md` §0). **TPRM (Third-Party Risk
+it is staged (see `task.md` top section and `HANDOFF.md` §0). **⚠ Updated 2026-09-25: v8 was
+attempted and lost.** It completed 33/50 queries in perfect health, was killed externally, and
+wrote nothing (the script saved only at the end — since fixed). Recovered from `audit_logs` and
+archived as `rag_benchmark_results.v8_PARTIAL_recovered_2026-09-25.json`, `valid: false`,
+`accuracy_percentage: null` — **it is not a v8 and must not be cited.** On the same 32 query ids it
+scored 29/32 against v7's 28/32, so the curated corpus is at least holding; that is a subset
+comparison, not an accuracy figure. **90.0% remains the last valid number, still carrying the
+superseded-corpus qualifier.** **TPRM (Third-Party Risk
 Management) module —
 Tier 1, 2, and 3 all complete as of 2026-08-04**: 13-stage vendor egress/ingress assessment, risk
 acceptances, vendor-level risk rollup, WebSocket-pushed reassessment surfacing, CSV export, and
@@ -190,6 +197,50 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   to evidence chain on ingest automatically.
 
 ## Hard-won gotchas
+
+- **The repo's own `faiss_index/` directory is a DECOY — do not read it to learn the index state.**
+  It is dated 2026-04-11 and the containerised stack never touches it. The live index lives in the
+  **`grc-faiss` Docker volume** at `/app/faiss_index` inside `grc-backend`. Found 2026-09-25 while
+  verifying the index before a benchmark; anyone glancing at the repo folder would conclude the
+  index had not changed since April. **To confirm which corpus is loaded without running anything:**
+  a FAISS flat index is linear in vector count at 384 dims × 4 bytes, so
+  `chunks × 1,536 + 45 = index.faiss size in bytes`. 17,123 chunks → 26,300,973 bytes (the curated
+  build); 17,498 → 26,876,973 (the archived Aug-17 build). Both matched exactly.
+
+- **A NUL byte (`0x00`) in retrieved PDF context silently destroyed the audit record for that chat.**
+  PostgreSQL `text` columns cannot represent `0x00`; asyncpg raises `CharacterNotInRepertoireError`
+  and the whole INSERT is lost, while the chat still returns HTTP 200. Found 2026-09-25 (32 audit
+  rows for 33 requests). **Fixed** — `_pg_safe()` in `core/database.py` strips NULs before the
+  INSERT and logs a `WARNING` with per-field counts so the trail discloses its own alterations.
+  The live failing case stripped **10** NULs, all from `context` (it concatenates ~10 raw chunks,
+  so it is by far the most exposed field). **Still open, deliberately:** `except Exception` around
+  the audit write still swallows *unknown* failures — see `AuditLog_NulByte_refactor.md` options
+  A/B/C, B recommended, undecided.
+
+- **`StructuredLogger` (`core/logger.py`) has `warn`, NOT `warning`.** Calling `logger.warning(...)`
+  raises `AttributeError`, and inside the audit write's `except Exception` that surfaces as the
+  generic `"Audit logging failed"` — i.e. it looks exactly like the bug you were trying to fix.
+  Cost one wasted rebuild cycle on 2026-09-25. Every existing call site in the repo already uses
+  `warn`; match the surrounding code.
+
+- **`rag_benchmark.py` used to save only once, after the loop — a killed run lost everything.**
+  2026-09-25: the run was killed at query 33/50 while completely healthy and wrote no file,
+  discarding ~100–130k tokens (half to two-thirds of the org-wide daily budget). The 2026-09-21
+  pacing change had widened the interruption window from ~3 min to ~32 without anyone revisiting
+  the write strategy. **Fixed** — it now saves after every query, flushes stdout, and marks any
+  short run invalid by construction. **Always launch it detached** (`Start-Process`, `python -u`)
+  so a terminal or tool session ending cannot kill it.
+
+- **`audit_logs` can reconstruct a lost benchmark run, at zero token cost.** It persists query,
+  response, context and sources for every `/chat`. On 2026-09-25 that recovered 32 of 33 lost
+  results, re-scored with `rag_benchmark.py`'s own scorer (import it — do not reimplement the
+  scoring, or the outcomes stop being comparable with the archives). Useful to know; **not** a
+  substitute for the benchmark writing its own results.
+
+- **v7's ~17 s average latency was free-tier throttling, not a model property.** Long carried as an
+  open question. On 2026-09-25 the same pipeline ran at **~3.5 s** per query (inter-row deltas of
+  ~25.5 s against 22 s pacing). Derived from timestamps, not measured directly — `audit_logs` does
+  not store latency — but the gap is far too large to be noise.
 
 - **Groq's free tier caps you at 200,000 tokens/day, which is roughly ONE 50-query benchmark run —
   shared with every other LLM feature.** Hit 2026-08-17 ("Used 199,902"). **Expanded and corrected

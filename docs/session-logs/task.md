@@ -8,9 +8,38 @@
 
 *Set as first priority by Efosa, 2026-09-21. Do this before any other Command Center work.*
 
-- [ ] **Run `$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py`** (~32 min). Everything is
-  staged — the pacing prerequisite is applied and pushed (`96502f1`), the corpus and index are in
-  sync as of the 2026-09-21 re-ingest. **Nothing left to build or approve; this is purely the run.**
+> **⚠ ATTEMPTED AND LOST, 2026-09-25.** The run was launched with every pre-flight gate green
+> (RPD 999/1000, readiness 4/4, live index confirmed as the curated 148-file/17,123-chunk build by
+> byte arithmetic). It completed **33 of 50 queries, all HTTP 200, zero 429s, zero engine
+> failures** — and was then **killed externally** at 14m26s, mid-pacing-sleep. Because the script
+> wrote its results only once, after the loop, **it saved nothing**: ~100–130k tokens, half to
+> two-thirds of the organization-wide daily budget, for no file.
+>
+> **All 33 queries were recovered from `audit_logs`** (32 of them — #13 was lost to the NUL-byte
+> audit bug, now fixed) and re-scored with the module's own scorer at zero token cost. Archived as
+> `docs/reports/rag_benchmark_results.v8_PARTIAL_recovered_2026-09-25.json` —
+> `valid: false`, `accuracy_percentage: null`. **It is not a v8 and must not be cited.**
+>
+> **Durability is fixed** (`Benchmark_Durability_refactor.md`, EXECUTED 2026-09-25, 21/21 checks):
+> the benchmark now saves after every query, so an interruption costs one query, not the day.
+> **Run it detached from now on** — a tool session ending must not be able to kill it:
+> ```powershell
+> $env:PYTHONUTF8 = "1"
+> Start-Process -FilePath python -ArgumentList "-u","backend/tests/rag_benchmark.py" `
+>   -WorkingDirectory "<repo root>" -RedirectStandardOutput "bench_run.log" `
+>   -RedirectStandardError "bench_run.err" -NoNewWindow
+> ```
+>
+> **What the partial already tells us** (same-subset vs v7, the only sound read): 29/32 vs v7's
+> 28/32 on the identical query ids. Two of Golden Mapping's four named enumeration targets — **#6**
+> (NIST CSF tiers) and **#12** (ISO 27001 mandatory documentation) — **fixed themselves via the
+> corpus curation alone**, while **#26** (seven GDPR principles) **regressed**. Re-scope item 2 of
+> the backlog against a real v8 before building anything.
+
+- [ ] **Run it, detached, on a day with a fresh Groq budget** (~32 min). Everything is staged — the
+  pacing prerequisite is applied and pushed (`96502f1`), durability applied 2026-09-25, and the
+  corpus and index are in sync as of the 2026-09-21 re-ingest. **Nothing left to build or approve;
+  this is purely the run.**
   - **Gate before starting:** the Groq budget is **organization-wide**. Confirm no other project
     needs tokens that day — a 50-query run costs ~100–200k of a 200,000/day cap, and there is no
     TPD header to check remaining budget with. Pre-flight proxy:
