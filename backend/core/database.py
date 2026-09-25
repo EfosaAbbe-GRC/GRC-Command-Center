@@ -60,6 +60,27 @@ def _run_async(coro):
         return future.result(timeout=30)
 
 
+def _pg_safe(value: str) -> tuple:
+    """Strip NUL bytes so a text column can store the value.
+
+    PostgreSQL text/varchar cannot represent 0x00 -- asyncpg raises
+    CharacterNotInRepertoireError and the entire INSERT is lost. PDF text
+    extraction emits NULs routinely, so an un-sanitized RAG context silently
+    destroyed its own audit record: the chat returned HTTP 200, the user got an
+    answer, and no audit row was ever written (observed 2026-09-25, benchmark
+    query #13 -- 32 audit rows for 33 chat requests).
+
+    Returns the cleaned text and how many bytes were removed, so the caller can
+    record that the stored record was altered rather than altering it silently.
+    """
+    if not value:
+        return value or "", 0
+    removed = value.count("\x00")
+    if not removed:
+        return value, 0
+    return value.replace("\x00", ""), removed
+
+
 def _naive_utcnow() -> datetime.datetime:
     """UTC 'now' as a NAIVE datetime.
 
@@ -202,6 +223,23 @@ class AuditLogger:
         try:
             async with AsyncSessionLocal() as session:
                 sources_str = ", ".join(sources) if sources else ""
+                # Sanitize BEFORE the INSERT. A single NUL byte anywhere in these
+                # four fields loses the whole row, and the row IS the audit trail.
+                query, n_q = _pg_safe(query)
+                response, n_r = _pg_safe(response)
+                context, n_c = _pg_safe(context)
+                sources_str, n_s = _pg_safe(sources_str)
+                stripped = n_q + n_r + n_c + n_s
+                if stripped:
+                    # WARNING, not silence: the stored record differs from what was
+                    # served, and an audit trail must disclose its own alterations.
+                    logger.warn(
+                        "Audit record sanitized before write",
+                        request_id=request_id,
+                        nul_bytes_removed=stripped,
+                        fields={"query": n_q, "response": n_r,
+                                "context": n_c, "sources": n_s},
+                    )
                 log = AuditLog(
                     request_id=request_id,
                     query=query,
