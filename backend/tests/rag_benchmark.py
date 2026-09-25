@@ -62,6 +62,34 @@ def is_engine_failure(answer: str) -> bool:
     low = answer.lower()
     return any(m in low for m in ENGINE_FAILURE_MARKERS)
 
+
+def _save(results, summary, aborted_at=None, complete=False):
+    """Write results to disk. Called after EVERY query, not just at the end.
+
+    A run killed at query 33 on 2026-09-25 lost all 33 completed results and
+    ~100k tokens of an organization-wide daily budget, because the only write
+    happened after the loop. Partial data is recoverable data; an absent file
+    is a wasted day. `complete` distinguishes a finished run from a snapshot so
+    a partial file can never be mistaken for a real measurement.
+    """
+    done = len(results)
+    snap = dict(summary)
+    snap["queries_completed"] = done
+    snap["complete"] = complete
+    snap["accuracy_percentage"] = (
+        round((snap["answered"] / snap["total"]) * 100, 2) if complete else None
+    )
+    snap["rate_on_completed"] = round((snap["answered"] / done) * 100, 2) if done else 0.0
+    if not complete:
+        snap["valid"] = False
+        snap["invalid_reason"] = (
+            f"PARTIAL SNAPSHOT -- {done}/{snap['total']} queries. "
+            "Not a measurement; do not cite."
+        )
+    with open(OUTPUT_FILE, "w") as f:
+        json.dump({"summary": snap, "results": results}, f, indent=4)
+
+
 # 50 Targeted GRC Queries
 QUERIES = [
     # NIST AI RMF / CSF 2.0
@@ -230,7 +258,12 @@ def run_benchmark():
         })
         
         # Live feedback
-        print(f"{i+1:<3} | {outcome:<18} | {latency:<8} | {sources_count:<8}")
+        # flush=True: without it Python block-buffers to a redirected file and 14
+        # minutes of progress output is lost if the process is killed (2026-09-25).
+        print(f"{i+1:<3} | {outcome:<18} | {latency:<8} | {sources_count:<8}", flush=True)
+
+        # Persist immediately. Costs ~2 ms against a 22 s pacing sleep.
+        _save(results, summary)
 
         # Once the backend is down or the daily token budget is exhausted, every
         # remaining query fails too. Stop rather than manufacture dozens of
@@ -264,21 +297,21 @@ def run_benchmark():
     # A run containing ANY engine error is not a comparable measurement: the
     # denominator is intact but the numerator is contaminated. Flag it in the JSON so
     # a future reader cannot mistake it for a real data point.
-    summary["valid"] = (summary["error"] == 0 and aborted_at is None)
+    # The `len(results) == total` clause means a run that ends early for ANY reason
+    # is invalid by construction -- not only one that trips the engine-error guard.
+    # The 2026-09-25 run was killed while perfectly healthy at query 33/50.
+    summary["valid"] = (summary["error"] == 0 and aborted_at is None
+                        and len(results) == summary["total"])
     if not summary["valid"]:
         summary["invalid_reason"] = (
             f"{summary['error']} engine failure(s)"
             + (f"; aborted at query {aborted_at}/{summary['total']}" if aborted_at else "")
+            + (f"; only {len(results)}/{summary['total']} queries completed"
+               if len(results) != summary["total"] else "")
         )
-    
-    # Save to file
-    final_output = {
-        "summary": summary,
-        "results": results
-    }
-    with open(OUTPUT_FILE, "w") as f:
-        json.dump(final_output, f, indent=4)
-        
+
+    _save(results, summary, aborted_at=aborted_at, complete=True)
+
     print("\n" + "=" * 50)
     print(f"BENCHMARK COMPLETE")
     print(f"Accuracy: {accuracy_pct}% ({summary['answered']}/{summary['total']})")
