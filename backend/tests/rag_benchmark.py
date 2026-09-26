@@ -16,6 +16,14 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "grc-admin-2026"
 OUTPUT_FILE = "rag_benchmark_results.json"
 
+# The backend's JWT_EXPIRE_MINUTES is 15, and a paced 50-query run takes ~32 minutes, so a
+# single login cannot cover a whole run. On 2026-09-26 queries 37-39 died on HTTP 401 at
+# exactly 15m24s after LOGIN_SUCCESS and the abort guard ended the run at 39/50. The
+# 2026-09-25 run was killed 34s short of the same fate. Re-authentication is a local DB
+# round-trip costing ZERO Groq tokens, so refreshing early and often is free; the only cost
+# of getting this wrong is losing the whole run.
+TOKEN_MAX_AGE_SECONDS = 600  # 10 min -- a third of headroom under a 15 min expiry
+
 # Groq binds four limits at once on openai/gpt-oss-120b (free tier): 30 RPM, 1,000 RPD,
 # 8,000 TPM and 200,000 TPD -- whichever is reached first returns 429. Only RPD and TPM
 # appear in response headers; there is NO TPD header, so remaining daily budget cannot be
@@ -74,13 +82,20 @@ def _save(results, summary, aborted_at=None, complete=False):
     """
     done = len(results)
     snap = dict(summary)
+    # `complete` from the caller only means "the script reached the end". It does NOT mean
+    # every query ran -- an aborted run reaches the end too. Conflating the two produced a
+    # 39/50 archive on 2026-09-26 stamped `complete: true` with `accuracy_percentage: 64.0`,
+    # a citable-looking figure for a run that never finished. Coverage is what matters, so
+    # require BOTH before any accuracy number is emitted.
+    full = (done == snap["total"])
     snap["queries_completed"] = done
-    snap["complete"] = complete
+    snap["complete"] = bool(complete and full)
     snap["accuracy_percentage"] = (
-        round((snap["answered"] / snap["total"]) * 100, 2) if complete else None
+        round((snap["answered"] / snap["total"]) * 100, 2) if (complete and full) else None
     )
     snap["rate_on_completed"] = round((snap["answered"] / done) * 100, 2) if done else 0.0
     if not complete:
+        # Mid-run snapshot. A short FINAL run keeps the caller's more specific reason.
         snap["valid"] = False
         snap["invalid_reason"] = (
             f"PARTIAL SNAPSHOT -- {done}/{snap['total']} queries. "
@@ -174,12 +189,32 @@ def authenticate():
         print(f"Connection error: {e}")
         return None
 
+class _Token:
+    """Holds the JWT and re-acquires it before it can age out mid-run."""
+
+    def __init__(self):
+        self.value = None
+        self.issued_at = 0.0
+
+    def get(self, force=False):
+        if force or self.value is None or (time.time() - self.issued_at) > TOKEN_MAX_AGE_SECONDS:
+            tok = authenticate()
+            if not tok:
+                return None
+            self.value = tok
+            self.issued_at = time.time()
+        return self.value
+
+    def headers(self, force=False):
+        tok = self.get(force=force)
+        return {"Authorization": f"Bearer {tok}"} if tok else None
+
+
 def run_benchmark():
-    token = authenticate()
-    if not token:
+    token = _Token()
+    if not token.get():
         sys.exit(1)
 
-    headers = {"Authorization": f"Bearer {token}"}
     results = []
     consecutive_errors = 0
     aborted_at = None
@@ -204,7 +239,17 @@ def run_benchmark():
         answer = ""
         
         try:
+            headers = token.headers()
             r = requests.post(f"{BASE_URL}/chat", json={"query": query}, headers=headers, timeout=60)
+            # Belt and braces: if the token still aged out (clock skew, a changed
+            # JWT_EXPIRE_MINUTES, an unusually slow query), re-auth once and retry rather
+            # than scoring an infrastructure failure as a result. The 401 itself never
+            # reached the LLM, so this costs no Groq tokens.
+            if r.status_code == 401:
+                retry_headers = token.headers(force=True)
+                if retry_headers:
+                    r = requests.post(f"{BASE_URL}/chat", json={"query": query},
+                                      headers=retry_headers, timeout=60)
             latency = round(time.time() - start_time, 2)
             summary["total_latency"] += latency
             
@@ -303,8 +348,11 @@ def run_benchmark():
     summary["valid"] = (summary["error"] == 0 and aborted_at is None
                         and len(results) == summary["total"])
     if not summary["valid"]:
+        # "failed quer(y/ies)", not "engine failure(s)": on 2026-09-26 three HTTP 401s
+        # (an expired JWT) were reported as engine failures in this summary line while the
+        # per-query outcomes correctly said ERROR (401). Don't assert a cause here.
         summary["invalid_reason"] = (
-            f"{summary['error']} engine failure(s)"
+            f"{summary['error']} failed quer(y/ies)"
             + (f"; aborted at query {aborted_at}/{summary['total']}" if aborted_at else "")
             + (f"; only {len(results)}/{summary['total']} queries completed"
                if len(results) != summary["total"] else "")

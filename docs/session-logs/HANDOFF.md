@@ -40,15 +40,27 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 
 Everything is staged. Nothing to build or approve. **This is purely the run**, ~32 minutes.
 
-### What happened on the last attempt — read this, it changes how you launch it
+### Two attempts have failed. Both causes are now fixed. Read this before the third.
 
-The run completed **33 of 50 queries, all HTTP 200, zero 429s, zero engine failures** — then was
-**killed externally** at 14m26s. Because the script saved only after the loop, it wrote **nothing**:
-~100–130k tokens, half to two-thirds of the org-wide daily budget, for no file.
+**Attempt 1 (2026-09-25)** — completed 33/50, all HTTP 200, zero 429s, zero engine failures, then
+**killed externally** at 14m26s. The script saved only after the loop, so it wrote **nothing**:
+~100–130k tokens for no file. Recovered from `audit_logs` afterwards.
+→ Fixed: `Benchmark_Durability_refactor.md` — saves after every query.
 
-**That hole is now fixed** (`Benchmark_Durability_refactor.md`): results are written after every
-query, so an interruption costs one query instead of the day. But **launch it detached anyway** —
-the last run died because it was a child of a tool session:
+**Attempt 2 (2026-09-26)** — aborted at 39/50 on three HTTP 401s. **Not a rate limit:** zero 429s,
+and a Groq probe immediately afterwards returned HTTP 200 with 964/1000 remaining. The harness
+authenticated **once** and `JWT_EXPIRE_MINUTES` is **15**, against a ~32-minute run — the token
+died at 15m24s, at query 37.
+→ Fixed: `Benchmark_TokenRefresh_refactor.md` — refreshes every 10 min, retries once on 401.
+
+**Both had the same underlying cause:** the 2026-09-21 pacing change took the run from ~3 minutes
+to ~32 and broke two time-bound assumptions nobody revisited. Attempt 1 was doomed either way — it
+died 34 seconds short of the same JWT expiry.
+
+**Watch query 36 on the third attempt.** That is the point both previous runs died at or before,
+and passing it is the signal that the auth fix holds.
+
+**Launch it detached** regardless — attempt 1 died because it was a child of a tool session:
 
 ```powershell
 $env:PYTHONUTF8 = "1"
@@ -81,19 +93,24 @@ current to the last completed query.
 6. **If it aborts,** the failure shape names the limit: intermittent-with-recovery = TPM (raise
    `GRC_BENCH_PACING`, retry same day); sustained-with-no-recovery = TPD (needs a fresh day).
 
-### What the recovered partial already tells us
+### What the two partials already tell us — read this before touching the backlog
 
-The lost run was reconstructed from `audit_logs` and archived as
-`rag_benchmark_results.v8_PARTIAL_recovered_2026-09-25.json` (`valid: false`,
-`accuracy_percentage: null`). **It is not a v8 and must not be cited.** The one sound reading is
-the same-subset comparison against v7 on the identical 32 query ids:
+Both are archived with `valid: false` and `accuracy_percentage: null`
+(`..._PARTIAL_recovered_2026-09-25.json`, `..._PARTIAL_jwt_expiry_2026-09-26.json`).
+**Neither is a v8; neither may be cited.** The only sound reading is same-subset against v7:
 
-| | v7 | Recovered |
-|---|---|---|
-| Same 32 queries | 28/32 (87.5%) | **29/32 (90.6%)** |
+| Partial | Coverage | v7 on same ids | Partial | Delta |
+|---|---|---|---|---|
+| 2026-09-25 | 32 queries | 28/32 (87.5%) | 29/32 (90.6%) | +1 |
+| **2026-09-26** | **36 queries** | **32/36 (88.9%)** | **32/36 (88.9%)** | **0** |
 
-Two outcome flips up, one down — see item 1 below. Also: real query latency was **~3.5 s** against
-v7's 16.86 s, which answers the long-standing "was v7 throttled?" question. It was.
+**The larger sample says net zero, not +1.** The 09-25 partial stopped at query 33 and never
+reached query **#36**, which is a *second* regression. Four flips in total: **#6 and #12 gained,
+while #26 and #36 were lost.** Treat the curation as roughly break-even until a full v8 says
+otherwise.
+
+Also settled: real query latency is **~2.6–3.5 s** against v7's 16.86 s average, which answers the
+long-standing "was v7 throttled?" question. It was.
 
 ---
 

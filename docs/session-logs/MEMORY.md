@@ -198,6 +198,34 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 
 ## Hard-won gotchas
 
+- **The benchmark harness must re-authenticate mid-run — `JWT_EXPIRE_MINUTES` is 15 and a paced
+  run takes ~32 minutes.** It used to log in once; on 2026-09-26 queries 37–39 returned HTTP 401 at
+  exactly 15m24s after `LOGIN_SUCCESS` and the abort guard ended the run at 39/50. **Not a rate
+  limit** — zero 429s, and a Groq probe straight after returned HTTP 200 with 964/1000 remaining.
+  The 401s cost **zero Groq tokens** (rejected at auth in 0.02s, never reached the LLM). **Fixed**
+  — `_Token` refreshes every 10 min and retries once on a 401. Do **not** "fix" this by raising
+  `JWT_EXPIRE_MINUTES`: 15 minutes is the correct posture, the harness was the wrong part.
+
+- **When a change alters how LONG something runs, re-check every time-bound assumption around it.**
+  The 2026-09-21 pacing change took the benchmark from ~3 min to ~32 and broke **two** latent
+  assumptions four days apart — "results only need saving at the end" (2026-09-25) and "one login
+  is enough" (2026-09-26). Neither was visible in the diff that caused them. The 2026-09-25 run
+  was killed 34 s short of the JWT expiry, so it was doomed either way.
+
+- **Stub coverage that omits the failure mode under discussion passes and proves nothing.**
+  `Benchmark_Durability_refactor.md` shipped with 21/21 green and still emitted
+  `complete: true, accuracy_percentage: 64.0` on the first real **aborted** run — the exact
+  miscitable artifact it existed to prevent. Its stubs tested a clean run and a mid-run snapshot,
+  never an abort. Fixed by requiring *coverage* (`len(results) == total`) before any accuracy
+  figure is written. **Reading the first real output is what caught it, not the tests.**
+
+- **The curation looks roughly BREAK-EVEN, not positive** (evidence as of 2026-09-26, 36-query
+  subset): **#6** and **#12** gained (both Golden Mapping targets, fixed by the corpus change
+  alone), while **#26** (seven GDPR principles) and **#36** (NIST CSF ↔ ISO 27001 gap assessment)
+  regressed. Same-subset vs v7: 32/36 both ways. The earlier "+1" reading came from a 32-query
+  sample that never reached #36. **Removing documents is not free** — weigh that before the
+  corpus authority review removes more.
+
 - **The repo's own `faiss_index/` directory is a DECOY — do not read it to learn the index state.**
   It is dated 2026-04-11 and the containerised stack never touches it. The live index lives in the
   **`grc-faiss` Docker volume** at `/app/faiss_index` inside `grc-backend`. Found 2026-09-25 while

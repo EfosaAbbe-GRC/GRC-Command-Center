@@ -1,3 +1,127 @@
+# Session Log — 2026-09-26 ("The budget was never the problem — the JWT was")
+
+**Outcome:** the public README was corrected (six stale claims, three of which broke setup), the
+v8 run was attempted again on a full budget and **truncated at 39/50 by an expired JWT — not a
+rate limit**, and two more defects were fixed: the token expiry itself, and a hole in the previous
+night's durability fix that its own passing tests had missed. **A clean v8 still has not run.**
+
+## The public README was advertising a provider this project left six weeks ago
+
+Started as a two-word fix for the 44% → 42% baseline. It was six corrections, and three of them
+meant **nobody following the README could run the project**:
+
+| Claim | Reality |
+|---|---|
+| Backend uses **Gemini 2.5 Flash** | Groq `openai/gpt-oss-120b` since 2026-08-13 |
+| Prerequisite: **Google AI API key** | needs a Groq key |
+| Setup: set **`GOOGLE_API_KEY`** | must be `GROQ_API_KEY` |
+| `cd backend && python backend/tests/smoke_test.py` | that path cannot resolve from `backend/` |
+| **27/27** smoke tests | 44/44 (27/27 was the April baseline) |
+| RAG **44% → 90%** | 42% → 90%; 44 was the pre-correction score of the same run |
+
+Verified against the code before changing anything (`rag.py:13` imports `ChatGroq`, `config.py:28`
+states `GOOGLE_API_KEY` survives only for parked diagnostic scripts). Pushed as `9d29c2b`.
+
+A portfolio repo whose headline claim is rigorous evidence-checking should not have a front page
+contradicting its own code — and this is the artifact interviewers and claude.ai actually read.
+
+## The v8 attempt — and the diagnosis that mattered more than the result
+
+Budget had fully refilled (999/1000 RPD). Every gate green, index confirmed byte-exact at
+26,300,973 = 17,123 chunks. Launched detached with `-u` per the new procedure.
+
+**Both of last night's fixes worked immediately and visibly:** progress appeared live in
+`bench_run.log`, and `rag_benchmark_results.json` existed with 2 queries saved within 45 seconds.
+
+It aborted at query 39/50. **The cause was not Groq:**
+
+| Evidence | Value |
+|---|---|
+| `LOGIN_SUCCESS` → first `Invalid or expired token` | **15m 24s** |
+| `JWT_EXPIRE_MINUTES` | **15** |
+| Failures | queries 37, 38, 39 — exactly 22 s apart (the pacing gap) |
+| Labelled | `ERROR (401)` — the scorer was honest |
+| Latency on those | **0.02–0.03 s**, rejected at auth, **zero Groq tokens spent** |
+| Groq probe immediately after | **HTTP 200**, 964/1000 remaining |
+
+The harness logs in **once** and reuses that token for a **32-minute** run. It was always going to
+die around query 36.
+
+**This is the same root cause as last night's durability bug in a different disguise.** The
+2026-09-21 pacing change took the run from ~3 minutes to ~32 and broke **two** independent
+time-bound assumptions, neither visible in the diff that caused them:
+
+1. *"results only need saving at the end"* — fixed 2026-09-25
+2. *"one login is enough"* — fixed today
+
+**Corollary: the 2026-09-25 run was doomed regardless.** It was killed externally at 14m26s,
+**34 seconds** short of the same expiry. It would have started 401-ing at query ~35 either way.
+That night's budget was never going to produce a complete run.
+
+## The finding that changes the corpus picture
+
+36 usable results (the three 401s produced no answer). Same-subset against v7 on those 36:
+
+| | v7 | Today |
+|---|---|---|
+| Answered | 32/36 (88.9%) | **32/36 (88.9%)** |
+
+**Dead even.** And there are now **four** flips, not three:
+
+| # | Query | Change |
+|---|---|---|
+| #6 | NIST CSF 2.0 tiers | INSUFFICIENT_DATA → **ANSWERED** |
+| #12 | ISO 27001 mandatory documentation | INSUFFICIENT_DATA → **ANSWERED** |
+| #26 | Seven GDPR principles | ANSWERED → **INSUFFICIENT_DATA** |
+| **#36** | **NIST CSF ↔ ISO 27001 gap assessment** | ANSWERED → **INSUFFICIENT_DATA** |
+
+**#36 is new** — the 2026-09-25 partial stopped at query 33 and never reached it. So the curation
+reads as **net zero, not +1**: two enumeration gains traded for two content losses. That is a
+direct caution for the queued corpus authority review — **removing documents is not free**, and
+the evidence now says it costs roughly what it gains.
+
+Archived as `rag_benchmark_results.v8_PARTIAL_jwt_expiry_2026-09-26.json`, `valid: false`,
+`accuracy_percentage: null`.
+
+## Two fixes EXECUTED — both verified at zero Groq cost
+
+**`Benchmark_TokenRefresh_refactor.md`** — a self-refreshing token (10-minute ceiling under a
+15-minute expiry) plus re-auth-and-retry on any 401. Re-authentication is a local DB call, so the
+fix costs nothing to run. **13/13 checks**, including a stubbed 401 that now scores on its retry
+instead of as a failure. Also corrected `invalid_reason`, which reported *"3 engine failure(s)"*
+for three HTTP 401s — the per-query labels were right, but the summary line asserted a cause that
+was false.
+
+**Raising `JWT_EXPIRE_MINUTES` was considered and rejected.** 15 minutes is a sound posture; the
+*harness* was wrong to assume one login covers a 32-minute job.
+
+### The correction that matters most: last night's fix shipped with a hole
+
+Reading the real 39/50 output showed `complete: true` and **`accuracy_percentage: 64.0`** — a
+citable-looking number on a run that never finished. `complete` was taken from the caller, where
+it means "the script reached the end", and an aborted run reaches the end too via `break`.
+
+So the exact artifact `Benchmark_Durability_refactor.md` exists to prevent is what it produced.
+Only `valid: false` stood in the way. Fixed: `_save()` now requires **coverage** as well —
+`complete` and `accuracy_percentage` are emitted only when `len(results) == total`. Re-verified
+against a stub reproducing the 39/50 abort exactly (11/11).
+
+**The lesson is about verification, not code.** Last night's 21 checks all passed and proved
+nothing about this case, because they exercised a clean run and a mid-run snapshot but never an
+*aborted* one — the single failure mode the refactor was written for. Stub coverage that omits the
+case under discussion is worse than no coverage, because it produces confidence.
+
+## Next session
+
+1. **Clean v8 on a fresh budget.** Both known blockers are now closed. Watch query 36 — the point
+   both previous attempts died at or before.
+2. Re-scope **Golden Mapping** against that run: #6 and #12 look self-resolved, leaving #4 and #18.
+3. Investigate the **#26 and #36 regressions** — both plausibly caused by the five removed
+   documents, and together they are the argument for treating further curation cautiously.
+4. Decide **A/B/C** on audit-write failure (from 2026-09-25, still open).
+
+---
+
 # Session Log — 2026-09-25 ("The benchmark died at query 33; the audit trail brought it back")
 
 **Outcome:** the v8 run was attempted and killed externally at query 33 of 50, writing nothing —

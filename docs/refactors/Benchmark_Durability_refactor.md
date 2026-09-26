@@ -29,6 +29,33 @@ One refinement made during EXECUTE, beyond the draft: `invalid_reason` now also 
 `"; only N/50 queries completed"` when a run ends short, so the reason string names the actual
 cause rather than leaving it to be inferred from `queries_completed`.
 
+## ⚠ Correction 2026-09-26 — this fix shipped with a hole of its own
+
+**The 21 checks above all passed and the fix was still wrong**, because they only ever exercised a
+*clean* run and a *mid-run snapshot* — never an **aborted** one. That is the case that matters.
+
+The first real aborted run (2026-09-26, truncated at 39/50 by an expired JWT) produced:
+
+```
+queries_completed : 39 of 50
+complete          : True    <-- an aborted run stamped complete
+accuracy_percentage: 64.0   <-- a citable-looking figure for a run that never finished
+```
+
+`complete` was taken straight from the caller, where it means *"the script reached the end"* — and
+an aborted run reaches the end too, via `break`. So the one artifact this refactor exists to
+prevent, a partial file carrying a quotable accuracy number, is exactly what it produced. Only
+`valid: false` stood in the way.
+
+**Fixed in `Benchmark_TokenRefresh_refactor.md`'s EXECUTE pass:** `_save()` now requires coverage
+as well as completion — `complete` and `accuracy_percentage` are emitted only when
+`len(results) == total`. Re-verified against a stub reproducing the exact 39/50 abort:
+`complete: false`, `accuracy_percentage: null`, `rate_on_completed` retained, reason string naming
+the shortfall. Full runs unaffected.
+
+**The lesson is about the verification, not the code.** Stub coverage that omits the failure mode
+under discussion will pass and prove nothing. Reading the first real output is what caught this.
+
 ## Consequence first
 
 `rag_benchmark.py` writes its results **exactly once, after the loop finishes**. Any interruption
