@@ -20,6 +20,26 @@
 > `docs/reports/rag_benchmark_results.v8_PARTIAL_recovered_2026-09-25.json` —
 > `valid: false`, `accuracy_percentage: null`. **It is not a v8 and must not be cited.**
 >
+> **⚠ ATTEMPT 2 ALSO FAILED, 2026-09-26 — and it was NOT the token budget.** Budget had fully
+> refilled (999/1000), every gate green. Aborted at **39/50** on three HTTP 401s: the harness
+> authenticated **once**, `JWT_EXPIRE_MINUTES` is **15**, and a paced run takes **~32 minutes**, so
+> the token died at 15m24s. Ruled out as rate limiting on evidence — zero 429s, and a Groq probe
+> straight afterwards returned HTTP 200 with 964/1000 left. Those 401s cost **zero Groq tokens**
+> (rejected at auth in 0.02 s, never reached the LLM).
+> **Fixed** (`Benchmark_TokenRefresh_refactor.md`, EXECUTED 2026-09-26, 13/13): the token refreshes
+> every 10 min and retries once on a 401. **Both failures share one cause** — the 2026-09-21 pacing
+> change took the run from ~3 min to ~32 and broke two time-bound assumptions four days apart.
+> Attempt 1 was doomed either way: killed 34 s short of the same expiry.
+> **On the next run, watch query 36** — the point both attempts died at or before.
+> Archived: `rag_benchmark_results.v8_PARTIAL_jwt_expiry_2026-09-26.json`, `valid: false`,
+> `accuracy_percentage: null`. **Not a v8; do not cite.**
+>
+> **Also fixed 2026-09-26 — a hole in the durability fix itself.** The first real *aborted* run
+> came out stamped `complete: true` with `accuracy_percentage: 64.0`, the exact miscitable artifact
+> that refactor exists to prevent; its 21 checks had covered a clean run and a mid-run snapshot but
+> never an abort. `_save()` now requires **coverage** (`len(results) == total`) before emitting any
+> accuracy figure. Re-verified 11/11 against a stub reproducing the 39/50 abort.
+>
 > **Durability is fixed** (`Benchmark_Durability_refactor.md`, EXECUTED 2026-09-25, 21/21 checks):
 > the benchmark now saves after every query, so an interruption costs one query, not the day.
 > **Run it detached from now on** — a tool session ending must not be able to kill it:
@@ -30,11 +50,26 @@
 >   -RedirectStandardError "bench_run.err" -NoNewWindow
 > ```
 >
-> **What the partial already tells us** (same-subset vs v7, the only sound read): 29/32 vs v7's
-> 28/32 on the identical query ids. Two of Golden Mapping's four named enumeration targets — **#6**
-> (NIST CSF tiers) and **#12** (ISO 27001 mandatory documentation) — **fixed themselves via the
-> corpus curation alone**, while **#26** (seven GDPR principles) **regressed**. Re-scope item 2 of
-> the backlog against a real v8 before building anything.
+> **What the two partials tell us — DIAGNOSED 2026-09-26, and it reversed an earlier reading.**
+> Same-subset vs v7: 29/32 on the 09-25 sample, **32/36 vs 32/36 on the larger 09-26 sample.** The
+> raw delta reads break-even; that is wrong. Diagnosis at zero token cost from `audit_logs`'
+> retrieved-source history — `docs/reports/Curation_Regression_Diagnosis_2026-09-26.md`:
+> **the curation was correct and should stand; do not restore `Notes from Study +.pdf`.**
+>
+> - **#6, #12 — real gains.** Under v7 the actual standard `NIST CSF 2.0 (CSWP 29).pdf` was
+>   **never retrieved** for #6; `Notes from Study +.pdf` and `B0DF8Z5HTT.pdf` held its slots. #12
+>   had a byte-identical duplicate burning a second slot.
+> - **#26 — exposed, not caused.** `GDPR_Regulation_Text.pdf` is live, indexed, and retrieved for
+>   three sibling GDPR queries that all answer; it loses to checklists only on this *enumeration*
+>   query. **Joins Golden Mapping — the list is #4, #18, #26.**
+> - **#36 — an improvement scored as a loss.** No CSF↔ISO crosswalk exists in the corpus (zero
+>   `27001` hits in the CSF paper). v7 extrapolated a generic gap-analysis methodology into a
+>   framework-specific table its sources did not support; today it correctly refuses. Needs an
+>   authoritative crosswalk document, **not** a query-time fix.
+> - **⬆ Consequence:** the binary scorer cannot tell a correct refusal from a failure, and that one
+>   mis-score is the entire reason the curation read as break-even. Promoted out of "not urgent".
+>   **It does not block v8** — archives store full answer text, so a scorer change can be applied
+>   retroactively to every run at once, exactly as the 2026-08-05 correction was.
 
 - [ ] **Run it, detached, on a day with a fresh Groq budget** (~32 min). Everything is staged — the
   pacing prerequisite is applied and pushed (`96502f1`), durability applied 2026-09-25, and the
