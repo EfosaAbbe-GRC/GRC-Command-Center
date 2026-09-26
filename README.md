@@ -4,12 +4,17 @@ An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered docum
 
 ## Highlights
 
-- **RAG accuracy 44% → 90%** on a fixed 50-query benchmark, driven by
+- **RAG accuracy 42% → 90%** on a fixed 50-query benchmark, driven by
   measured changes (chunking, retrieval depth, cross-encoder re-ranking,
   golden mapping) — each kept only after an independent before/after
   evidence check, including catching and reverting a scorer bug that once
-  misreported a fake 96%. Full trajectory and writeups in
-  [`docs/reports/`](docs/reports/), starting with
+  misreported a fake 96%. The 42% baseline is itself a corrected figure: the
+  original scorer only detected refusals at the start of a response, so
+  answers that refused halfway through were counted as passes. Every
+  historical run was re-scored and the record corrected downward.
+  *Current caveat: the corpus was re-curated on 2026-09-21 and the 90% figure
+  measures the previous index — a fresh benchmark is pending.* Full trajectory
+  and writeups in [`docs/reports/`](docs/reports/), starting with
   [`RAG_Benchmark_Report_v7.md`](docs/reports/RAG_Benchmark_Report_v7.md).
 - **Immutable audit trail** — PL/pgSQL `SECURITY DEFINER` triggers block
   `UPDATE`/`DELETE` on audit logs, evidence, and TPRM risk acceptances at
@@ -17,13 +22,13 @@ An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered docum
 - **Third-Party Risk Management** — 13-stage vendor assessment workflow
   with automatic risk tiering and admin-signed, append-only risk
   acceptances.
-- **27/27 smoke tests green**, including a live probe that attempts to
-  tamper with an audit row via `docker exec` and asserts the trigger
-  rejects it.
+- **44/44 smoke tests green** (plus 50/50 unit tests), including a live probe
+  that attempts to tamper with an audit row via `docker exec` and asserts the
+  trigger rejects it.
 
 ## Architecture
 
-- **Backend:** FastAPI (Python) with Gemini 2.5 Flash LLM, FAISS vector store.
+- **Backend:** FastAPI (Python) with Groq (`openai/gpt-oss-120b`) LLM, FAISS vector store.
 - **Database:** PostgreSQL 16 for high-concurrency audit logging and user registry.
 - **Real-Time:** Synchronous Event Bus (WebSockets) for zero-latency terminal updates.
 - **Frontend:** React 19 + Vite + Tailwind CSS v4.
@@ -37,14 +42,19 @@ The production stack is fully containerized and hardened. This is the recommende
 ### Prerequisites
 
 - Docker and Docker Compose
-- Google AI API key ([get one here](https://makersuite.google.com/app/apikey))
+- Groq API key ([get one here](https://console.groq.com/keys)) — the free tier
+  is enough to run the platform, but note its limits: 30 requests/min,
+  1,000 requests/day, 8,000 tokens/min and 200,000 tokens/day, all binding at
+  once and scoped to your whole Groq organization.
 
 ### Quick Start
 
 1. **Configure Environment:**
-   Create `backend/.env` with your `GOOGLE_API_KEY`, plus `ADMIN_PASSWORD` / `ANALYST_PASSWORD` /
+   Create `backend/.env` with your `GROQ_API_KEY`, plus `ADMIN_PASSWORD` / `ANALYST_PASSWORD` /
    `VIEWER_PASSWORD` and `JWT_SECRET_KEY`. The checked-in defaults for those four are non-functional
    placeholders (`CHANGE-ME-...`), so the seeded accounts won't log in until you set real values.
+   (`GOOGLE_API_KEY` still appears in the settings model, but it is retained only for parked
+   Gemini-pinned diagnostic scripts — it is **not** used by the live RAG pipeline.)
 
 2. **Launch the Hardened Stack:**
 
@@ -111,7 +121,21 @@ organized so the root stays focused on the project itself:
 
 ## Testing
 
+Endpoint smoke tests — run from the repository root (expect **44/44**):
+
 ```bash
-cd backend
 python backend/tests/smoke_test.py
 ```
+
+Unit tests — must run from `backend/`, since the suite imports `core.*` (expect **50/50**):
+
+```bash
+cd backend
+python -m pytest -q
+```
+
+Both target the isolated test stack (`docker-compose.test.yml`, port 8002) by default. To point
+them at the dev stack instead, set `GRC_TEST_BASE=http://localhost:8001` first.
+
+> `smoke_test.py` makes three live `/chat` calls, so it consumes roughly 9,000 Groq tokens per run
+> — worth knowing against the free tier's 200,000/day.
