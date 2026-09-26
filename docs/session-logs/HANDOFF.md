@@ -104,10 +104,23 @@ Both are archived with `valid: false` and `accuracy_percentage: null`
 | 2026-09-25 | 32 queries | 28/32 (87.5%) | 29/32 (90.6%) | +1 |
 | **2026-09-26** | **36 queries** | **32/36 (88.9%)** | **32/36 (88.9%)** | **0** |
 
-**The larger sample says net zero, not +1.** The 09-25 partial stopped at query 33 and never
-reached query **#36**, which is a *second* regression. Four flips in total: **#6 and #12 gained,
-while #26 and #36 were lost.** Treat the curation as roughly break-even until a full v8 says
-otherwise.
+Four flips in total: **#6 and #12 gained, #26 and #36 went the other way.** The raw delta reads
+net zero — **but that reading is wrong, and the diagnosis is done.**
+
+**→ `docs/reports/Curation_Regression_Diagnosis_2026-09-26.md` (zero-token, from `audit_logs`).**
+**The curation was correct and should stand. Do not restore `Notes from Study +.pdf`.** In short:
+
+- **#6, #12 — real gains.** On #6 the actual standard (`NIST CSF 2.0 (CSWP 29).pdf`) was *never
+  retrieved* under v7; two secondary docs held its slots. On #12 a byte-identical duplicate was
+  burning a second slot.
+- **#26 — not a regression.** `GDPR_Regulation_Text.pdf` is present, indexed, and retrieved for
+  three sibling GDPR queries that all answer. It simply doesn't surface for an *enumeration*
+  query. The study notes were masking that weakness, not fixing it. **#26 is a Golden Mapping
+  target, not curation damage.**
+- **#36 — an improvement scored as a loss.** No CSF↔ISO crosswalk exists in the corpus (zero
+  `27001` hits in the CSF paper). v7 "answered" by extrapolating a generic gap-analysis
+  methodology; today it correctly refuses. **Needs an authoritative crosswalk document, not a
+  query-time fix.**
 
 Also settled: real query latency is **~2.6–3.5 s** against v7's 16.86 s average, which answers the
 long-standing "was v7 throttled?" question. It was.
@@ -116,18 +129,27 @@ long-standing "was v7 throttled?" question. It was.
 
 ## The rest of the queue — independent of each other, except where noted
 
-**1. Golden Mapping for the enumeration queries — RE-SCOPE BEFORE BUILDING.** This has been carried
-as "the highest-value lever," targeting **#4, #6, #12, #18**. The recovered partial shows that
-**#6 and #12 now answer correctly from the corpus curation alone**, with no query-time work at all.
-**It may be a two-query problem (#4, #18) rather than four.** Confirm against a real v8 — don't build
-against the partial. Root cause for the remainder is unchanged: 1000-char chunking shatters
-multi-page enumerations. **Do not re-diagnose #18 as a retrieval bug** — investigated and disproved,
-see `RAG_Benchmark_Report_v7.md` §Correction.
+**1. Golden Mapping for the enumeration queries — RE-SCOPED 2026-09-26, still ~four targets.**
+Long carried as "the highest-value lever" for **#4, #6, #12, #18**. The new list is
+**#4, #18, and #26**:
 
-**2. Investigate #26's regression.** *"List the seven core principles of GDPR"* went
-ANSWERED → INSUFFICIENT_DATA. One of the five documents removed on 2026-09-21 was evidently
-carrying it — the first evidence the curation was not purely additive. Confirm it persists in v8
-before digging.
+- **#6 and #12 are done** — the corpus curation alone fixed them, no query-time work needed.
+- **#26 joins.** *"List the seven core principles of GDPR"* is an enumeration query, not curation
+  damage: `GDPR_Regulation_Text.pdf` is present, indexed, and retrieved for three sibling GDPR
+  queries that all answer — it just loses to checklists on this one. See
+  `Curation_Regression_Diagnosis_2026-09-26.md`.
+
+Root cause unchanged: 1000-char chunking shatters multi-page enumerations. **Do not re-diagnose
+query #18 as a retrieval bug** — investigated and disproved, see `RAG_Benchmark_Report_v7.md`
+§Correction. Confirm the list against a real v8 before building.
+
+**2. Acquire an authoritative NIST CSF ↔ ISO 27001 crosswalk — corpus gap, not a code fix.**
+*"How do you perform a gap assessment between NIST CSF and ISO 27001?"* (#36) now refuses, and
+**that is the correct answer**: there is no crosswalk anywhere in the corpus (zero `27001` hits in
+`NIST CSF 2.0 (CSWP 29).pdf`). Under v7 it "answered" by extrapolating a generic gap-analysis
+methodology into a framework-specific table the sources did not support. NIST publishes
+Informative References for exactly this mapping. **Until one is added, refusing is right** — do
+not treat the refusal as a defect.
 
 **3. Decide A/B/C on audit-write failure.** The NUL-byte bug is fixed, but `except Exception` still
 swallows *unknown* audit failures — and it swallowed a bug introduced during that very fix, which
@@ -139,7 +161,13 @@ Needs its own draft — it is a response-schema change.
 mojibake sponsors page and two sub-150-char stubs. A length threshold plus a non-ASCII-ratio guard
 fixes this class across all documents, including future additions.
 
-**5. Corpus authority review — user-led, human judgement.** Efosa's own proposal, still open. A
+**5. Corpus authority review — user-led, human judgement. Now BETTER supported than when proposed.**
+The 2026-09-26 diagnosis is direct evidence the premise holds: on query #6 the actual standard
+(`NIST CSF 2.0 (CSWP 29).pdf`) was **never retrieved** under v7 because two secondary documents
+held its slots, and on #12 a byte-identical duplicate burned another. Removing secondary material
+demonstrably promotes primary sources. **The surviving caveat is narrower than "removals cost
+accuracy":** a removal can *expose* an enumeration weakness the removed doc was masking (#26), so
+benchmark after each removal — that is a reason to measure, not to remove less. Original note: A
 crude name heuristic flagged 33 of 158 PDFs as personal/secondary; **that count predates the
 refresh to 148 files — re-run the heuristic before trusting it.** Evidence it costs accuracy: on
 query #12, `Notes from Study +.pdf` supplied 4 of 10 chunks and out-retrieved the actual standard.
@@ -153,10 +181,18 @@ exist project-wide, and five frontend fixes now rest purely on manual browser ve
 **7. Interview Simulator Tier 2** — only on a specific pull toward it, not the default next move.
 See `Interview_Simulator_Roadmap.md`.
 
+**⬆ PROMOTED 2026-09-26 — the binary scorer cannot tell a correct refusal from a failure, and it
+has now distorted a real decision.** Long filed as "a real methodology gap, not urgent." On
+query #36 the pipeline correctly refused (no CSF↔ISO crosswalk exists in the corpus) where v7 had
+answered by extrapolating generic methodology — an unambiguous improvement in honesty, scored as
+a loss. That single mis-score is the entire reason the curation read as break-even instead of
+positive. **The benchmark currently penalises the system for the exact behaviour the rest of this
+project was fixed to produce.** Minimum viable change: score a well-formed `INSUFFICIENT_DATA` as
+a distinct third category rather than folding it in with failures, so refusals can be judged
+correct-or-not instead of counted as wrong by default.
+
 **Lower priority, unchanged:** migrate `diagnose_rag.py` / `validate_diagnostic.py` off the dead
-Gemini key (has blocked analysis twice); the binary benchmark scorer still cannot distinguish a
-correct refusal from a failure, which rewards the less honest model — a real methodology gap, not
-urgent. Also unaddressed: `ChatGroq(max_retries=2)` means a throttled query can fire three calls;
+Gemini key (has blocked analysis twice). Also unaddressed: `ChatGroq(max_retries=2)` means a throttled query can fire three calls;
 the 2026-09-25 run spent ~43 Groq calls for 33 queries.
 
 **Standing recommendation, not a queued item:** this is explicitly a *progressive* project.

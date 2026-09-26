@@ -219,12 +219,27 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   never an abort. Fixed by requiring *coverage* (`len(results) == total`) before any accuracy
   figure is written. **Reading the first real output is what caught it, not the tests.**
 
-- **The curation looks roughly BREAK-EVEN, not positive** (evidence as of 2026-09-26, 36-query
-  subset): **#6** and **#12** gained (both Golden Mapping targets, fixed by the corpus change
-  alone), while **#26** (seven GDPR principles) and **#36** (NIST CSF ↔ ISO 27001 gap assessment)
-  regressed. Same-subset vs v7: 32/36 both ways. The earlier "+1" reading came from a 32-query
-  sample that never reached #36. **Removing documents is not free** — weigh that before the
-  corpus authority review removes more.
+- **The curation was CORRECT and should stand — do not restore `Notes from Study +.pdf`.**
+  ~~Earlier reading, same day: "roughly break-even; removing documents is not free."~~
+  **Superseded 2026-09-26 by `docs/reports/Curation_Regression_Diagnosis_2026-09-26.md`**, built
+  from `audit_logs`' retrieved-source history at zero token cost. The raw 32/36-vs-32/36 delta is
+  misleading. What the four flips actually are:
+  - **#6, #12 — real gains.** Under v7 the actual standard `NIST CSF 2.0 (CSWP 29).pdf` was
+    **never retrieved** for #6 — `Notes from Study +.pdf` and `B0DF8Z5HTT.pdf` held its slots. On
+    #12 a byte-identical duplicate burned a second slot. Secondary material was out-competing
+    primary standards for retrieval: the corpus authority review's premise, demonstrated rather
+    than predicted.
+  - **#26 — a weakness EXPOSED, not caused.** `GDPR_Regulation_Text.pdf` is live, indexed, and
+    retrieved for three sibling GDPR queries that all answer; it just loses to checklists on an
+    *enumeration* query. The study notes had supplied a tidy summary list that masked it.
+    **#26 is now a Golden Mapping target — the list is #4, #18, #26.**
+  - **#36 — an improvement the scorer recorded as a loss.** No CSF↔ISO crosswalk exists in the
+    corpus at all (zero `27001` hits in the CSF paper). v7 "answered" by extrapolating a generic
+    gap-analysis methodology into a framework-specific table its sources did not support; today
+    it correctly refuses. Fix is **corpus acquisition** (NIST Informative References), not code.
+  - **Consequence: the binary scorer's inability to tell a correct refusal from a failure is no
+    longer theoretical** — that one mis-score is the entire reason the curation read as
+    break-even. Promoted out of "not urgent" in `HANDOFF.md`.
 
 - **The repo's own `faiss_index/` directory is a DECOY — do not read it to learn the index state.**
   It is dated 2026-04-11 and the containerised stack never touches it. The live index lives in the

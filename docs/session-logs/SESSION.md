@@ -111,14 +111,46 @@ nothing about this case, because they exercised a clean run and a mid-run snapsh
 *aborted* one — the single failure mode the refactor was written for. Stub coverage that omits the
 case under discussion is worse than no coverage, because it produces confidence.
 
+## Addendum, same day — the regressions were diagnosed, and it reverses the conclusion above
+
+Done at zero token cost from `audit_logs`, which stores retrieved sources per query. Full write-up:
+`docs/reports/Curation_Regression_Diagnosis_2026-09-26.md`.
+
+**The curation was correct and should stand. Do not restore `Notes from Study +.pdf`.** The
+"break-even" reading recorded earlier in this entry is superseded:
+
+- **#6, #12 — real gains.** Under v7 the actual standard `NIST CSF 2.0 (CSWP 29).pdf` was **never
+  retrieved** for #6; `Notes from Study +.pdf` and `B0DF8Z5HTT.pdf` occupied its slots. #12 had a
+  byte-identical duplicate burning a second slot. Secondary material was out-competing primary
+  standards — the corpus authority review's premise, now demonstrated.
+- **#26 — exposed, not caused.** `GDPR_Regulation_Text.pdf` is live, indexed, and retrieved for
+  three sibling GDPR queries that all answer. It simply loses to checklists on an enumeration
+  query; the study notes had masked that with a tidy summary list. **#26 becomes a Golden Mapping
+  target.**
+- **#36 — an improvement scored as a loss.** No CSF↔ISO crosswalk exists in the corpus (zero
+  `27001` hits in the CSF paper). v7 "answered" by extrapolating a generic gap-analysis
+  methodology into a framework-specific table its own sources did not support. Today's refusal is
+  correct. Needs an authoritative crosswalk, not code.
+
+**The most consequential consequence:** the binary scorer cannot distinguish a correct refusal
+from a failure, and that single mis-score is the entire reason the curation read as break-even.
+Long filed as "not urgent"; it has now distorted a real decision, and is promoted in `HANDOFF.md`.
+
+**Method note, third session running.** A conclusion I reported with confidence — "the curation is
+break-even" — did not survive the first real check. It was an inference from a score delta,
+reported as a finding, when the score itself was the thing that needed auditing. The pattern holds:
+the number was right, what it *meant* was not.
+
 ## Next session
 
-1. **Clean v8 on a fresh budget.** Both known blockers are now closed. Watch query 36 — the point
-   both previous attempts died at or before.
-2. Re-scope **Golden Mapping** against that run: #6 and #12 look self-resolved, leaving #4 and #18.
-3. Investigate the **#26 and #36 regressions** — both plausibly caused by the five removed
-   documents, and together they are the argument for treating further curation cautiously.
-4. Decide **A/B/C** on audit-write failure (from 2026-09-25, still open).
+1. **Clean v8 on a fresh budget.** Both known blockers are closed. Watch query 36 — the point both
+   previous attempts died at or before. No corpus change needed first; the diagnosis settled that.
+2. **Golden Mapping** targets are **#4, #18, #26** — confirm against the real v8 before building.
+3. **Acquire a NIST CSF ↔ ISO 27001 crosswalk** (NIST Informative References) for #36. Corpus
+   acquisition, not a code fix.
+4. **Fix the scorer's refusal blindness** — score a well-formed `INSUFFICIENT_DATA` as its own
+   category rather than folding it in with failures.
+5. Decide **A/B/C** on audit-write failure (from 2026-09-25, still open).
 
 ---
 
