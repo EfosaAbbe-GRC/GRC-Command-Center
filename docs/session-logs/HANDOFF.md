@@ -42,6 +42,13 @@ Queue item 1 below, promoted: the scorer and the v7 correction are both done, an
 completeness checks are exactly what shows whether Golden Mapping works (today: #4 4/6, #12
 0/11, #18 and #26 refused). Draft-first. One variable per run; the next benchmark costs a day's Groq budget.
 
+**DRAFTED 2026-09-27 — `docs/refactors/Golden_Mapping_Enumerations_refactor.md`, awaiting EXECUTE.**
+Data-only (3 JSON entries: #4, #18, #26), triggers tested at zero tokens in-container: all three
+match their query and rewordings with **zero false matches** against the other 49 queries. #12
+excluded — no official ISO source in the corpus. Three decisions in the draft. New finding inside
+it: the official **GDPR PDF's text layer is damaged** (~1 in 10 words split: "pur pose limitation"),
+a likely contributing cause of #26 and of weak GDPR retrieval generally.
+
 ### Done 2026-09-27 — scorer fix and v7 correction
 
 **The scorer fix is DONE** (2026-09-27, `047cbc0`, `Benchmark_Grading_refactor.md` Parts A–D):
