@@ -36,7 +36,18 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 
 ---
 
-## ▶ 0. FIRST: Golden Mapping for #4, #12, #18, #26 — now measurable
+## ▶ 0. FIRST: run the v9 benchmark — measures Golden Mapping (EXECUTED 2026-09-27)
+
+The four entries are **live** (`Golden_Mapping_Enumerations_refactor.md`, status block has the
+verification). **One variable changed since v8:** those four `golden_mappings.json` entries. Run v9
+on a fresh Groq day using §"Running a benchmark" below (confirm Mufasa idle; detached; ~21 min).
+Archive as `rag_benchmark_results.v9_golden_enumerations.json`. **Success:** #4, #12, #18, #26
+graded `COMPLETE`, every other query's grade unchanged (report any change as noise, not a gain).
+Label the four **mapping-attributed** in the report. Then take the two open decisions to Efosa:
+(2) fix the v6 entries' exact-wording triggers — they also misfire on #17 and #21; (3) re-extract
+the damaged GDPR PDF.
+
+### Background (written before EXECUTE)
 
 Queue item 1 below, promoted: the scorer and the v7 correction are both done, and the new grader's
 completeness checks are exactly what shows whether Golden Mapping works (today: #4 4/6, #12

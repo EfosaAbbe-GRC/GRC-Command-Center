@@ -60,6 +60,20 @@ Two grader bugs caught before shipping, both by reading real answers rather than
 the model's `U+202F` narrow space ("Lessons Learned") defeated a keyword match, and the v7
 error strings needed the engine-failure check re-applied to stored text. Both are now unit tests.
 
+## Evening — Golden Mapping for the enumeration queries, drafted and executed
+
+Drafted data-only entries for #4, #18, #26 after testing triggers at zero tokens in-container with
+the app's own embedding model. First-round triggers failed (GOVERN falsely matched #1/#2/#16;
+OWASP missed its own query) — iterated, disclosed. **Efosa then asked me to confirm the ISO 27001
+standard wasn't in the corpus — it was.** `ISO 27001-2022 BookLet.pdf` is the official standard;
+my first check had searched filenames and never opened it. #12 added back (paraphrased clause
+references — copyrighted standard, public repo). Also found: the official GDPR PDF's text layer is
+broken ("purpose" appears 0× intact, 261× as "pur pose") — revises the 09-26 diagnosis of #26.
+
+Executed on "Execute": +101 lines to `golden_mappings.json`, backend rebuilt, pytest 65/65. The live
+matcher fires each new entry only on its own query; untouched rewordings 6/8 (two misses reported,
+not patched). Pre-existing: the v6 EU AI Act entries misfire on #17 and #21. v9 measures it next.
+
 ## Parallel, outside this project
 
 Started a review of private study material (tracked in the workspace's own local docs, not in this

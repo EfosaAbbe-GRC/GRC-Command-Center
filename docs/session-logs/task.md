@@ -4,7 +4,19 @@
 
 ---
 
-## ✅ DONE 2026-09-27 — benchmark grading (scorer fix), Parts A–D · ⏸ Part E awaiting approval
+## ✅ EXECUTED 2026-09-27 — Golden Mapping for enumeration queries #4, #12, #18, #26 · ⏳ v9 pending
+
+- [x] `Golden_Mapping_Enumerations_refactor.md` executed: 4 entries (NIST AI RMF GOVERN, OWASP LLM
+  Top 10 2025, GDPR Art. 5, ISO/IEC 27001:2022 documented information), official sources with page
+  citations; ISO entry paraphrased (copyrighted standard, public repo). Live matcher: each fires on
+  its own query only; untouched rewordings 6/8. pytest 65/65.
+- [ ] **v9 benchmark** (next fresh Groq day) — `HANDOFF.md` §0.
+- [ ] **Decision 2 (Efosa):** v6 EU AI Act entries use exact benchmark wording as triggers **and
+  misfire on #17 and #21**. Recommended: fix + re-test in a separate change after v9.
+- [ ] **Decision 3 (Efosa):** official `GDPR_Regulation_Text.pdf` text layer is damaged ("purpose":
+  0 intact / 261 broken). Recommended: re-extract or replace, re-ingest (~36.5 min), benchmark.
+
+## ✅ DONE 2026-09-27 — benchmark grading (scorer fix), Parts A–D · ✅ Part E done
 
 - [x] `Benchmark_Grading_refactor.md` A–D executed (`047cbc0`): `rag_grading.py`, graded fields in
   `rag_benchmark.py`, `scripts/rescore_benchmarks.py`, `test_rag_grading.py` (15 tests from real

@@ -1,6 +1,24 @@
 # Golden Mapping for the enumeration queries (#4, #12, #18, #26) — Draft
 
-**Status:** 📝 DRAFT (2026-09-27, revised same day) — awaiting EXECUTE. Draft-first per `GOVERNANCE.md`.
+**Status:** ✅ **EXECUTED 2026-09-27** (Efosa: "Execute"). Four entries appended to
+`golden_mappings.json` exactly as drafted (diff: +101 lines, 0 removed; the three v6 entries
+byte-identical). Backend rebuilt (19 s), readiness 4/4, pytest **65/65**. Smoke skipped (it costs
+~9k Groq tokens; the day's budget went to v8). **Not yet measured — v9 benchmark pending (next Groq day).**
+
+**Post-EXECUTE verification — the live `core.rag` matcher, zero tokens:**
+- All four new entries fire on their benchmark query (#4, #12, #18, #26) and **nowhere else**
+  across the 50 queries.
+- **Untouched rewordings: 6/8 pass.** Failed: *"Which governance categories does NIST define for AI
+  risk management?"* (GOVERN) and *"Give me the list of required ISMS documents for ISO
+  27001:2022."* (ISO). Per this draft's own rule, reported rather than patched with new triggers —
+  the entries generalise to most, not all, phrasings. A miss is harmless: the query falls back to
+  normal retrieval.
+- **Pre-existing finding:** the three **v6** EU AI Act entries also fire on **#17** (high-risk AI
+  systems) and **#21** (EU AI Act penalties) — queries they were never meant for. Independent of
+  this change (entries match independently). Means #17 and #21 have had EU AI Act golden context
+  injected since v6. Strengthens Decision 2.
+
+*Original status line:* 📝 DRAFT (2026-09-27, revised same day) — awaiting EXECUTE.
 **Change type:** **data only** — ~~three~~ **four** new entries in `backend/data/golden_mappings.json`.
 
 > **Revised 2026-09-27 — #12 is back in.** The first version excluded #12 claiming "no official
