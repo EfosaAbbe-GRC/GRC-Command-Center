@@ -1,7 +1,15 @@
-# Golden Mapping for the enumeration queries (#4, #18, #26) — Draft
+# Golden Mapping for the enumeration queries (#4, #12, #18, #26) — Draft
 
-**Status:** 📝 DRAFT (2026-09-27) — awaiting EXECUTE. Draft-first per `GOVERNANCE.md`.
-**Change type:** **data only** — three new entries in `backend/data/golden_mappings.json`. No code
+**Status:** 📝 DRAFT (2026-09-27, revised same day) — awaiting EXECUTE. Draft-first per `GOVERNANCE.md`.
+**Change type:** **data only** — ~~three~~ **four** new entries in `backend/data/golden_mappings.json`.
+
+> **Revised 2026-09-27 — #12 is back in.** The first version excluded #12 claiming "no official
+> ISO source in the corpus". **That was wrong.** Efosa asked for a check, and
+> `GRC_Analyst/ISO 27001-2022 BookLet.pdf` is the **official ISO/IEC 27001:2022 (third edition,
+> 2022-10)** — confirmed by content, not filename: the exact normative wording of 4.1, 6.1.3 d)
+> and 7.5.1, the official title, "© ISO/IEC 2022", clauses 4–10 on PDF pp. 7–16, Annex A from
+> p. 17, a clean text layer, no licensee watermark. The error: the first check searched filenames,
+> found a consultancy PDF, and never opened the file named "BookLet". Decision 1 is corrected below. No code
 change: the matching and injection logic in `core/rag.py` (`_match_golden_mappings`, threshold
 0.70) is reused exactly as shipped in `Golden_Mapping_refactor.md` (v6).
 **Token cost of this draft: zero.** All trigger testing below ran locally, in the backend container,
@@ -19,7 +27,7 @@ The v8 re-grade (`rag_grading.py`) shows the list-type ("enumeration") queries a
 | #4 GOVERN outcomes (NIST AI RMF) | INCOMPLETE 4/6 — misses GOVERN 3 and 6 | the six categories span 3 PDF pages of a table; 1000-char chunks split them |
 | #18 OWASP Top 10 for LLMs | WRONG_REFUSAL | 1 source retrieved; list spans 2 pages (v7 report §Correction) |
 | #26 GDPR seven principles | WRONG_REFUSAL | see the new finding below |
-| #12 ISO 27001 mandatory documents | INCOMPLETE 0/11 | **no official source in the corpus** — excluded, see Decision 1 |
+| #12 ISO 27001 mandatory documents | INCOMPLETE 0/11 | ~~no official source in the corpus~~ the official standard **is** indexed, but never *lists* the documents — the requirements are scattered across ~14 clauses over 10 pages, so no chunk holds the list |
 
 ## New finding — the official GDPR PDF has a damaged text layer
 
@@ -33,7 +41,17 @@ Pr inciples relating to processing of personal dat a
 ```
 
 A sample across the document found ~700 split-word pairs in ~7,200 words (~1 in 10). Search can't
-match words it can't see whole. **This revises the 2026-09-26 diagnosis of #26**, which attributed
+match words it can't see whole. Across the **entire** extracted text:
+
+| Word | Appears intact | Appears broken |
+| --- | --- | --- |
+| "purpose" | **0** | 261 ("pur pose") |
+| "Article" | **0** | 508 ("Ar ticle") |
+| "principles" | **0** | 30 ("pr inciples") |
+| "fairness" | **0** | 1 ("fa ir ness") |
+
+As far as the index can tell, the GDPR never uses the word "purpose". For comparison, the ISO
+27001 standard's text layer is clean — clause 4.1 extracts word-for-word. **This revises the 2026-09-26 diagnosis of #26**, which attributed
 it to the enumeration/chunking weakness alone: the damaged text is at least a contributing cause —
 which one dominates is not proven. It is the same defect class already recorded for
 `EU AI ACT 2024_Doc.pdf` in `Golden_Mapping_refactor.md`. Golden Mapping works around it for #26;
@@ -56,6 +74,7 @@ These are benchmark questions, so a mapping could simply memorise the answer key
 | `NIST_AI_RMF_GOVERN` | ✅ 0.888 | ✅ 0.766, 0.971 | none | 0.633 (#15) |
 | `OWASP_LLM_TOP10_2025` | ✅ 0.737 | ✅ 0.977, 0.857 | none | 0.493 (#19) |
 | `GDPR_ART5_PRINCIPLES` | ✅ 0.760 | ✅ 0.813, 0.925 | none | 0.653 (#24) |
+| `ISO27001_DOCUMENTED_INFO` | ✅ 0.863 | ✅ 0.794, 0.787 (+ 0.811, 0.740) | none — incl. the other ISO queries #9, #13, #14 | 0.538 (#13) |
 
 **How we got there — iteration was needed, and is disclosed.** First-round GOVERN triggers were too
 generic: they falsely matched #1 (0.895), #2 and #16 — any AI RMF or EU AI Act question would have
@@ -70,6 +89,7 @@ below, written now and never used for tuning:
 | GOVERN | "Which governance categories does NIST define for AI risk management?" · "Break down the Govern function of AI RMF 1.0." |
 | OWASP | "What are the top LLM security risks according to OWASP?" · "Walk me through OWASP's LLM Top 10 list." |
 | GDPR | "What are the core data processing principles under GDPR Article 5?" · "Which principles must personal data processing follow under the GDPR?" |
+| ISO 27001 | "What must be written down to meet ISO/IEC 27001 requirements?" · "Give me the list of required ISMS documents for ISO 27001:2022." *(The ISO entry's first two "fresh" rewordings were also scored during selection, so these are its new untouched set.)* |
 
 If a fresh rewording fails, the honest outcome is to report it, not to add it as a trigger.
 
@@ -139,16 +159,42 @@ references. OWASP is limited to the official item titles (the only text verified
 The GDPR text is the official wording with the extraction damage removed; (b), (d) and (e) are
 shortened at a clause boundary — each principle and its official name are verbatim.
 
+```json
+{
+  "id": "ISO27001_DOCUMENTED_INFO",
+  "framework": "ISO/IEC 27001:2022",
+  "trigger_phrases": [
+    "ISO 27001 mandatory documents and records",
+    "Which documents are mandatory for ISO 27001 certification audits?",
+    "What must an organisation document to be certified against ISO 27001?"
+  ],
+  "canonical_context": "ISO/IEC 27001:2022 (third edition, 2022-10) contains no single list of mandatory documents; its clauses require documented information in these places: 4.3 the ISMS scope; 5.2 the information security policy; 6.1.2 the information security risk assessment process; 6.1.3 the risk treatment process, including the Statement of Applicability (6.1.3 d) and the risk treatment plan (6.1.3 e); 6.2 the information security objectives; 7.2 evidence of competence; 7.5.1 b) any further documented information the organization determines is necessary for ISMS effectiveness; 8.1 documented information to the extent needed for confidence that processes are carried out as planned; 8.2 the results of information security risk assessments; 8.3 the results of risk treatment; 9.1 evidence of monitoring and measurement results; 9.2.2 evidence of the internal audit programme and audit results; 9.3.3 evidence of management review results; 10.2 evidence of nonconformities, actions taken and the results of corrective action.",
+  "citations": [
+    {"clause": "4.3, 5.2", "pdf_pages": "8–9"},
+    {"clause": "6.1.2, 6.1.3 (d, e), 6.2", "pdf_pages": "10–11"},
+    {"clause": "7.2, 7.5.1, 8.1", "pdf_pages": "12–13"},
+    {"clause": "8.2, 8.3, 9.1", "pdf_pages": "14"},
+    {"clause": "9.2.2, 9.3.3, 10.2", "pdf_pages": "15–16"}
+  ],
+  "source_file": "ISO 27001-2022 BookLet.pdf"
+}
+```
+
+**Copyright safeguard (applies to this entry only).** ISO/IEC 27001 is a copyrighted, paid
+standard, and `golden_mappings.json` lives in the **public** repo. So this entry **cites clause
+numbers and paraphrases** what each clause requires, never quoting the standard's text. The other
+three sources are freely reusable (NIST: US government work; GDPR: EU legislation; OWASP: open
+licence, titles only). The standard's PDF itself stays in `GRC_Analyst/`, which is **not tracked**
+by git — verified 2026-09-27; keep it that way.
+
 ---
 
 ## Decisions for Efosa
 
-1. **#12 (ISO 27001 mandatory documents) — excluded; no official source.** The only matching
-   corpus file, `iso 27001mandstory documentation.pdf`, is marketing material from a consultancy
-   (cyveer.com). The standard itself is a paid ISO publication. Under the official-sources-only
-   rule there is nothing to cite. Options: **(a, recommended)** leave #12 unmapped and accept it as
-   a known limit; (b) purchase ISO/IEC 27001:2022 and add it to the corpus (one change, one run);
-   (c) relax the rule for this one entry — not recommended; it is exactly what the rule prevents.
+1. ~~**#12 (ISO 27001 mandatory documents) — excluded; no official source.**~~ **Corrected
+   2026-09-27: resolved — no decision needed.** The official standard is in the corpus
+   (`ISO 27001-2022 BookLet.pdf`) and #12 is now the fourth entry above. The consultancy PDF
+   (`iso 27001mandstory documentation.pdf`, cyveer.com) is still not used as a source.
 2. **The three existing v6 entries use the benchmark's exact wording as a trigger.** That inflates
    #16, #19 and #49 by design. Options: **(a, recommended)** a follow-up change that removes the
    exact-wording triggers and re-tests them the way this draft does — separate run, so it doesn't
@@ -163,9 +209,9 @@ shortened at a clause boundary — each principle and its official name are verb
    not bind-mounted (HANDOFF note): `docker compose -f docker-compose-v2.yml up -d --build backend`.
 2. Re-run the zero-token trigger test inside the container, including the fresh rewordings above.
 3. pytest (expect 65/65) and smoke (44/44) — smoke costs ~9k Groq tokens; not on the benchmark day.
-4. **v9 benchmark** on a fresh Groq day, detached. Success = #4, #18, #26 graded `COMPLETE` and
+4. **v9 benchmark** on a fresh Groq day, detached. Success = #4, #12, #18, #26 graded `COMPLETE` and
    **no other query's grade changes** (all three entries have zero false matches, so any other
    change is noise, and gets reported as such). Archive as
    `rag_benchmark_results.v9_golden_enumerations.json`; report both legacy and graded scores.
-   Label the three as **mapping-attributed** in the report — a lookup table answering them is a
+   Label the four as **mapping-attributed** in the report — a lookup table answering them is a
    real product feature, but it must never be presented as retrieval improving.

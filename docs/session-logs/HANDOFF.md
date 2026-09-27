@@ -43,9 +43,12 @@ completeness checks are exactly what shows whether Golden Mapping works (today: 
 0/11, #18 and #26 refused). Draft-first. One variable per run; the next benchmark costs a day's Groq budget.
 
 **DRAFTED 2026-09-27 — `docs/refactors/Golden_Mapping_Enumerations_refactor.md`, awaiting EXECUTE.**
-Data-only (3 JSON entries: #4, #18, #26), triggers tested at zero tokens in-container: all three
-match their query and rewordings with **zero false matches** against the other 49 queries. #12
-excluded — no official ISO source in the corpus. Three decisions in the draft. New finding inside
+Data-only (**4** JSON entries: #4, #12, #18, #26), triggers tested at zero tokens in-container: all
+four match their query and rewordings with **zero false matches** against the other queries.
+~~#12 excluded — no official ISO source in the corpus.~~ *Corrected same day at Efosa's prompt:*
+`GRC_Analyst/ISO 27001-2022 BookLet.pdf` **is** the official ISO/IEC 27001:2022 (verified by
+content) — the first check only searched filenames. The ISO entry paraphrases clause references
+rather than quoting (copyrighted standard, public repo). Two decisions left in the draft. New finding inside
 it: the official **GDPR PDF's text layer is damaged** (~1 in 10 words split: "pur pose limitation"),
 a likely contributing cause of #26 and of weak GDPR retrieval generally.
 
