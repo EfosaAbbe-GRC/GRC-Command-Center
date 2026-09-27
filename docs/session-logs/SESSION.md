@@ -1,3 +1,55 @@
+# Session Log — 2026-09-27 ("v8 lands at 92% — and the scorer is caught lying in both directions")
+
+**Outcome:** the clean v8 benchmark ran to completion on the third attempt: **92.0% (46/50), 0
+system errors, avg 3.76 s**. Reading the actual answers of every flipped query, rather than the
+summary, showed the headline is not what it looks like in two places. Scorer fix is now first.
+
+## The run
+
+Pre-flight verified, not assumed: token-refresh code read at source (`_Token`, 401 retry), dev
+stack 4/4 ready, Groq probe HTTP 200 with 999/1000 RPD. Launched detached 11:20:19. Passed query
+36 (the point both earlier attempts died by) at 11:35; the harness re-authenticated twice on its
+own. Finished 11:41:40 — ~21 min, not the ~32 planned, because real latency (median 3.56 s) is a
+fraction of v7's 16.86 s. That settles the "was v7 throttled?" question for good: it was.
+
+## The Groq-org gate, finally checked
+
+The handoff had carried "other stacks on this machine might call Groq — never checked" since
+09-25. Checked: only `mufasa_backend` (besides this project's two backends) has a Groq variable. Its
+key is **different** from this project's (SHA-256 fingerprint compared, keys never printed); whether
+it is the same Groq *organization* cannot be told from here. Efosa confirmed it idle.
+
+## What the spot-check found
+
+| Query | v7 → v8 | Reading |
+| --- | --- | --- |
+| #6 CSF tiers | ❌ → ✅ | real gain, stable across all three v8 attempts, answer correct |
+| #12 ISO 27001 mandatory docs | ❌ → ✅ | **wrong** — claims one mandatory document; scorer can't see it |
+| #4 GOVERN outcomes | ❌ → ✅ | **variance** — refused in both partials; answer omits GOVERN 3 and 6 |
+| #26 GDPR principles | ✅ → ❌ | enumeration weakness, as diagnosed 09-26 |
+| #36 CSF ↔ ISO gap | ✅ → ❌ | correct refusal |
+
+Zero-source answers went from 3 (v7) to **0**. Net: 92% means *answered without refusing*; a
+strict correctness count on the checked queries is ~45, and 43 answers remain ungraded.
+
+**The lesson for every future run:** the summary number would have been reported as "+2, curation
+confirmed" without reading seven answers. Reading them took minutes and changed the queue.
+
+## Docs corrected
+
+`RAG_Benchmark_Report_v8.md` written. README ("42% → 90%" + "fresh benchmark pending" → "42% →
+92%" with the scorer caveat), `CLAUDE.md` header, `MEMORY.md` (stacked 90%-until-v8 qualifiers
+collapsed into the v8 fact), `HANDOFF.md` rewritten clean, `task.md` v8 item closed.
+
+## Parallel, outside this project
+
+Started a review of `GRC resources/InfoSEC4TC/` (tracked in that folder's own chain). Installed
+`faster-whisper` in an isolated venv (`~/.venvs/whisper`) for transcribing its course videos; the
+model download is blocked at network level (`huggingface.co` connection-reset; PyPI fine). Efosa
+will fetch the model manually when back at the PC.
+
+---
+
 # Session Log — 2026-09-26 ("The budget was never the problem — the JWT was")
 
 **Outcome:** the public README was corrected (six stale claims, three of which broke setup), the

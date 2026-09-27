@@ -4,9 +4,21 @@
 
 ---
 
-## 🔴 FIRST PRIORITY, NEXT SESSION — run the clean v8 benchmark
+## ✅ DONE 2026-09-27 — clean v8 benchmark: 92.0% (46/50)
 
-*Set as first priority by Efosa, 2026-09-21. Do this before any other Command Center work.*
+*Set as first priority by Efosa, 2026-09-21. Completed on the third attempt.*
+
+> **✅ v8 COMPLETE, 2026-09-27 — 92.0% (46/50), 0 system errors, avg 3.76 s, 50/50 valid.**
+> Launched detached 11:20:19, finished 11:41:40 (~21 min). Both fixes held: two mid-run re-logins,
+> zero 401s, zero 429s. Archived `docs/reports/rag_benchmark_results.v8_curated_corpus.json`;
+> report `docs/reports/RAG_Benchmark_Report_v8.md`. Bundled reading (corpus refresh + curation).
+> **Spot-check of flipped answers changed the reading:** #6 a real, stable gain; **#12 scored ✅
+> but the answer is wrong** (claims one mandatory ISO 27001 document); **#4 answered this run but
+> refused in both partials** — variance, and incomplete (omits GOVERN 3 and 6); #26 and #36 refuse
+> (#36 correctly). Zero-source answers: v7 had 3, v8 has **0**. Latency 16.86 s → 3.76 s confirms
+> v7 was throttled. **Next: fix the scorer** — see `HANDOFF.md` §0.
+> Pre-flight also established that `mufasa_backend` holds a **different** Groq key (same Groq org
+> unknown); Efosa confirmed it idle for this run.
 
 > **⚠ ATTEMPTED AND LOST, 2026-09-25.** The run was launched with every pre-flight gate green
 > (RPD 999/1000, readiness 4/4, live index confirmed as the curated 148-file/17,123-chunk build by
@@ -71,7 +83,7 @@
 >   **It does not block v8** — archives store full answer text, so a scorer change can be applied
 >   retroactively to every run at once, exactly as the 2026-08-05 correction was.
 
-- [ ] **Run it, detached, on a day with a fresh Groq budget** (~32 min). Everything is staged — the
+- [x] **DONE 2026-09-27 (third attempt) — 92.0%, see above.** **Run it, detached, on a day with a fresh Groq budget** (~32 min). Everything is staged — the
   pacing prerequisite is applied and pushed (`96502f1`), durability applied 2026-09-25, and the
   corpus and index are in sync as of the 2026-09-21 re-ingest. **Nothing left to build or approve;
   this is purely the run.**

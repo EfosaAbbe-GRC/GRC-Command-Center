@@ -12,21 +12,16 @@ History worth knowing: Gemini → Groq `llama-3.3-70b-versatile` on 2026-08-13 (
 for Gemini, see `LLM_Groq_Migration_2026-08-13.md`), then **Groq retired that Llama model within four
 days** and named `openai/gpt-oss-120b` its successor — see `RAG_Model_Outage_refactor.md`. The model
 id now lives in one place, `core/rag.py`'s `GROQ_MODEL` constant, and `/readiness` validates it
-against Groq's live model list. **RAG accuracy is now MEASURED under Groq: 90.0% (45/50), v7,
-2026-08-17** (`RAG_Benchmark_Report_v7.md`, archive `rag_benchmark_results.v7_groq_gptoss120b.json`).
-Quote **90%**, not the older 92% — that was Gemini 2.5 Flash-era. **⚠ Updated 2026-09-21: 90.0%
-now describes an index that no longer exists.** The corpus was re-ingested on 2026-09-21 to apply
-the 2026-08-18 curation (153 files/17,498 chunks → **148/17,123**). The figure is not wrong, it
-measures a superseded corpus — attach that qualifier wherever it is quoted, including the resume
-and interview prep, until a clean v8 runs. That run is first priority next session; everything for
-it is staged (see `task.md` top section and `HANDOFF.md` §0). **⚠ Updated 2026-09-25: v8 was
-attempted and lost.** It completed 33/50 queries in perfect health, was killed externally, and
-wrote nothing (the script saved only at the end — since fixed). Recovered from `audit_logs` and
-archived as `rag_benchmark_results.v8_PARTIAL_recovered_2026-09-25.json`, `valid: false`,
-`accuracy_percentage: null` — **it is not a v8 and must not be cited.** On the same 32 query ids it
-scored 29/32 against v7's 28/32, so the curated corpus is at least holding; that is a subset
-comparison, not an accuracy figure. **90.0% remains the last valid number, still carrying the
-superseded-corpus qualifier.** **TPRM (Third-Party Risk
+against Groq's live model list. **RAG accuracy: 92.0% (46/50), v8, 2026-09-27** — the first
+complete measurement of the current curated corpus (148 files/17,123 chunks, re-ingested
+2026-09-21). `RAG_Benchmark_Report_v8.md`, archive `rag_benchmark_results.v8_curated_corpus.json`.
+It bundles the corpus refresh and the 2026-08-18 curation — one reading, not attributable to
+either. **It means "answered without refusing", not "correct":** #12 is a wrong answer scored as a
+pass, #36 a correct refusal scored as a failure, and #4's pass did not reproduce across three runs.
+Quote as **42% → 92%**. History: v7 = 90.0% (45/50, 2026-08-17) measured the pre-curation corpus
+and is now historical; Gemini-era v6 was also 92% — same number, different model and corpus. The
+two v8 partials (`..._PARTIAL_recovered_2026-09-25`, `..._PARTIAL_jwt_expiry_2026-09-26`) are
+`valid: false` and must never be cited. **TPRM (Third-Party Risk
 Management) module —
 Tier 1, 2, and 3 all complete as of 2026-08-04**: 13-stage vendor egress/ingress assessment, risk
 acceptances, vendor-level risk rollup, WebSocket-pushed reassessment surfacing, CSV export, and
@@ -157,9 +152,9 @@ cd backend; python -m pytest -v; cd ..                  # hits :8002 by default 
 Invoke-RestMethod http://localhost:8001/api/v1/readiness  # dev stack health -- expect all "ready"
                                                             # (read-only, safe to run directly against
                                                             # the dev stack any time)
-$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py  # 46/50 (92%) was the Gemini-era number,
-                                                            # NOT YET RE-RUN against Groq (migrated
-                                                            # 2026-08-13) -- also needs PYTHONUTF8=1;
+$env:PYTHONUTF8=1; python backend/tests/rag_benchmark.py  # 46/50 (92%) as of v8, 2026-09-27 --
+                                                            # launch DETACHED (see HANDOFF), ~21 min,
+                                                            # 77-100% of Groq's daily budget;
                                                             # untouched by the test-stack split,
                                                             # still targets :8001 by default (read-only,
                                                             # never created TPRM data)

@@ -4,7 +4,7 @@ An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered docum
 
 ## Highlights
 
-- **RAG accuracy 42% → 90%** on a fixed 50-query benchmark, driven by
+- **RAG accuracy 42% → 92%** on a fixed 50-query benchmark, driven by
   measured changes (chunking, retrieval depth, cross-encoder re-ranking,
   golden mapping) — each kept only after an independent before/after
   evidence check, including catching and reverting a scorer bug that once
@@ -12,10 +12,12 @@ An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered docum
   original scorer only detected refusals at the start of a response, so
   answers that refused halfway through were counted as passes. Every
   historical run was re-scored and the record corrected downward.
-  *Current caveat: the corpus was re-curated on 2026-09-21 and the 90% figure
-  measures the previous index — a fresh benchmark is pending.* Full trajectory
-  and writeups in [`docs/reports/`](docs/reports/), starting with
-  [`RAG_Benchmark_Report_v7.md`](docs/reports/RAG_Benchmark_Report_v7.md).
+  The 92% (v8, 2026-09-27) measures the current curated corpus and means
+  *answered without refusing*: spot-checking the flipped queries found one
+  wrong answer the binary scorer counts as a pass and one correct refusal it
+  counts as a failure — both documented, and the scorer is the next fix.
+  Full trajectory and writeups in [`docs/reports/`](docs/reports/), starting
+  with [`RAG_Benchmark_Report_v8.md`](docs/reports/RAG_Benchmark_Report_v8.md).
 - **Immutable audit trail** — PL/pgSQL `SECURITY DEFINER` triggers block
   `UPDATE`/`DELETE` on audit logs, evidence, and TPRM risk acceptances at
   the database layer, not just the application layer.
