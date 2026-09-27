@@ -18,7 +18,10 @@ complete measurement of the current curated corpus (148 files/17,123 chunks, re-
 It bundles the corpus refresh and the 2026-08-18 curation — one reading, not attributable to
 either. **It means "answered without refusing", not "correct":** #12 is a wrong answer scored as a
 pass, #36 a correct refusal scored as a failure, and #4's pass did not reproduce across three runs.
-Quote as **42% → 92%**. History: v7 = 90.0% (45/50, 2026-08-17) measured the pre-curation corpus
+Quote as **42% → 92%**. **Graded (2026-09-27, `rag_grading.py`): also 92% (46/50)** — two false
+passes removed, two correct refusals credited; checkable 6/10; 40 answers still ungraded. Re-grading
+also shows **v7 stored 3 engine errors as answers** (correction pending approval — `HANDOFF.md` §0).
+History: v7 = 90.0% (45/50, 2026-08-17) measured the pre-curation corpus
 and is now historical; Gemini-era v6 was also 92% — same number, different model and corpus. The
 two v8 partials (`..._PARTIAL_recovered_2026-09-25`, `..._PARTIAL_jwt_expiry_2026-09-26`) are
 `valid: false` and must never be cited. **TPRM (Third-Party Risk

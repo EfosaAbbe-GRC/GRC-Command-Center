@@ -20,8 +20,8 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 | | Status | Last verified |
 |---|---|---|
 | `smoke_test.py` (test stack, `:8002`) | **44/44** | 2026-09-25 |
-| `pytest` (from `backend/`) | **50/50** | 2026-09-25 |
-| RAG accuracy | **92.0% (46/50), v8** | 2026-09-27 |
+| `pytest` (from `backend/`) | **65/65** | 2026-09-27 |
+| RAG accuracy | **92.0% (46/50), v8** — legacy and graded both | 2026-09-27 |
 | Index | curated: **148 files / 17,123 chunks** | re-ingested 2026-09-21 |
 
 **How to quote the RAG figure:** *"42% → 92%"*. 92% means **answered without refusing**, not
@@ -35,28 +35,22 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 
 ---
 
-## ▶ 0. FIRST: fix the scorer — it now mis-reads results in both directions
+## ▶ 0. FIRST: get Efosa's decision on Part E — correcting the v7 record
 
-*The benchmark is only as honest as its scorer, and v8 showed it failing both ways in one run.*
+**The scorer fix is DONE** (2026-09-27, `047cbc0`, `Benchmark_Grading_refactor.md` Parts A–D):
+`backend/tests/rag_grading.py` grades 7 outcomes (closed-list completeness for 8 queries, expected
+refusals for #36/#50, engine errors re-detected from text); `rag_benchmark.py` now records `grade`
+per query and `graded_*` summary fields next to the unchanged legacy `accuracy_percentage`;
+`scripts/rescore_benchmarks.py` re-grades every archive (zero tokens, archives untouched). pytest
+**65/65**. **v8 is 92% graded as well (46/50; checkable 6/10).**
 
-`rag_benchmark.py` scores **"did it refuse?"** and nothing else:
-
-- **#36** — correctly refuses (no NIST CSF ↔ ISO 27001 crosswalk exists in the corpus) → scored ❌.
-- **#12** — confidently states ISO 27001 has **one** mandatory document (it has ~12 clauses
-  requiring documented information) → scored ✅.
-
-Minimum viable change, draft-first per `GOVERNANCE.md`:
-
-1. Score a well-formed `INSUFFICIENT_DATA` as a **distinct third category**, not a failure, and
-   keep a per-query expected-behaviour field (`answer` vs `refuse`) so #36/#50 can be judged
-   *correct refusals*.
-2. For enumeration queries, a completeness check against a short expected-item list (#4 GOVERN 1–6,
-   #12 the documented-information clauses, #26 GDPR's seven principles, #18 OWASP LLM01–10).
-   Rule-based, not an LLM judge.
-
-**Costs zero Groq tokens**: it re-scores the stored `answer` text, so it applies retroactively to
-**every** archive v1–v8 without a new run. Report the re-scored trajectory alongside the old one;
-never overwrite the old figures.
+**Still open — Part E, needs its own explicit approval.** Re-grading found **v7 stored three
+engine-error messages as ANSWERED** (#35, #39, #45 = "I encountered an error processing your
+request."). They are the three "zero-source answers" `RAG_Benchmark_Report_v7.md` read as possible
+hallucinations. So v7 was really 42/50 with 3 engine errors — **invalid by the project's own rule**,
+and its 90% was never a valid figure. Part E would correct (strikethrough + dated callout) the v7
+report, two claims in the v8 report ("+2 vs v7", "zero-source answers resolved"), and the v7 rows in
+`MEMORY.md`. **Don't apply it without a yes.** v8's 92% and the README are unaffected.
 
 ---
 
@@ -135,7 +129,8 @@ The procedure that worked on 2026-09-27, first try:
 docker compose -f docker-compose-v2.yml ps
 docker compose -f docker-compose.test.yml ps
 $env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 44/44 (hits :8002)
-cd backend; python -m pytest -q; cd ..                   # expect 50/50 -- MUST run from backend/
+cd backend; python -m pytest -q; cd ..                   # expect 65/65 -- MUST run from backend/
+python scripts/rescore_benchmarks.py                     # re-grade all archives, zero tokens
 Invoke-RestMethod http://localhost:8001/api/v1/readiness # dev stack health, read-only, safe anytime
 ```
 

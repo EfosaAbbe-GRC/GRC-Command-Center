@@ -4,6 +4,14 @@
 
 ---
 
+## ✅ DONE 2026-09-27 — benchmark grading (scorer fix), Parts A–D · ⏸ Part E awaiting approval
+
+- [x] `Benchmark_Grading_refactor.md` A–D executed (`047cbc0`): `rag_grading.py`, graded fields in
+  `rag_benchmark.py`, `scripts/rescore_benchmarks.py`, `test_rag_grading.py` (15 tests from real
+  archived answers). pytest **65/65**. v8 graded **46/50 (92%)**, checkable 6/10.
+- [ ] **Part E — correct the v7 record.** v7 stored 3 engine errors as ANSWERED (#35/#39/#45) →
+  42/50, invalid. Needs Efosa's explicit yes before touching the v7/v8 reports and `MEMORY.md`.
+
 ## ✅ DONE 2026-09-27 — clean v8 benchmark: 92.0% (46/50)
 
 *Set as first priority by Efosa, 2026-09-21. Completed on the third attempt.*

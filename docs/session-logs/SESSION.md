@@ -41,6 +41,25 @@ confirmed" without reading seven answers. Reading them took minutes and changed 
 92%" with the scorer caveat), `CLAUDE.md` header, `MEMORY.md` (stacked 90%-until-v8 qualifiers
 collapsed into the v8 fact), `HANDOFF.md` rewritten clean, `task.md` v8 item closed.
 
+## Later the same day — the scorer fix, and what it found in v7
+
+Efosa chose the scorer over the InfoSEC4TC review as the next priority (it protects a public claim,
+costs zero tokens). Drafted `Benchmark_Grading_refactor.md` from a prototype run against every
+archive first; he green-lit it ("do the score work"). Parts A–D shipped as `047cbc0`: seven grades,
+closed-list completeness checks for the 8 queries with official answers, expected refusals
+for #36/#50 tagged with the corpus they hold for, and a zero-token rescoring script. pytest 50 → 65.
+
+**The prototype found a bigger problem than the one it was built for.** Checking a suspicious
+v7 #39 "0/4" by reading the answer: it was `"I encountered an error processing your request."`,
+scored ANSWERED. v7 has three — #35, #39, #45 — the same three the v7 report called "zero-source
+answers, possible hallucinations". The engine-failure check that catches that string was added
+2026-08-17, after v7 was scored, and never applied backwards. v7 was 42/50 with 3 engine errors:
+invalid by the project's own rule. Correcting the v7 record is Part E — held for its own approval.
+
+Two grader bugs caught before shipping, both by reading real answers rather than trusting output:
+the model's `U+202F` narrow space ("Lessons Learned") defeated a keyword match, and the v7
+error strings needed the engine-failure check re-applied to stored text. Both are now unit tests.
+
 ## Parallel, outside this project
 
 Started a review of `GRC resources/InfoSEC4TC/` (tracked in that folder's own chain). Installed
