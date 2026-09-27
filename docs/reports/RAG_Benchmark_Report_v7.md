@@ -1,7 +1,20 @@
 # RAG Benchmark v7 — First Groq-era measurement (`openai/gpt-oss-120b`)
 
-**Run date:** 2026-08-17 · **Result: 90.0% (45/50)** · avg latency **16.86s** · 0 system errors
+**Run date:** 2026-08-17 · **Result: ~~90.0% (45/50)~~ INVALID — 42/50 with 3 engine errors** ·
+avg latency **16.86s** · ~~0 system errors~~ **3 engine errors**
 **Archive:** `rag_benchmark_results.v7_groq_gptoss120b.json`
+
+> **⚠ Corrected 2026-09-27 — this run is not a valid measurement.** Re-grading every archive with
+> `backend/tests/rag_grading.py` (see `Benchmark_Grading_refactor.md`, Part E) found that three
+> results scored ANSWERED — **#35, #39 and #45** — are the engine's own failure message,
+> `"I encountered an error processing your request."`, not answers. The check that catches that
+> string was added to the scorer on 2026-08-17 *after* the fake-96% run, and this run was scored
+> before it; it was never applied backwards until now. Most likely cause: this run was unpaced
+> (~3.56 queries/min) and hit Groq's 8,000 tokens/minute limit — pacing arrived 2026-09-21.
+> **Real result: 42 answered, 5 refused, 3 engine errors.** Under the project's own rule (a run with
+> any engine error is not a comparable measurement), v7 is **invalid**, and the 90% should never be
+> quoted. The first valid Groq-era figure is **v8: 92% (46/50), 2026-09-27**. The original text
+> below is left in place, with the specific claims this changes struck through.
 **One variable changed:** the generation model. Corpus, chunking, embeddings, re-ranker, `k`, golden
 mappings and the prompt are all untouched since v6.
 
@@ -23,14 +36,21 @@ real Groq-era data point, on Groq's own designated successor model.**
 | v4 | Corpus expanded (158 docs) | 80% | — |
 | v5 | Cross-encoder re-ranker | 84% | — |
 | v6 | Golden Mapping (Gemini 2.5 Flash) | **92%** | 6.6s |
-| **v7** | **Model → `openai/gpt-oss-120b`** | **90%** | **16.86s** |
+| **v7** | **Model → `openai/gpt-oss-120b`** | ~~**90%**~~ **invalid** (42/50 + 3 engine errors — corrected 2026-09-27) | **16.86s** |
 
 All figures post-scorer-correction (see `RAG_Benchmark_Report_v6.md` §3a).
 
 ## Headline: accuracy essentially held — but the behaviour changed more than the number suggests
 
-**92% → 90% is a single query.** On a 50-query suite that is well inside noise, and the honest reading
-is "the model swap did not cost meaningful accuracy." But the *composition* of the failures churned
+> **Corrected 2026-09-27:** this section's premise — "92% → 90% is a single query" — does not hold.
+> The real comparison is 46 (v6) vs **42 answered + 3 engine errors** (v7), and a run with engine
+> errors cannot be compared at all. #45 below did not "recover": it was an engine error. #35 and #39,
+> both answered under v6, also failed here as engine errors — they belong under "newly failing",
+> for an infrastructure reason, not a model one. The per-query refusal analysis (#4, #12, #18, #36)
+> is unaffected — those were real model responses.
+
+~~**92% → 90% is a single query.** On a 50-query suite that is well inside noise, and the honest reading
+is "the model swap did not cost meaningful accuracy."~~ But the *composition* of the failures churned
 substantially, and that is the more interesting finding:
 
 | | Query | v6 (Gemini) | v7 (gpt-oss) |
@@ -38,7 +58,7 @@ substantially, and that is the more interesting finding:
 | **Still failing** | #6 CSF 2.0 Tier 1–4 levels | ❌ | ❌ |
 | | #50 CISA booklet | ❌ | ❌ |
 | **Recovered** | #36 NIST CSF ↔ ISO 27001 gap assessment | ❌ (confirmed **hallucination**) | ✅ |
-| | #45 AI-agent compliance benefits | ❌ (prompt too conservative) | ✅ |
+| | ~~#45 AI-agent compliance benefits~~ | ❌ (prompt too conservative) | ~~✅~~ **engine error** (corrected 2026-09-27) |
 | **Newly failing** | #4 "List the core outcomes of the GOVERN function" | ✅ | ❌ (2 sources retrieved) |
 | | #12 "List the mandatory documentation for ISO 27001" | ✅ | ❌ (6 sources retrieved) |
 | | #18 "Explain the OWASP Top 10 for LLMs" | ✅ | ❌ (1 source retrieved) |
@@ -147,15 +167,22 @@ model swap — consistent with the fast, unthrottled end of the range, not the 1
 
 ## Three answers with zero retrieved sources
 
-Queries **#35, #39 and #45** were scored ANSWERED with `sources_count: 0` — the model produced an
-answer with no citable retrieved context. That is the signature of unguarded generation, and #36 under
-Gemini was a confirmed hallucination of exactly this kind.
+> **Corrected 2026-09-27 — these were not answers, and not hallucinations.** All three contain the
+> engine's failure message, `"I encountered an error processing your request."` — which is why they
+> had zero sources: the pipeline failed before retrieval results were returned. The hallucination
+> hypothesis below was wrong; the question it raised is closed. The failures also corroborate the
+> latency section's throttling hypothesis — confirmed independently on 2026-09-26/27 (v8's paced
+> run averaged 3.76 s).
 
-**Not resolved here.** Confirming whether these are hallucinations needs the calibrated judge in
+~~Queries **#35, #39 and #45** were scored ANSWERED with `sources_count: 0` — the model produced an
+answer with no citable retrieved context. That is the signature of unguarded generation, and #36 under
+Gemini was a confirmed hallucination of exactly this kind.~~
+
+~~**Not resolved here.** Confirming whether these are hallucinations needs the calibrated judge in
 `validate_diagnostic.py` — which is **still pinned to the dead Gemini key** and non-functional (open
 item since 2026-08-13). Flagged, not diagnosed. Worth noting the prompt instructs the model to answer
 *only* from context, so a zero-source answer is a prompt-compliance question regardless of whether the
-content happens to be correct.
+content happens to be correct.~~
 
 ## Open items from this run
 
@@ -165,8 +192,9 @@ content happens to be correct.
 2. **A minimum-content / quality filter before re-ranking** — ~30% of #18's context budget was
    mojibake and sub-150-char stubs.
 3. **Establish whether the latency is rate limiting** before treating it as a model property.
-4. **Migrate `diagnose_rag.py` / `validate_diagnostic.py` off Gemini** — without them the three
-   zero-source answers cannot be classified. This has now blocked analysis twice.
+4. **Migrate `diagnose_rag.py` / `validate_diagnostic.py` off Gemini** — ~~without them the three
+   zero-source answers cannot be classified.~~ *(Corrected 2026-09-27: those three are engine errors,
+   classified without a judge.)* Still worth doing to grade answer correctness generally.
 5. **The binary scorer no longer fits the model's behaviour.** It cannot distinguish a *correct
    refusal on an under-served question* from a failure — and this run shows that distinction is now
    load-bearing: #4/#12/#18 are all correct refusals scored as failures, while Gemini's confabulated

@@ -3,7 +3,7 @@
 **Status:** ✅ **Parts A–D EXECUTED 2026-09-27** (Efosa: "do the score work"; decisions 1 and 2
 taken as recommended). Verified: `test_rag_grading.py` 15/15, full pytest **65/65** (was 50),
 `rescore_benchmarks.py` reproduces the table below exactly, no archive modified.
-⏸ **Part E (correct the v7 record) — NOT executed; awaiting its own explicit approval.**
+✅ **Part E EXECUTED 2026-09-27** on Efosa's explicit approval ("let's go ahead and do part E").
 Drafted 2026-09-27.
 **Costs zero Groq tokens.** Everything here re-reads answer text already stored in the archives.
 **Files:** new `backend/tests/rag_grading.py`, new `backend/tests/test_rag_grading.py`, new

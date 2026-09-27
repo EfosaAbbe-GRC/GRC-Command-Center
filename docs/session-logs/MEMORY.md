@@ -20,9 +20,10 @@ either. **It means "answered without refusing", not "correct":** #12 is a wrong 
 pass, #36 a correct refusal scored as a failure, and #4's pass did not reproduce across three runs.
 Quote as **42% → 92%**. **Graded (2026-09-27, `rag_grading.py`): also 92% (46/50)** — two false
 passes removed, two correct refusals credited; checkable 6/10; 40 answers still ungraded. Re-grading
-also shows **v7 stored 3 engine errors as answers** (correction pending approval — `HANDOFF.md` §0).
-History: v7 = 90.0% (45/50, 2026-08-17) measured the pre-curation corpus
-and is now historical; Gemini-era v6 was also 92% — same number, different model and corpus. The
+also shows **v7 stored 3 engine errors as answers**. History: v7 = ~~90.0% (45/50, 2026-08-17)~~
+**invalid — 42/50 with 3 engine errors** (#35/#39/#45 are "I encountered an error processing your
+request."; corrected 2026-09-27 with Efosa's approval, `Benchmark_Grading_refactor.md` Part E) —
+never quote it; Gemini-era v6 was also 92% — same number, different model and corpus. The
 two v8 partials (`..._PARTIAL_recovered_2026-09-25`, `..._PARTIAL_jwt_expiry_2026-09-26`) are
 `valid: false` and must never be cited. **TPRM (Third-Party Risk
 Management) module —
@@ -475,18 +476,22 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
 ## Key numbers to not re-derive
 
 - Benchmark trajectory (**corrected 2026-08-05**): 42 (v1, Apr 11) → 70 → 76 → 80 → 84 (v5, Jul 18)
-  → 92 (v6, Aug 5 — Golden Mapping, **Gemini 2.5 Flash**) → **90 (v7, Aug 17 — `openai/gpt-oss-120b`,
-  first Groq-era measurement)**. **There is no valid v8.** The corpus refresh (2026-08-17) is done
+  → 92 (v6, Aug 5 — Golden Mapping, **Gemini 2.5 Flash**) → ~~**90 (v7, Aug 17 — `openai/gpt-oss-120b`,
+  first Groq-era measurement)**~~ **v7 invalid** (3 engine errors, corrected 2026-09-27) → **92 (v8,
+  Sep 27 — curated corpus, `openai/gpt-oss-120b`, the first VALID Groq-era measurement; graded also
+  92)**. *The rest of this bullet is the pre-v8 history, kept for the record:* ~~There is no valid v8.~~ The corpus refresh (2026-08-17) is done
   and sound, but its run hit the token cap at query #11 and the pre-fix scorer reported a **fake
   96%**; that archive is quarantined as `rag_benchmark_results.v8_INVALID_rate_limited.json` and must
-  never be cited. **v7's 90% remains the current figure until a clean v8 is run.** The only
+  never be cited. ~~**v7's 90% remains the current figure until a clean v8 is run.**~~ The only
   salvageable signal from the void run is queries #1-10: **9/10 vs v7's 8/10, with #6 recovered** —
   independently confirmed live, the new `NIST CSF 2.0 (CSWP 29).pdf` answers the Tier question with
   correct citations. Archives in `rag_benchmark_results.v*.json`; query list lives inside
-  `backend/tests/rag_benchmark.py`. **v1–v6 are Gemini-era; only v7 reflects the current stack.**
-- **v7's headline (90% vs 92%) is one query and understates the change — read
-  `RAG_Benchmark_Report_v7.md` before drawing conclusions.** #36 and #45 **recovered** (#36 was a
-  confirmed Gemini *hallucination* — a real quality win the number hides). #4/#12/#18 newly fail.
+  `backend/tests/rag_benchmark.py`. **v1–v6 are Gemini-era; ~~only v7 reflects~~ v8 is the only
+valid run on the current stack.**
+- ~~**v7's headline (90% vs 92%) is one query and understates the change**~~ **Corrected
+  2026-09-27: v7 has no valid headline** (3 engine errors). Its per-query model behaviour still
+  reads: #36 answered where Gemini hallucinated, #4/#12/#18 newly refuse. ~~#45 recovered~~ — #45
+  was an engine error, as were #35 and #39.
 - **#4, #6, #12 and #18 are ONE root cause, not four — verified by dumping the retrieved chunks
   (2026-08-17).** 1000-char chunking shatters multi-page enumerations (AI RMF Table 1, the OWASP Top
   10, ISO 27001's mandatory-documentation list), so "list/explain the whole framework" queries

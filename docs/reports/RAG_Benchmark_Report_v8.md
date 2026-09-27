@@ -7,7 +7,14 @@
 (duplicate and secondary-document removals). Model, chunking, embeddings, re-ranker, `k`, golden
 mappings and prompt are unchanged since v7. **This is one unattributable reading of both changes
 together** — accepted to avoid spending a second day's token budget on a corpus state already
-abandoned. Do not credit the +2 points to either change alone.
+abandoned. ~~Do not credit the +2 points to either change alone.~~
+
+> **Corrected 2026-09-27 (same day, after re-grading — `Benchmark_Grading_refactor.md` Part E):**
+> v7 turned out to be **invalid** — three of its "answers" (#35, #39, #45) were engine-error
+> messages, so it was 42/50 with 3 engine errors, not 90%. There is therefore **no valid v7 figure
+> to compute a "+2" against.** v8 stands on its own as the first valid Groq-era measurement. The
+> per-query comparisons with v7 below remain useful for the queries where v7 produced a real
+> response; the claims that relied on v7's headline number are struck through.
 
 ## Why this run took three attempts
 
@@ -32,15 +39,17 @@ below v7's).
 | v4 | Corpus expanded (158 docs) | 80% | — |
 | v5 | Cross-encoder re-ranker | 84% | — |
 | v6 | Golden Mapping (Gemini 2.5 Flash) | 92% | 6.6s |
-| v7 | Model → `openai/gpt-oss-120b` | 90% | 16.86s |
-| **v8** | **Corpus refresh + curation (bundled)** | **92%** | **3.76s** |
+| v7 | Model → `openai/gpt-oss-120b` | ~~90%~~ **invalid** (42/50 + 3 engine errors) | 16.86s |
+| **v8** | **Corpus refresh + curation (bundled)** | **92%** (graded: also 92%) | **3.76s** |
 
 All figures post-scorer-correction. v6's 92% and v8's 92% are different models on different
 corpora — equal numbers, not the same measurement.
 
-## Headline: +2 points, but the number overstates the change in one place and understates it in another
+## Headline: ~~+2 points, but~~ the number overstates the change in one place and understates it in another
 
-**90% → 92% is two queries**, and the composition matters more than the net:
+~~**90% → 92% is two queries**, and the composition matters more than the net:~~ *(Corrected
+2026-09-27: v7 has no valid headline to compare against.)* Query by query, against v7's real
+responses:
 
 | | Query | v7 | v8 | Reading |
 | --- | --- | --- | --- | --- |
@@ -83,10 +92,12 @@ chunking problem again, without saying the list is partial.
   dead Gemini key. So "92%" means *answered without refusing*, not *answered correctly* — as it has
   for every version in the trajectory.
 
-## Zero-source answers: resolved
+## Zero-source answers: ~~resolved~~ never existed
 
-v7 had three ANSWERED results with `sources_count: 0` (#35, #39, #45) — the signature of
-unguarded generation. **v8 has none.** Every answer cites retrieved context.
+~~v7 had three ANSWERED results with `sources_count: 0` (#35, #39, #45) — the signature of
+unguarded generation. **v8 has none.**~~ **Corrected 2026-09-27:** those three were engine-error
+messages scored as answers, not unguarded generation — there was nothing to resolve. What does hold:
+every v8 answer cites retrieved context, and v8 has zero engine errors.
 
 ## Latency: 16.86s → 3.76s
 
@@ -112,5 +123,6 @@ real per-query latency is 2.24–9.08s, median 3.56s.
 ## Quoting this figure
 
 **"92% (46/50) on the current curated corpus, v8, 2026-09-27"** — with "answered without refusing"
-as the definition if asked. Paired with the corrected baseline: **42% → 92%**. The 90% (v7) figure
-is now historical — it measured a corpus that no longer exists.
+as the definition if asked. Paired with the corrected baseline: **42% → 92%**. ~~The 90% (v7) figure
+is now historical — it measured a corpus that no longer exists.~~ **Corrected 2026-09-27:** the 90%
+(v7) figure was never valid (3 engine errors scored as answers) and should not be quoted at all.

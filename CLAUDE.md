@@ -7,7 +7,8 @@
 corpus (148 files/17,123 chunks) under Groq/`openai/gpt-oss-120b` — see
 `docs/reports/RAG_Benchmark_Report_v8.md`. It means *answered without refusing*: #12 is a wrong
 answer scored as a pass, #36 a correct refusal scored as a failure. The 86% below is a stale,
-pre-correction, pre-provider-migration figure; v7's 90.0% measured a corpus that no longer exists.
+pre-correction, pre-provider-migration figure. **v7's 90.0% was never valid** — 3 engine errors
+scored as answers (corrected 2026-09-27, `RAG_Benchmark_Report_v7.md`); never quote it.
 
 > Cold-start order: read `docs/session-logs/MEMORY.md` (durable facts) → `docs/session-logs/SESSION.md`
 > (last session) → `docs/session-logs/task.md` (live board) → `docs/session-logs/HANDOFF.md` (what to

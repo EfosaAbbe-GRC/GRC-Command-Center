@@ -28,14 +28,21 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 graded-correct — see `docs/reports/RAG_Benchmark_Report_v8.md`. Spot-checking the flipped queries
 found **#12 is a wrong answer scored as a pass** and **#36 a correct refusal scored as a failure**;
 and #4's pass did not reproduce across three runs. The other 43 answers have not been graded for
-correctness. v7's 90% measured a corpus that no longer exists and is now historical.
+correctness. **v7's 90% was never valid** (3 engine errors scored as answers — corrected
+2026-09-27); v8 is the first valid Groq-era figure. Never quote 90%.
 
 **⚠ Do not read the repo's `faiss_index/` folder to learn the index state.** It is an April 11
 decoy. The live index is in the `grc-faiss` Docker volume.
 
 ---
 
-## ▶ 0. FIRST: get Efosa's decision on Part E — correcting the v7 record
+## ▶ 0. FIRST: Golden Mapping for #4, #12, #18, #26 — now measurable
+
+Queue item 1 below, promoted: the scorer and the v7 correction are both done, and the new grader's
+completeness checks are exactly what shows whether Golden Mapping works (today: #4 4/6, #12
+0/11, #18 and #26 refused). Draft-first. One variable per run; the next benchmark costs a day's Groq budget.
+
+### Done 2026-09-27 — scorer fix and v7 correction
 
 **The scorer fix is DONE** (2026-09-27, `047cbc0`, `Benchmark_Grading_refactor.md` Parts A–D):
 `backend/tests/rag_grading.py` grades 7 outcomes (closed-list completeness for 8 queries, expected
@@ -44,13 +51,13 @@ per query and `graded_*` summary fields next to the unchanged legacy `accuracy_p
 `scripts/rescore_benchmarks.py` re-grades every archive (zero tokens, archives untouched). pytest
 **65/65**. **v8 is 92% graded as well (46/50; checkable 6/10).**
 
-**Still open — Part E, needs its own explicit approval.** Re-grading found **v7 stored three
-engine-error messages as ANSWERED** (#35, #39, #45 = "I encountered an error processing your
-request."). They are the three "zero-source answers" `RAG_Benchmark_Report_v7.md` read as possible
-hallucinations. So v7 was really 42/50 with 3 engine errors — **invalid by the project's own rule**,
-and its 90% was never a valid figure. Part E would correct (strikethrough + dated callout) the v7
-report, two claims in the v8 report ("+2 vs v7", "zero-source answers resolved"), and the v7 rows in
-`MEMORY.md`. **Don't apply it without a yes.** v8's 92% and the README are unaffected.
+**Part E — DONE, approved by Efosa 2026-09-27.** Re-grading found **v7 stored three engine-error
+messages as ANSWERED** (#35, #39, #45 = "I encountered an error processing your request.") — the
+three "zero-source answers" the v7 report had read as possible hallucinations. v7 was 42/50 with 3
+engine errors: **invalid**. Corrected with strikethrough + dated callouts in
+`RAG_Benchmark_Report_v7.md`, `RAG_Benchmark_Report_v8.md` ("+2 vs v7", "zero-source resolved"),
+`MEMORY.md` and `CLAUDE.md`. Historical `SESSION.md`/`task.md` entries were left as written — they
+are the record of what was believed at the time. v8's 92% and the README are unaffected.
 
 ---
 
