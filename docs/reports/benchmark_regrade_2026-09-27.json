@@ -1,0 +1,698 @@
+{
+  "generated": "2026-09-27T12:51:29",
+  "grader": "backend/tests/rag_grading.py",
+  "runs": [
+    {
+      "archive": "v1_baseline",
+      "legacy_answered": 21,
+      "graded_pass": 22,
+      "graded_percentage": 44.0,
+      "checked_pass": 4,
+      "checked_total": 32,
+      "ungraded": 18,
+      "grade_counts": {
+        "COMPLETE": 2,
+        "INCOMPLETE": 1,
+        "CORRECT_REFUSAL": 2,
+        "UNSUPPORTED_ANSWER": 0,
+        "WRONG_REFUSAL": 27,
+        "UNGRADED_ANSWER": 18,
+        "ERROR": 0
+      },
+      "checked_queries": {
+        "1": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "2": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "4": {
+          "grade": "INCOMPLETE",
+          "detail": "0/6 missing items [1, 2, 3, 4, 5, 6]"
+        },
+        "6": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "7": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "9": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "10": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "12": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "15": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "16": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "18": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "19": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "22": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "23": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "24": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "26": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "29": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "30": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "31": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "32": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "36": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        },
+        "38": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "39": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "40": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "41": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "42": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "44": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "45": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "46": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "48": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "49": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "50": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "archive": "v2_tuned",
+      "legacy_answered": 35,
+      "graded_pass": 35,
+      "graded_percentage": 70.0,
+      "checked_pass": 5,
+      "checked_total": 20,
+      "ungraded": 30,
+      "grade_counts": {
+        "COMPLETE": 3,
+        "INCOMPLETE": 2,
+        "CORRECT_REFUSAL": 2,
+        "UNSUPPORTED_ANSWER": 0,
+        "WRONG_REFUSAL": 13,
+        "UNGRADED_ANSWER": 30,
+        "ERROR": 0
+      },
+      "checked_queries": {
+        "1": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "4": {
+          "grade": "INCOMPLETE",
+          "detail": "4/6 missing items [3, 6]"
+        },
+        "6": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "12": {
+          "grade": "INCOMPLETE",
+          "detail": "1/11 missing items [1, 2, 4, 5, 6, 7, 8, 9, 10, 11]"
+        },
+        "16": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "18": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "19": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "22": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "23": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "24": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "26": {
+          "grade": "COMPLETE",
+          "detail": "7/7"
+        },
+        "32": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "36": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        },
+        "38": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "39": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "40": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "46": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "48": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "49": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "50": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "archive": "v3_corpus_repair",
+      "legacy_answered": 38,
+      "graded_pass": 38,
+      "graded_percentage": 76.0,
+      "checked_pass": 5,
+      "checked_total": 17,
+      "ungraded": 33,
+      "grade_counts": {
+        "COMPLETE": 3,
+        "INCOMPLETE": 2,
+        "CORRECT_REFUSAL": 2,
+        "UNSUPPORTED_ANSWER": 0,
+        "WRONG_REFUSAL": 10,
+        "UNGRADED_ANSWER": 33,
+        "ERROR": 0
+      },
+      "checked_queries": {
+        "1": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "4": {
+          "grade": "INCOMPLETE",
+          "detail": "1/6 missing items [1, 2, 3, 5, 6]"
+        },
+        "6": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "7": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "12": {
+          "grade": "INCOMPLETE",
+          "detail": "2/11 missing items [1, 2, 4, 5, 6, 7, 8, 10, 11]"
+        },
+        "16": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "18": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "19": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "26": {
+          "grade": "COMPLETE",
+          "detail": "7/7"
+        },
+        "32": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "35": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "36": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        },
+        "38": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "39": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "48": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "49": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "50": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "archive": "v4_corpus_expanded",
+      "legacy_answered": 40,
+      "graded_pass": 37,
+      "graded_percentage": 74.0,
+      "checked_pass": 4,
+      "checked_total": 17,
+      "ungraded": 33,
+      "grade_counts": {
+        "COMPLETE": 3,
+        "INCOMPLETE": 3,
+        "CORRECT_REFUSAL": 1,
+        "UNSUPPORTED_ANSWER": 1,
+        "WRONG_REFUSAL": 9,
+        "UNGRADED_ANSWER": 33,
+        "ERROR": 0
+      },
+      "checked_queries": {
+        "1": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "4": {
+          "grade": "INCOMPLETE",
+          "detail": "3/6 missing items [3, 5, 6]"
+        },
+        "6": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "7": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "12": {
+          "grade": "INCOMPLETE",
+          "detail": "1/11 missing items [1, 2, 4, 5, 6, 7, 8, 9, 10, 11]"
+        },
+        "16": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "18": {
+          "grade": "INCOMPLETE",
+          "detail": "0/6 missing items [1, 2, 3, 4, 5, 6]"
+        },
+        "19": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "26": {
+          "grade": "COMPLETE",
+          "detail": "7/7"
+        },
+        "32": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "35": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "36": {
+          "grade": "UNSUPPORTED_ANSWER",
+          "detail": ""
+        },
+        "38": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "39": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "48": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "49": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "50": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "archive": "v5_reranked",
+      "legacy_answered": 42,
+      "graded_pass": 41,
+      "graded_percentage": 82.0,
+      "checked_pass": 5,
+      "checked_total": 14,
+      "ungraded": 36,
+      "grade_counts": {
+        "COMPLETE": 3,
+        "INCOMPLETE": 3,
+        "CORRECT_REFUSAL": 2,
+        "UNSUPPORTED_ANSWER": 0,
+        "WRONG_REFUSAL": 6,
+        "UNGRADED_ANSWER": 36,
+        "ERROR": 0
+      },
+      "checked_queries": {
+        "1": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "4": {
+          "grade": "INCOMPLETE",
+          "detail": "3/6 missing items [3, 5, 6]"
+        },
+        "6": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "12": {
+          "grade": "INCOMPLETE",
+          "detail": "0/11 missing items [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]"
+        },
+        "16": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "18": {
+          "grade": "INCOMPLETE",
+          "detail": "0/6 missing items [1, 2, 3, 4, 5, 6]"
+        },
+        "19": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "26": {
+          "grade": "COMPLETE",
+          "detail": "7/7"
+        },
+        "35": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "36": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        },
+        "39": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "45": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "49": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "50": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "archive": "v6_golden_mapping",
+      "legacy_answered": 46,
+      "graded_pass": 45,
+      "graded_percentage": 90.0,
+      "checked_pass": 6,
+      "checked_total": 11,
+      "ungraded": 39,
+      "grade_counts": {
+        "COMPLETE": 4,
+        "INCOMPLETE": 3,
+        "CORRECT_REFUSAL": 2,
+        "UNSUPPORTED_ANSWER": 0,
+        "WRONG_REFUSAL": 2,
+        "UNGRADED_ANSWER": 39,
+        "ERROR": 0
+      },
+      "checked_queries": {
+        "1": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "4": {
+          "grade": "INCOMPLETE",
+          "detail": "1/6 missing items [1, 2, 3, 5, 6]"
+        },
+        "6": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "12": {
+          "grade": "INCOMPLETE",
+          "detail": "0/11 missing items [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]"
+        },
+        "16": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "18": {
+          "grade": "INCOMPLETE",
+          "detail": "0/6 missing items [1, 2, 3, 4, 5, 6]"
+        },
+        "26": {
+          "grade": "COMPLETE",
+          "detail": "7/7"
+        },
+        "36": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        },
+        "39": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "45": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "50": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "archive": "v7_groq_gptoss120b",
+      "legacy_answered": 45,
+      "graded_pass": 42,
+      "graded_percentage": 84.0,
+      "checked_pass": 4,
+      "checked_total": 9,
+      "ungraded": 38,
+      "grade_counts": {
+        "COMPLETE": 3,
+        "INCOMPLETE": 0,
+        "CORRECT_REFUSAL": 1,
+        "UNSUPPORTED_ANSWER": 1,
+        "WRONG_REFUSAL": 4,
+        "UNGRADED_ANSWER": 38,
+        "ERROR": 3
+      },
+      "checked_queries": {
+        "1": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "4": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "6": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "12": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "16": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "18": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "26": {
+          "grade": "COMPLETE",
+          "detail": "7/7"
+        },
+        "35": {
+          "grade": "ERROR",
+          "detail": ""
+        },
+        "36": {
+          "grade": "UNSUPPORTED_ANSWER",
+          "detail": ""
+        },
+        "39": {
+          "grade": "ERROR",
+          "detail": ""
+        },
+        "45": {
+          "grade": "ERROR",
+          "detail": ""
+        },
+        "50": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "archive": "v8_curated_corpus",
+      "legacy_answered": 46,
+      "graded_pass": 46,
+      "graded_percentage": 92.0,
+      "checked_pass": 6,
+      "checked_total": 10,
+      "ungraded": 40,
+      "grade_counts": {
+        "COMPLETE": 4,
+        "INCOMPLETE": 2,
+        "CORRECT_REFUSAL": 2,
+        "UNSUPPORTED_ANSWER": 0,
+        "WRONG_REFUSAL": 2,
+        "UNGRADED_ANSWER": 40,
+        "ERROR": 0
+      },
+      "checked_queries": {
+        "1": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "4": {
+          "grade": "INCOMPLETE",
+          "detail": "4/6 missing items [3, 6]"
+        },
+        "6": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "12": {
+          "grade": "INCOMPLETE",
+          "detail": "0/11 missing items [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]"
+        },
+        "16": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "18": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "26": {
+          "grade": "WRONG_REFUSAL",
+          "detail": ""
+        },
+        "36": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        },
+        "39": {
+          "grade": "COMPLETE",
+          "detail": "4/4"
+        },
+        "50": {
+          "grade": "CORRECT_REFUSAL",
+          "detail": ""
+        }
+      }
+    }
+  ]
+}

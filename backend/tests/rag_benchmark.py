@@ -10,6 +10,9 @@ import time
 import os
 import sys
 
+# Run as a script, so this directory is on sys.path. See Benchmark_Grading_refactor.md.
+from rag_grading import grade, summarise
+
 # Configuration
 BASE_URL = "http://localhost:8001/api/v1"
 ADMIN_USER = "admin"
@@ -292,11 +295,15 @@ def run_benchmark():
             outcome = f"ERROR (Timeout/Exc)"
             summary["error"] += 1
             
-        # Log to list
+        # Log to list. `outcome` is the legacy refused/answered call, kept unchanged so every
+        # archive stays comparable; `grade` is what the answer actually got right.
+        g, g_detail = grade(i + 1, outcome, answer)
         results.append({
             "id": i + 1,
             "query": query,
             "outcome": outcome,
+            "grade": g,
+            "grade_detail": g_detail,
             "latency": latency,
             "sources_count": sources_count,
             "answer": answer
@@ -339,6 +346,13 @@ def run_benchmark():
     # directly comparable with v1-v7.
     summary["pacing_seconds"] = PACING_SECONDS
 
+    # Graded score alongside the legacy one -- never instead of it. Only a full run gets a
+    # percentage, for the same reason _save() withholds accuracy_percentage from partials.
+    graded = summarise(results)
+    if len(results) != summary["total"]:
+        graded["graded_percentage"] = None
+    summary.update(graded)
+
     # A run containing ANY engine error is not a comparable measurement: the
     # denominator is intact but the numerator is contaminated. Flag it in the JSON so
     # a future reader cannot mistake it for a real data point.
@@ -362,7 +376,10 @@ def run_benchmark():
 
     print("\n" + "=" * 50)
     print(f"BENCHMARK COMPLETE")
-    print(f"Accuracy: {accuracy_pct}% ({summary['answered']}/{summary['total']})")
+    print(f"Answer rate (legacy): {accuracy_pct}% ({summary['answered']}/{summary['total']})")
+    print(f"Graded:               {summary['graded_percentage']}% "
+          f"({summary['graded_pass']}/{summary['total']}) -- checkable "
+          f"{summary['checked_pass']}/{summary['checked_total']}, {summary['ungraded']} ungraded")
     print(f"Avg Latency: {avg_latency}s")
     print(f"Insufficient Data: {summary['insufficient_data']}")
     print(f"System Errors: {summary['error']}")
