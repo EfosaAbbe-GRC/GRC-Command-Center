@@ -41,6 +41,9 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 The four entries are **live** (`Golden_Mapping_Enumerations_refactor.md`, status block has the
 verification). **One variable changed since v8:** those four `golden_mappings.json` entries. Run v9
 on a fresh Groq day using §"Running a benchmark" below (confirm Mufasa idle; detached; ~21 min).
+**Also confirm no long CPU job is running on the PC** — a ~9.4 h local transcription job was started
+2026-09-27 19:24 (the re-ranker shares the CPU; a busy CPU slows queries and muddies latency).
+Check with Efosa or Task Manager for a `python.exe` at below-normal priority.
 Archive as `rag_benchmark_results.v9_golden_enumerations.json`. **Success:** #4, #12, #18, #26
 graded `COMPLETE`, every other query's grade unchanged (report any change as noise, not a gain).
 Label the four **mapping-attributed** in the report. Then take the two open decisions to Efosa:
