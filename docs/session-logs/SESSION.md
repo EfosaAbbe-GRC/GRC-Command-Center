@@ -43,7 +43,7 @@ collapsed into the v8 fact), `HANDOFF.md` rewritten clean, `task.md` v8 item clo
 
 ## Later the same day — the scorer fix, and what it found in v7
 
-Efosa chose the scorer over the InfoSEC4TC review as the next priority (it protects a public claim,
+Efosa chose the scorer over a study-material review as the next priority (it protects a public claim,
 costs zero tokens). Drafted `Benchmark_Grading_refactor.md` from a prototype run against every
 archive first; he green-lit it ("do the score work"). Parts A–D shipped as `047cbc0`: seven grades,
 closed-list completeness checks for the 8 queries with official answers, expected refusals
@@ -62,8 +62,9 @@ error strings needed the engine-failure check re-applied to stored text. Both ar
 
 ## Parallel, outside this project
 
-Started a review of `GRC resources/InfoSEC4TC/` (tracked in that folder's own chain). Installed
-`faster-whisper` in an isolated venv (`~/.venvs/whisper`) for transcribing its course videos; the
+Started a review of private study material (tracked in the workspace's own local docs, not in this
+repo). Installed `faster-whisper` in an isolated venv (`~/.venvs/whisper`) for transcribing course
+videos; the
 model download is blocked at network level (`huggingface.co` connection-reset; PyPI fine). Efosa
 will fetch the model manually when back at the PC.
 
