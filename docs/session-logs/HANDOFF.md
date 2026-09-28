@@ -40,10 +40,10 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 
 The four entries are **live** (`Golden_Mapping_Enumerations_refactor.md`, status block has the
 verification). **One variable changed since v8:** those four `golden_mappings.json` entries. Run v9
-on a fresh Groq day using §"Running a benchmark" below (confirm Mufasa idle; detached; ~21 min).
-**Also confirm no long CPU job is running on the PC** — a ~9.4 h local transcription job was started
-2026-09-27 19:24 (the re-ranker shares the CPU; a busy CPU slows queries and muddies latency).
-Check with Efosa or Task Manager for a `python.exe` at below-normal priority.
+on a fresh Groq day using §"Running a benchmark" below (**Mufasa's AI analysis paused** — it shares
+this Groq org; detached; ~21 min). **Deferred 2026-09-28** — Efosa needed Mufasa running that day,
+and only ~176k of 200k tokens remained (Mufasa had spent 23,249), too tight for a 154–200k run.
+The CPU is clear: the transcription job finished 2026-09-28 03:44.
 Archive as `rag_benchmark_results.v9_golden_enumerations.json`. **Success:** #4, #12, #18, #26
 graded `COMPLETE`, every other query's grade unchanged (report any change as noise, not a gain).
 Label the four **mapping-attributed** in the report. Then take the two open decisions to Efosa:
@@ -129,10 +129,13 @@ frontend tests) are priced in — don't re-raise them as new findings.
 The procedure that worked on 2026-09-27, first try:
 
 1. **Groq budget is organization-wide: 200,000 tokens/day; one run costs 77–100% of it.** Confirm
-   nothing else Groq-backed will run. **Established 2026-09-27:** `mufasa_backend` holds a Groq key
-   — a **different key** from this project's (compared by SHA-256 fingerprint), but whether it is
-   the same Groq organization is **not known**. Ask Efosa before each run; he confirmed it idle on
-   2026-09-27. No other container on the machine has a Groq variable.
+   nothing else Groq-backed will run. **Confirmed 2026-09-28: `mufasa_backend` is in the SAME Groq
+   organization** — a different key (SHA-256 fingerprint), but one ~90-token probe per key showed a
+   shared counter (`x-ratelimit-remaining-requests` 999 → 998, reset timer 1m26s → 2m52s). So
+   **every benchmark needs Mufasa's AI analysis paused**, which is Efosa's call. Mufasa reports its own
+   daily Groq spend at `GET localhost:8000/api/admin/costs` inside `mufasa_backend`; subtract it from
+   200k for a rough "left today" (the only estimate available, as Groq has no TPD header). No other
+   container has a Groq variable (re-checked 2026-09-28, 18 containers).
 2. **Pre-flight:** `x-ratelimit-remaining-requests` near 1,000 (a one-word probe from inside
    `grc-backend` costs ~80 tokens).
 3. **Launch detached:**
