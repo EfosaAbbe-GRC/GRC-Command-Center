@@ -87,6 +87,16 @@ are the record of what was believed at the time. v8's 92% and the README are una
 
 ## The rest of the queue — independent of each other, except where noted
 
+**0a. PII redaction — DRAFT awaiting EXECUTE, deploy AFTER v9** (added 2026-09-28).
+`docs/refactors/PII_Redaction_refactor.md`: redact personal data locally (Microsoft Presidio)
+before a question is sent to Groq or written to the immutable `audit_logs`. Efosa decided the
+approach 2026-09-28; it's the treatment for impacts I6/I7 in his ISO 42001 impact assessment.
+Two open choices in the draft: spaCy model size (recommend `lg`), and a pre-flight check that the
+model downloads past this PC's firewall. Groq's Services Agreement §4.2 (last modified
+2026-06-22) prohibits training on inputs/outputs; Efosa doesn't rely on it alone. Also for Efosa:
+check that **Zero Data Retention** is enabled in the Groq console (otherwise requests are kept up
+to 30 days).
+
 **1. Golden Mapping for the enumeration queries — #4, #12, #18, #26.** #12 **rejoins** (answered,
 but wrong); #6 stays off (fixed by curation, correct, stable across all three v8 attempts). Root
 cause: 1000-char chunking shatters multi-page enumerations. **Do not re-diagnose #18 as a retrieval
