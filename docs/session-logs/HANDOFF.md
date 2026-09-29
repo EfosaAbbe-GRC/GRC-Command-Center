@@ -90,7 +90,7 @@ are the record of what was believed at the time. v8's 92% and the README are una
 
 ## The rest of the queue — independent of each other, except where noted
 
-**0b. Remove two personal (non-GRC) files from the corpus — APPROVED 2026-09-29, do AFTER v9.**
+**0b. Remove three personal (non-GRC) files from the corpus — APPROVED 2026-09-29, do AFTER v9.**
 File names are recorded in the owner's **private** workspace `GRC resources/task.md` (not here: they
 are personal). Move them from `GRC_Analyst/` to `GRC_Analyst/Excluded Docs/` (archive, don't delete),
 re-ingest (~36.5 min, blocks the backend), then benchmark it as its own variable. Treatment I3 in the
