@@ -14,6 +14,8 @@ class GRCQuery(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     sources: List[str]
+    # {entity_type: count} removed from the question before it was processed (core/pii.py)
+    redactions: Dict[str, int] = {}
 
 class PolicyItem(BaseModel):
     id: str

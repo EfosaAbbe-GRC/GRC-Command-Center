@@ -21,6 +21,7 @@ Integration notes (same conventions as core/tprm.py):
 
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 from datetime import datetime, timezone
@@ -38,6 +39,7 @@ from core.database import get_db
 from core.auth import authorize, get_current_user, log_security_event
 from core.config import settings
 from core.logger import logger
+from core import pii
 from core.rag import GROQ_MODEL
 from core.tprm import (
     Direction, TransferMethod, StageStatus,
@@ -406,9 +408,16 @@ async def submit_turn_response(session_id: uuid.UUID, turn_id: uuid.UUID, payloa
     guidance = stage.guidance if stage else "General TPRM diligence — evaluate on soundness alone."
     evidence = stage.evidence_to_collect if stage else "N/A"
 
-    turn.user_response_text = payload.response_text
+    # Practice answers often carry real-life details; redact before storing or sending to the grader.
+    try:
+        response_text, _ = await asyncio.to_thread(pii.redact, payload.response_text)
+    except Exception as e:
+        logger.error("PII redaction unavailable -- answer not submitted", error=str(e))
+        raise HTTPException(status_code=503, detail="Privacy filter unavailable; answer not submitted. Try again shortly.")
+
+    turn.user_response_text = response_text
     result = await grade_response(turn.question_text, turn.question_category, guidance, evidence,
-                                   payload.response_text)
+                                   response_text)
     turn.graded_at = _utcnow()
     if result["ok"]:
         turn.grading_status = "graded"

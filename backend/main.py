@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+import asyncio
 import uvicorn
 import os
 import uuid
@@ -19,6 +20,7 @@ from slowapi.errors import RateLimitExceeded
 from core.config import settings
 from core.logger import logger, request_id_var
 from core.rag import rag_engine
+from core import pii
 from core.agent import agent_runner
 from core.database import audit_logger
 from data_service import data_service
@@ -106,6 +108,11 @@ async def lifespan(app):
         await seed_tprm_stages()
     except Exception as e:
         logger.error("TPRM stage seeding failed at startup", error=str(e))
+
+    # PII redaction model takes up to ~1 min to load cold. Warm it in a background thread so the
+    # health check isn't held up and the first real question isn't the slow one.
+    import threading
+    threading.Thread(target=pii.warm_up, name="pii-warm-up", daemon=True).start()
 
     yield
     # Dispose engine connections on shutdown
@@ -442,14 +449,22 @@ def readiness_check():
 
 @app.post("/api/v1/chat", response_model=ChatResponse, dependencies=[Depends(authorize("RAG_QUERY"))])
 async def chat_endpoint(request: Request, payload: GRCQuery, background_tasks: BackgroundTasks):
+    # Redact personal data BEFORE the question reaches the LLM provider or the immutable audit log.
+    # Fail closed: if redaction can't run, refuse rather than send or log the original text.
     try:
-        result = await rag_engine.query(payload.query)
+        query, redactions = await asyncio.to_thread(pii.redact, payload.query)
+    except Exception as e:
+        logger.error("PII redaction unavailable -- chat refused", error=str(e))
+        raise HTTPException(status_code=503, detail="Privacy filter unavailable; question not sent. Try again shortly.")
+
+    try:
+        result = await rag_engine.query(query)
         
         # Log interaction in background for audit compliance
         background_tasks.add_task(
             audit_logger.log_interaction,
             request_id=request_id_var.get(),
-            query=payload.query,
+            query=query,
             response=result.get("answer"),
             context=result.get("context", ""),
             sources=result.get("sources", [])
@@ -457,7 +472,8 @@ async def chat_endpoint(request: Request, payload: GRCQuery, background_tasks: B
 
         return ChatResponse(
             response=result.get("answer", "I could not find an answer."),
-            sources=result.get("sources", [])
+            sources=result.get("sources", []),
+            redactions=redactions,
         )
     except Exception as e:
         logger.error("Chat endpoint error", error=str(e))

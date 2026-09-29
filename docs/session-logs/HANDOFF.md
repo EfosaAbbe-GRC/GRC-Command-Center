@@ -96,7 +96,9 @@ are personal). Move them from `GRC_Analyst/` to `GRC_Analyst/Excluded Docs/` (ar
 re-ingest (~36.5 min, blocks the backend), then benchmark it as its own variable. Treatment I3 in the
 owner's ISO 42001 impact assessment. Archives already redacted (`docs/reports/REDACTIONS.md`).
 
-**0a. PII redaction — DRAFT awaiting EXECUTE, deploy AFTER v9** (added 2026-09-28).
+**0a. PII redaction — EXECUTED 2026-09-29, verified on the TEST stack; DEPLOY TO DEV AFTER v9** (added
+2026-09-28). Deploy: `docker compose -f docker-compose-v2.yml up -d --build backend frontend`, then
+smoke 44/44 and one redaction check (see the refactor's Execution record). Original note:
 `docs/refactors/PII_Redaction_refactor.md`: redact personal data locally (Microsoft Presidio)
 before a question is sent to Groq or written to the immutable `audit_logs`. Efosa decided the
 approach 2026-09-28; it's the treatment for impacts I6/I7 in his ISO 42001 impact assessment.

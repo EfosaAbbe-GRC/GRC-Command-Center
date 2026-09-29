@@ -2,6 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Cpu, User, Database, MessagesSquare } from 'lucide-react';
 import { api } from '../lib/api';
 
+// Plain-language labels for the privacy filter's entity types (backend/core/pii.py).
+const REDACTION_LABELS = {
+  PERSON: 'name', EMAIL_ADDRESS: 'email', PHONE_NUMBER: 'phone number', US_SSN: 'SSN',
+  CREDIT_CARD: 'card number', IBAN_CODE: 'bank account', IP_ADDRESS: 'IP address',
+  US_PASSPORT: 'passport number', US_DRIVER_LICENSE: "driver's license",
+};
+const describeRedactions = (r) => Object.entries(r)
+  .map(([type, n]) => `${n} ${REDACTION_LABELS[type] || type.toLowerCase()}${n > 1 ? 's' : ''}`)
+  .join(', ');
+
 export default function GRCChatBot() {
   const [messages, setMessages] = useState([
     { role: 'system', content: 'GRC_OS v2.5.0 Initialized. All knowledge nodes online. Security context: USR_ADMIN.' }
@@ -28,10 +38,15 @@ export default function GRCChatBot() {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: data.response || "INSUFFICIENT_DATA", 
-        sources: data.sources 
+        sources: data.sources,
+        redactions: data.redactions || {},
+        aiGenerated: true,
       }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: "ERR_CONNECTION_REFUSED. Critical interface failure." }]);
+    } catch (err) {
+      const content = err?.status === 503
+        ? err.message
+        : "ERR_CONNECTION_REFUSED. Critical interface failure.";
+      setMessages(prev => [...prev, { role: 'assistant', content }]);
     }
     setLoading(false);
   };
@@ -90,6 +105,13 @@ export default function GRCChatBot() {
                 `}>
                   {msg.content}
                   
+                  {/* Privacy filter: what was removed from the question before it was processed */}
+                  {msg.redactions && Object.keys(msg.redactions).length > 0 && (
+                    <div className="mt-3 text-[9px] font-bold text-[var(--text-tertiary)] tracking-wide">
+                      PRIVACY FILTER: removed {describeRedactions(msg.redactions)} before processing.
+                    </div>
+                  )}
+
                   {/* Sources chips */}
                   {msg.sources && msg.sources.length > 0 && (
                     <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex flex-wrap gap-2">
@@ -101,6 +123,13 @@ export default function GRCChatBot() {
                           {src}
                         </span>
                       ))}
+                    </div>
+                  )}
+
+                  {/* EU AI Act Art. 50(1) + over-reliance control (impact assessment I1/I2) */}
+                  {msg.aiGenerated && (
+                    <div className="mt-3 text-[9px] font-bold text-[var(--text-tertiary)] tracking-wide">
+                      AI-GENERATED RESEARCH AID — VERIFY AGAINST THE CITED SOURCE BEFORE USE.
                     </div>
                   )}
                 </div>
@@ -139,6 +168,10 @@ export default function GRCChatBot() {
         >
             <Send size={18} />
         </button>
+      </div>
+
+      <div className="px-4 pb-3 -mt-1 bg-[var(--layer-2)] text-[9px] text-[var(--text-tertiary)] font-mono tracking-wide">
+        Do not enter personal or confidential data. Names, emails and ID numbers are removed automatically before your question is processed.
       </div>
 
       {/* DRAGGABLE DIVIDER LOOK-ALIKE */}
