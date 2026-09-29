@@ -115,8 +115,8 @@
   - **During the run:** nothing else Groq-backed — no interactive `/chat`, no agent runs, no
     Interview Simulator grading, no LLM-touching smoke tests.
   - **Why it matters beyond this project:** until it runs, the citable **90.0%** figure describes
-    an index that no longer exists (153 files → 148). That number is on Efosa's resume and in his
-    Workstreet interview prep, so it currently needs a spoken qualifier.
+    an index that no longer exists (153 files → 148). That number is quoted outside this project,
+    so until then it needs a qualifier wherever it's cited.
   - **Afterwards:** archive as `rag_benchmark_results.v8_curated_corpus.json`, write the report,
     and label it explicitly as measuring the corpus refresh *and* the 2026-08-18 curation together
     — a deliberate bundling, accepted to avoid spending a second full day's budget on a corpus
