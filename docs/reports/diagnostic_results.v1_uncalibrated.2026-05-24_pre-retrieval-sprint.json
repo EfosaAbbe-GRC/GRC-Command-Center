@@ -1,4 +1,5 @@
 {
+    "_redaction_note": "2026-09-29: redacted at the owner's request - personal job-search material (interview-prep and job-description files) was never GRC content. Only the affected chunk_id/text values were replaced; every score, rank and result is unchanged. See docs/reports/REDACTIONS.md.",
     "results": [
         {
             "query_id": 1,
@@ -6561,7 +6562,7 @@
                     {
                         "rank": 0,
                         "score": 0.6185,
-                        "text": "spell disaster.\nT askYou have been asked to developed an incident response plan to ensure we have a process to implement the respsne at the \ncorporate and the plant level.\nActions Plan\u2022You proactively began building the plan using NIST SP 800 -61 guideline\n\u2022The incident response plan contained the following:\n\u2022Preparation\n\u2022Identification\n\u2022Containment & Escalation\n\u2022Analysis & Eradication\n\u2022Recovery\n\u2022Lessons\n\u2022Learned\nResultsAn incident response plan was built for the enterprise and customized to one location UK,",
+                        "text": "[text from a personal file, redacted 2026-09-29]",
                         "judge_verdict": "relevant"
                     },
                     {
@@ -6683,9 +6684,9 @@
             "retrieval": {
                 "chunks": [
                     {
-                        "chunk_id": "GRC STAR Scenarios for Interviews.pdf_p8_c0",
+                        "chunk_id": "[personal file, removed from corpus]_p8_c0",
                         "score": 0.6185,
-                        "text": "spell disaster.\nT askYou have been asked to developed an incident response plan to ensure we have a process to implement the respsne at the \ncorporate and the plant level.\nActions Plan\u2022You proactively began building the plan using NIST SP 800 -61 guideline\n\u2022The incident response plan contained the following:\n\u2022Preparation\n\u2022Identification\n\u2022Containment & Escalation\n\u2022Analysis & Eradication\n\u2022Recovery\n\u2022Lessons\n\u2022Learned\nResultsAn incident response plan was built for the enterprise and customized to one location UK,"
+                        "text": "[text from a personal file, redacted 2026-09-29]"
                     },
                     {
                         "chunk_id": "Notes from Study +.pdf_p129_c1",
@@ -6775,7 +6776,7 @@
                     {
                         "rank": 7,
                         "score": 0.8018,
-                        "text": "and supporting internal or external audits?\nAnswer: (STAR Method)\nSituation: Ahead of a recent SOC 2 audit, I was tasked with leading our audit preparation.\nTask: I had to ensure all evidence demonstrating control effectiveness was collected and \nvalidated across IT, HR, and business operations.\nAction: I built an audit tracker in Archer to map required controls to documentation (like \naccess reviews, security policies, incident logs). I scheduled prep meetings with each control \nowner, pre -reviewed their evidence, and conducted mock interviews to prepare the teams",
+                        "text": "[text from a personal file, redacted 2026-09-29]",
                         "judge_verdict": "partial"
                     },
                     {

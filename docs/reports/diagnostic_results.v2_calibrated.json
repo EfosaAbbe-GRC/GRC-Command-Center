@@ -1,4 +1,5 @@
 {
+    "_redaction_note": "2026-09-29: redacted at the owner's request - personal job-search material (interview-prep and job-description files) was never GRC content. Only the affected chunk_id/text values were replaced; every score, rank and result is unchanged. See docs/reports/REDACTIONS.md.",
     "results": [
         {
             "query_id": 1,
@@ -6588,7 +6589,7 @@
                     {
                         "rank": 3,
                         "score": 0.6252,
-                        "text": "SituationYour organization is a Pharmaceutical that manufactures Ophthalmology drugs for rare diseases. The drug is a life saver \nmanufactured in multiple global plant locations and research labs. At the Operational technology layer, there is currently no\ndefined incident response plan at the Corporate/Enterprise level nor at the plant level.\nProblem:\nThere is a concern if the manufacturing plant is attacked, there is no coordinated plan to respond in such a scenario. This c ould \nspell disaster.\nT askYou have been asked to developed an incident response plan to ensure we have a process to implement the respsne at the \ncorporate and the plant level.\nActions Plan\u2022You proactively began building the plan using NIST SP 800 -61 guideline\n\u2022The incident response plan contained the following:\n\u2022Preparation\n\u2022Identification\n\u2022Containment & Escalation\n\u2022Analysis & Eradication\n\u2022Recovery\n\u2022Lessons\n\u2022Learned\nResultsAn incident response plan was built for the enterprise and customized to one location UK,",
+                        "text": "[text from a personal file, redacted 2026-09-29]",
                         "judge_verdict": "relevant"
                     },
                     {
@@ -6707,9 +6708,9 @@
                         "text": "response protocols [2, 4].\n### Task (T)\nMy task as a GRC professional is to **manage the risks** associated with this incident, **ensure \ncompliance** with our existing vendor security standards and contracts, and coordinate a comprehensive \ninternal response to **mitigate the impact** on our organization and customer data [3, 5]. This involves \nensuring **confidentiality, integrity, and availability (CIA)** of our data are maintained [6, 7].\n### Action (A)\nMy actions would follow the Incident Response Plan (IRP) process, focusing on the specialized steps required \nfor third -party involvement, incorporating Governance (accountability and policy adherence) and Risk \n(assessment and mitigation) throughout [3, 8, 9].\n#### 1. Immediate Incident Identification and Activation (Detect/Initial Response)\n*   **Activate the Incident Response Plan (IRP):** Immediately activate the organization\u2019s IRP, involving key"
                     },
                     {
-                        "chunk_id": "GRC STAR Scenarios for Interviews.pdf_p8_c3",
+                        "chunk_id": "[personal file, removed from corpus]_p8_c3",
                         "score": 0.6252,
-                        "text": "SituationYour organization is a Pharmaceutical that manufactures Ophthalmology drugs for rare diseases. The drug is a life saver \nmanufactured in multiple global plant locations and research labs. At the Operational technology layer, there is currently no\ndefined incident response plan at the Corporate/Enterprise level nor at the plant level.\nProblem:\nThere is a concern if the manufacturing plant is attacked, there is no coordinated plan to respond in such a scenario. This c ould \nspell disaster.\nT askYou have been asked to developed an incident response plan to ensure we have a process to implement the respsne at the \ncorporate and the plant level.\nActions Plan\u2022You proactively began building the plan using NIST SP 800 -61 guideline\n\u2022The incident response plan contained the following:\n\u2022Preparation\n\u2022Identification\n\u2022Containment & Escalation\n\u2022Analysis & Eradication\n\u2022Recovery\n\u2022Lessons\n\u2022Learned\nResultsAn incident response plan was built for the enterprise and customized to one location UK,"
+                        "text": "[text from a personal file, redacted 2026-09-29]"
                     },
                     {
                         "chunk_id": "Implementation Guide ISO 27001.pdf_p44_c4",
@@ -6778,7 +6779,7 @@
                     {
                         "rank": 6,
                         "score": 0.7948,
-                        "text": "For unstructured data, I implement DLP (Data Loss Prevention) tools and leverage secure \ncollaboration solutions with role -based access.\nTraining users to recognize and appropriately handle sensitive content is critical. For \nexample, we use Splunk to monitor data flows and SharePoint/Teams with built -in security \ncontrols for document sharing. I periodically review access rights on both types and update \nsecurity controls to support regulatory compliance and incident readiness.\n6. Can you walk me through your experience preparing for \nand supporting internal or external audits?\nAnswer: (STAR Method)\nSituation: Ahead of a recent SOC 2 audit, I was tasked with leading our audit preparation.\nTask: I had to ensure all evidence demonstrating control effectiveness was collected and \nvalidated across IT, HR, and business operations.\nAction: I built an audit tracker in Archer to map required controls to documentation (like",
+                        "text": "[text from a personal file, redacted 2026-09-29]",
                         "judge_verdict": "relevant"
                     },
                     {

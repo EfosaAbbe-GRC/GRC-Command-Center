@@ -90,6 +90,12 @@ are the record of what was believed at the time. v8's 92% and the README are una
 
 ## The rest of the queue — independent of each other, except where noted
 
+**0b. Remove two personal (non-GRC) files from the corpus — APPROVED 2026-09-29, do AFTER v9.**
+File names are recorded in the owner's **private** workspace `GRC resources/task.md` (not here: they
+are personal). Move them from `GRC_Analyst/` to `GRC_Analyst/Excluded Docs/` (archive, don't delete),
+re-ingest (~36.5 min, blocks the backend), then benchmark it as its own variable. Treatment I3 in the
+owner's ISO 42001 impact assessment. Archives already redacted (`docs/reports/REDACTIONS.md`).
+
 **0a. PII redaction — DRAFT awaiting EXECUTE, deploy AFTER v9** (added 2026-09-28).
 `docs/refactors/PII_Redaction_refactor.md`: redact personal data locally (Microsoft Presidio)
 before a question is sent to Groq or written to the immutable `audit_logs`. Efosa decided the
