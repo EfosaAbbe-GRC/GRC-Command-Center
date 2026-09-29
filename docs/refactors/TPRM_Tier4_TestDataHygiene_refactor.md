@@ -31,7 +31,7 @@ script's) — direct file redirection is required instead.
 `information_schema.triggers` — checked both), and every FK from `integrations`/`vendors` down to
 those tables is `NO ACTION` (no cascade). Any integration/vendor that ever had a risk acceptance
 signed is permanently undeletable short of disabling the immutability trigger — not something to do
-quietly, since it's the literal subject of the Mufasa interview story.
+quietly, since that immutability is the module's core design guarantee.
 
 ## Two parts, both approved by the user together
 

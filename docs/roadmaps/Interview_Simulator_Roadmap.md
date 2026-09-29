@@ -22,7 +22,7 @@ deleted).
 
 **Origin:** picks up a "GRC Analyst Agent" concept from an earlier ideation conversation (claude.ai,
 not recorded in this project's own doc chain — that's why it isn't in `MEMORY.md`). That conversation
-proposed three modules: a Sourcing Engine, an Interview Prep/TPRM Simulator, and a Framework Mapper.
+proposed several modules; only the TPRM Interview Simulator is in scope here.
 Two decisions were confirmed 2026-08-18: **build the TPRM Interview Simulator first**, and **build it
 as a new module inside GRC Command Center**, not a standalone project — reusing this repo's existing
 FastAPI/Postgres 16/RAG stack rather than the original blueprint's proposed OpenRouter + Crawl4AI/
@@ -61,7 +61,7 @@ already-verified platform capability into a new surface, not building new infras
 
 **Goal:** a working, honest, single-session interview loop — start a session, get a real
 TPRM-grounded question, submit a free-text answer, get a real graded rubric back, get the next
-question, see a session summary at the end. No Framework Mapper hook, no multi-scenario-type
+question, see a session summary at the end. No cross-reference hook, no multi-scenario-type
 selector, no analytics dashboard yet — those are Tier 2.
 
 ### 1.1 Data model — `backend/core/interview_sim.py` (own module, mirrors `tprm.py`'s pattern)
@@ -160,25 +160,13 @@ terminal. Realistically multi-day, not a single sitting.
 
 ## Tier 2 — deferred, not abandoned
 
-- **Framework Mapper hook.** Given a JD requirement or interview question, surface which real
-  `NARRATIVE_BANK.md` STAR story or which platform feature (Mufasa triggers, TPRM module, RAG
-  cross-framework mapping table) answers it — this was originally its own separate module in the
-  blueprint; makes more sense as Tier 2 here since it can reuse the session/turn data model this Tier
-  1 build establishes, rather than being built in parallel from scratch.
 - **Additional scenario sources beyond TPRM stages** — e.g. general SOC 2/ISO 27001 questions
   grounded via `rag_engine.query()` directly against the ingested corpus, not just the 26 TPRM
   stages.
-- **Session analytics** — "which categories does he consistently score lowest on" aggregation across
+- **Session analytics** — "which categories does the user consistently score lowest on" aggregation across
   session history, once there's enough session history to make it meaningful.
 - **Async grading + WebSocket push**, if synchronous grading proves too slow in practice.
 - **Speech-to-text input** (from the original blueprint) — real scope, not remotely urgent.
-
-## Tier 3 — the original blueprint's other two modules, still deferred
-
-- **Sourcing Engine upgrade** (Crawl4AI/Firecrawl + OpenRouter routing) — the existing Indeed/Dice
-  daily cloud routine already does this job functionally (see `job-search-tracker-automation`
-  memory); revisit only if that routine's official-connector approach proves insufficient, not on a
-  fixed schedule.
 
 ---
 

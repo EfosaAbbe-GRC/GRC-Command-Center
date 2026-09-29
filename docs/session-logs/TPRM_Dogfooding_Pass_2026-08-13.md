@@ -20,7 +20,7 @@ One fictional-but-realistic vendor, **Meridian Cloud Storage**, with two integra
 both directions, both a CRITICAL and a LOW risk tier, and a mix of `pass`/`gap`/`not_applicable`
 stage outcomes with real compensating-control reasoning — deliberately not a clean run, since the
 gap → risk-acceptance → approve-with-exceptions path is the module's most legally/architecturally
-loaded workflow (the immutable-sign-off "Mufasa interview story" per the Tier 4 doc) and the one
+loaded workflow (the immutable sign-off design, per the Tier 4 doc) and the one
 least exercised by a trivial happy-path fixture.
 
 - **Egress — "Nightly Customer PII Backup Export"** (file transfer, PII + GDPR/PCI, 15,000

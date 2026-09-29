@@ -109,7 +109,7 @@ Verified against the code before changing anything (`rag.py:13` imports `ChatGro
 states `GOOGLE_API_KEY` survives only for parked diagnostic scripts). Pushed as `9d29c2b`.
 
 A portfolio repo whose headline claim is rigorous evidence-checking should not have a front page
-contradicting its own code — and this is the artifact interviewers and claude.ai actually read.
+contradicting its own code — and this is the artifact visitors and claude.ai actually read.
 
 ## The v8 attempt — and the diagnosis that mattered more than the result
 
@@ -543,10 +543,9 @@ close-out went, which surfaced this on inspection rather than assumption.
 works isn't the test count, it's a screenshot of it correctly failing a bad answer.
 
 **Where this came from:** the user surfaced a "GRC Analyst Agent" blueprint from an earlier
-claude.ai conversation that had never been recorded in this project's doc chain (three modules:
-a job-sourcing engine, an interview-prep simulator, a hands-on GRC mentor lab). Two decisions
-confirmed before any code: build the interview simulator first (not the sourcing engine — the
-existing Indeed/Dice cloud routine already does that job), and build it *inside*
+claude.ai conversation that had never been recorded in this project's doc chain (several
+proposed modules, including a TPRM practice simulator). Two decisions confirmed before any code:
+build the TPRM simulator first, and build it *inside*
 `GRC_Command_Center` rather than as a standalone project, reusing the existing stack instead of
 the blueprint's proposed OpenRouter/Crawl4AI one.
 
@@ -582,11 +581,8 @@ one doesn't, which is the whole point.
 **Committed and pushed** (`0e60631`) — draft → EXECUTE → verify → commit → push, same loop as
 every other change in this project.
 
-**Separately, the same session:** the user asked for guidance on building hands-on GRC experience
-more broadly (not just tooling), which led to auditing `GRC resources/`'s Career Lab and finding
-its own tracker had drifted (a fully-drafted project marked "Not Started"); then to a
-workspace-wide doc-chain standardization pass across the whole `GRC Inspector` parent folder. Both
-are recorded in that parent workspace's own `SESSION.md`/`CLAUDE.md`, not duplicated here — this
+**Separately, the same session:** documentation work outside this repository (a doc-chain
+standardization pass in the parent workspace). It is recorded in that parent workspace's own `SESSION.md`/`CLAUDE.md`, not duplicated here — this
 project's own state didn't change as a result of that pass beyond what's recorded above.
 
 ---

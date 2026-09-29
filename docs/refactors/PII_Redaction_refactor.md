@@ -3,7 +3,7 @@
 **Status:** 📝 **DRAFT — awaiting EXECUTE.** Drafted 2026-09-28. Nothing below has been built.
 **Decision behind it:** Efosa, 2026-09-28: "remove personal data from questions before they are
 logged", extended on recommendation to *before they are sent to Groq*. Recorded as the treatment
-for impacts I6/I7 in the ISO 42001 AI System Impact Assessment (Career Lab Project 4, deliverable 1).
+for impacts I6/I7 in the ISO 42001 AI System Impact Assessment of this system.
 **Costs zero Groq tokens to build and test** (all verification is local), apart from one optional
 live chat check.
 **Files:** new `backend/core/pii.py`, new `backend/tests/test_pii.py`; edit `backend/main.py`

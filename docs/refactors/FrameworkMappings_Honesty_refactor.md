@@ -29,7 +29,7 @@ dishonest.
 illustrative reference data" note (`REFERENCE_ENTRY_DETAIL`, two columns over) both apply to this
 panel by inference — same page, same selected policy — but nothing says so *inside* the
 `Framework_Mappings` column itself. Worth closing given this UI could plausibly end up on a
-screen-share in an interview context where "hand-curated vs. live-computed" is exactly the kind of
+screen-share or demo where "hand-curated vs. live-computed" is exactly the kind of
 distinction that should be stated, not inferred.
 
 ## The fix
