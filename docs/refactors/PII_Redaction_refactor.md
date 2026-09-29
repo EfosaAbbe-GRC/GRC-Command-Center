@@ -97,9 +97,9 @@ mapping matching (it receives the already-redacted text).
 - When `redactions` is non-empty, a small note on that message: *"Removed before sending: 1 name,
   1 email."*
 
-**Optional C2, only if Efosa confirms the I1/I2 treatment:** a per-answer line: *"AI-generated
-research aid — verify against the cited source before use."* It's kept separate because that
-decision is still open.
+**C2 (treatment for I1/I2 approved by Efosa 2026-09-29; also meets EU AI Act Art. 50(1)):** a per-answer line: *"AI-generated
+research aid — verify against the cited source before use."* Screen-only, so it can ship
+before or after v9.
 
 ## Part D — read-only scan of existing logs (no changes to them)
 

@@ -141,3 +141,17 @@ them at the dev stack instead, set `GRC_TEST_BASE=http://localhost:8001` first.
 
 > `smoke_test.py` makes three live `/chat` calls, so it consumes roughly 9,000 Groq tokens per run
 > — worth knowing against the free tier's 200,000/day.
+
+## License
+
+The code in this repository is released under the [MIT License](LICENSE).
+
+**Third-party material is not covered by that licence.** The framework documents the RAG pipeline
+reads (NIST, ISO, EU legislation, OWASP and others) are **not** included in this repository. You
+supply your own corpus via `DOCUMENTS_PATH`. `backend/data/golden_mappings.json` contains short
+reference summaries that cite their sources: the EU AI Act and GDPR (EU legislation), NIST AI RMF
+1.0 (U.S. Government work), ISO/IEC 27001:2022 (clause references only, no reproduced text), and
+the OWASP Top 10 for LLM Applications 2025 (© OWASP Foundation, licensed CC BY-SA 4.0).
+
+This software is a compliance research aid, not legal advice. Answers are AI-generated and should
+be verified against the cited source documents.
