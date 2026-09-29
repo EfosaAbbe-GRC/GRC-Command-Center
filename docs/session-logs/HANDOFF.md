@@ -44,6 +44,9 @@ on a fresh Groq day using §"Running a benchmark" below (**Mufasa's AI analysis 
 this Groq org; detached; ~21 min). **Deferred 2026-09-28** — Efosa needed Mufasa running that day,
 and only ~176k of 200k tokens remained (Mufasa had spent 23,249), too tight for a 154–200k run.
 The CPU is clear: the transcription job finished 2026-09-28 03:44.
+**Scheduled: weekend of Sat 3 / Sun 4 Oct 2026** (Efosa, 2026-09-29): Mufasa trades on market days, so
+the shared budget should be free. **Still pre-flight it:** Mufasa's spend so far that day via
+`GET localhost:8000/api/admin/costs` inside `mufasa_backend` (expect ~0), plus the usual RPD probe.
 Archive as `rag_benchmark_results.v9_golden_enumerations.json`. **Success:** #4, #12, #18, #26
 graded `COMPLETE`, every other query's grade unchanged (report any change as noise, not a gain).
 Label the four **mapping-attributed** in the report. Then take the two open decisions to Efosa:
@@ -93,9 +96,8 @@ before a question is sent to Groq or written to the immutable `audit_logs`. Efos
 approach 2026-09-28; it's the treatment for impacts I6/I7 in his ISO 42001 impact assessment.
 Two open choices in the draft: spaCy model size (recommend `lg`), and a pre-flight check that the
 model downloads past this PC's firewall. Groq's Services Agreement §4.2 (last modified
-2026-06-22) prohibits training on inputs/outputs; Efosa doesn't rely on it alone. Also for Efosa:
-check that **Zero Data Retention** is enabled in the Groq console (otherwise requests are kept up
-to 30 days).
+2026-06-22) prohibits training on inputs/outputs; Efosa doesn't rely on it alone. **Zero Data Retention enabled 2026-09-29** by Efosa
+(org-wide: covers Mufasa; Batch and Fine-tuning off, unused by both projects).
 
 **1. Golden Mapping for the enumeration queries — #4, #12, #18, #26.** #12 **rejoins** (answered,
 but wrong); #6 stays off (fixed by curation, correct, stable across all three v8 attempts). Root
