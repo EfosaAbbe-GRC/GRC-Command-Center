@@ -98,3 +98,11 @@ def test_v7_summary_exposes_three_engine_errors(v7):
     s = summarise(list(v7.values()))
     assert s["grade_counts"]["ERROR"] == 3
     assert s["graded_pass"] == 42
+
+
+def test_hyphenated_items_match():
+    # v9 #12 wrote "internal‑audit" / "management‑review" and was reported 9/11.
+    v9 = _archive("v9_golden_enumerations")
+    assert grade(12, "ANSWERED", v9[12]["answer"]) == ("COMPLETE", "11/11")
+    hyphen = grade(12, "ANSWERED", "scope, security policy, risk-assessment, internal-audit")
+    assert hyphen == ("INCOMPLETE", "4/11 missing items [4, 5, 6, 7, 8, 10, 11]")

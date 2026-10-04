@@ -58,8 +58,8 @@ non-breaking hyphens across v9's 50 answers); v9 #12 wrote `internal‑audit` an
 `management‑review`, which is why it reported items 9 and 10 missing when both are present.
 Re-grading **every archive, v1–v9**, with hyphens normalised to spaces changes exactly one result:
 v9 #12's detail, 9/11 → 11/11. **No pass/fail grade has ever been affected.** Fix: let a space in an
-item pattern also match a hyphen (draft-first: `Grader_Hyphen_refactor.md`; tests-only, zero
-tokens).
+item pattern also match a hyphen (`Grader_Hyphen_refactor.md`; tests-only, zero tokens) —
+**executed 2026-10-04**, regrade confirms the above.
 
 ## Open decisions (Efosa's)
 

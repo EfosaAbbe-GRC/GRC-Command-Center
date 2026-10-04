@@ -90,6 +90,7 @@ This platform operates under the **GRC.OS Prime Directive**:
 
 - **Zero-Trust**: No arbitrary code execution via subprocess. Everything is registered in the `InternalAgentRunner`.
 - **Immutability**: Audit trails are protected by PL/pgSQL triggers that prevent all `UPDATE` or `DELETE` operations on core GRC tables.
+- **PII redaction at entry**: Names, emails, phone numbers and similar identifiers are replaced with placeholders (`[PERSON]`, `[EMAIL_ADDRESS]`) locally, via Microsoft Presidio, before a question reaches the LLM provider or the immutable audit log. If the filter can't run, the request is refused (HTTP 503), never sent unredacted.
 - **Synchronous Telemetry**: No polling allowed. All data updates are pushed via the custom `useWebSocket` hook.
 
 For more details, see [GOVERNANCE.md](GOVERNANCE.md).

@@ -102,7 +102,10 @@ def grade(query_id, outcome, answer):
         return "WRONG_REFUSAL", ""
     if query_id in CLOSED_LIST:
         _, bar, items = CLOSED_LIST[query_id]
-        hits = [bool(re.search(p, text, re.I)) for p in items]
+        # Item patterns are written with spaces; answers often hyphenate ("internal-audit").
+        # See docs/refactors/Grader_Hyphen_refactor.md.
+        flat = text.replace("-", " ")
+        hits = [bool(re.search(p, flat, re.I)) for p in items]
         missing = [n + 1 for n, h in enumerate(hits) if not h]
         detail = f"{sum(hits)}/{len(hits)}" + (f" missing items {missing}" if missing else "")
         return ("COMPLETE" if sum(hits) / len(hits) >= bar else "INCOMPLETE"), detail

@@ -19,8 +19,13 @@
   the expectation to the list. Recommended: descriptions.
 - [ ] **Decision (Efosa): #12's invented item** — tighten the golden-mapping instruction ("list
   only what the canonical context lists") or add a negative grader check. Own variable, own run.
-- [ ] **`Grader_Hyphen_refactor.md`** — DRAFTED 2026-10-04, awaiting EXECUTE. Patterns use spaces;
-  hyphenated answers miss items. Re-grade of v1–v9: no grade ever affected.
+- [x] **`Grader_Hyphen_refactor.md`** — EXECUTED 2026-10-04: pytest 66 + 1 skipped; regrade of
+  v1–v9 identical except v9 #12 detail (11/11).
+- [ ] **`Golden_Mapping_OWASP_Descriptions_refactor.md`** (#18) — approved in principle, DRAFTED,
+  awaiting EXECUTE. Measured by v10; corpus removal moves to v11.
+- [ ] **`Grader_Unsupported_Items_refactor.md`** (#12, Efosa's choice) — DRAFTED, awaiting EXECUTE.
+- [ ] **`Smoke_TPM_Pacing_refactor.md`** — approved in principle, DRAFTED, awaiting EXECUTE.
+- [x] README: PII-redaction line added to Security & Governance (2026-10-04).
 
 ## ✅ DONE 2026-10-04 — PII redaction live on dev *(entry backfilled: built 2026-09-29)*
 

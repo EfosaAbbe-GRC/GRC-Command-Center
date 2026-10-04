@@ -1,6 +1,9 @@
 # Grader: let a space in an item pattern match a hyphen
 
-**Status:** DRAFT 2026-10-04 — awaiting EXECUTE. Tests-only; zero Groq tokens; no container rebuild.
+**Status:** EXECUTED 2026-10-04 (approved by Efosa same day). pytest **66 passed, 1 skipped**
+(new `test_hyphenated_items_match`); `rescore_benchmarks.py` → `benchmark_regrade_2026-10-04.json`:
+v1–v8 per-query grades and details identical to the 2026-09-27 regrade; v9 #12 detail 11/11.
+**Was:** DRAFT 2026-10-04. Tests-only; zero Groq tokens; no container rebuild.
 **Found by:** reading v9's #12 answer (`RAG_Benchmark_Report_v9.md` §"Grader finding — hyphens").
 
 ## The problem

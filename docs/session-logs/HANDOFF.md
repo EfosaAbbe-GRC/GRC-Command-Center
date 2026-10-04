@@ -21,7 +21,7 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 | `smoke_test.py` (test stack, `:8002`) | **44/44** | 2026-09-29 |
 | `smoke_test.py` (dev, `:8001`) | **43/44** — the one failure is a Groq **per-minute** 429 (see §0) | 2026-10-04 |
 | `test_pii.py` (in the dev container) | **21/21** | 2026-10-04 |
-| `pytest` (from `backend/`) | **65/65** | 2026-09-27 |
+| `pytest` (from `backend/`) | **66 passed, 1 skipped** (test_pii skips on host) | 2026-10-04 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
 | RAG, latest run | v9: legacy 94% (47/50), graded 98% — **not citable as accuracy** | 2026-10-04 |
 | Index | curated: **148 files / 17,123 chunks** | re-ingested 2026-09-21 |
@@ -44,12 +44,16 @@ the query says "Explain". All other 46 grades unchanged. Full reading in the v9 
 
 Independent of each other — take them to Efosa:
 
-- **a. #18:** add official short descriptions to the OWASP mapping (recommended) or narrow the
-  expectation to the list.
-- **b. #12's invented item:** tighten the golden-mapping instruction ("list only what the canonical
-  context lists") or add a negative grader check. Its own variable and benchmark.
-- **c. `Grader_Hyphen_refactor.md`** — DRAFTED, awaiting EXECUTE. Zero tokens; no grade changes.
-- **d. Smoke test vs Groq TPM:** the `active-auditor` run (makes several RAG calls) is followed
+- **a. #18 — approved; DRAFTED, awaiting EXECUTE:** `Golden_Mapping_OWASP_Descriptions_refactor.md`
+  (official descriptions from the corpus PDF, wording checked page by page). Measured by **v10**,
+  which pushes the corpus removal (0b) to v11 — one variable per run.
+- **b. #12's invented item — Efosa chose the grader route; DRAFTED, awaiting EXECUTE:**
+  `Grader_Unsupported_Items_refactor.md` (new `UNSUPPORTED_ITEM` grade; prototype over v1–v9: one
+  true catch, one borderline paraphrase, no false alarms; v9 graded 49 → 48). Prompt tightening
+  stays a possible later variable.
+- **c. ~~`Grader_Hyphen_refactor.md`~~ — EXECUTED 2026-10-04.** pytest 66 + 1 skipped; no grade
+  changed in any archive.
+- **d. Smoke test vs Groq TPM — approved; DRAFTED, awaiting EXECUTE:** `Smoke_TPM_Pacing_refactor.md`. the `active-auditor` run (makes several RAG calls) is followed
   ~12 s later by the chat check; together they exceed 8,000 tokens/minute, so "Chat generation"
   fails with a 429 (seen twice on dev, 2026-10-04). Not caused by PII: a standalone chat with
   made-up PII returned 200 and correct redactions. Fix candidate: pause ~60 s before the chat check,
@@ -57,8 +61,8 @@ Independent of each other — take them to Efosa:
 - Carried: fix the v6 entries' exact-wording triggers (misfire on #17/#21); re-extract the damaged
   GDPR PDF.
 
-**Then, sequential — one corpus/config variable per benchmark day:** 0b below (remove the three
-personal files, re-ingest, benchmark), then whichever of a/b Efosa picks. Weekend benchmarks only
+**Then, sequential — one variable per benchmark day:** v10 = the OWASP descriptions (a); v11 = 0b
+below (remove the three personal files, re-ingest, benchmark). Weekend benchmarks only
 while Mufasa trades on market days; pre-flight per "Running a benchmark".
 
 ---
