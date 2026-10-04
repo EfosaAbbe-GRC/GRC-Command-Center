@@ -4,13 +4,41 @@
 
 ---
 
-## ✅ EXECUTED 2026-09-27 — Golden Mapping for enumeration queries #4, #12, #18, #26 · ⏳ v9 pending
+## ✅ DONE 2026-10-04 — v9 benchmark: Golden Mapping measured (3 of 4 targets)
+
+- [x] **v9 run** — legacy 94.0% (47/50), graded 98.0% (49/50, checkable 9/10), 0 errors, avg 3.81 s
+  (#1 cold start 33.5 s). One variable verified (image predates PII commit; mapping file
+  byte-identical). Archive `rag_benchmark_results.v9_golden_enumerations.json`; report
+  `docs/reports/RAG_Benchmark_Report_v9.md`. **Not quotable as accuracy** — citable figure stays
+  42% → 92%.
+- [x] Answers read in full: **#4 and #26 correct**; **#12 complete + one invented item**
+  ("information security guideline, 5.2 e" — not in the standard, checked against the official
+  text); **#18 still WRONG_REFUSAL** — list now correct, 7 of 10 explanations refused (query says
+  "Explain"; mapping holds names only). All other 46 grades unchanged.
+- [ ] **Decision (Efosa): #18** — add official short descriptions to the OWASP mapping, or narrow
+  the expectation to the list. Recommended: descriptions.
+- [ ] **Decision (Efosa): #12's invented item** — tighten the golden-mapping instruction ("list
+  only what the canonical context lists") or add a negative grader check. Own variable, own run.
+- [ ] **`Grader_Hyphen_refactor.md`** — DRAFTED 2026-10-04, awaiting EXECUTE. Patterns use spaces;
+  hyphenated answers miss items. Re-grade of v1–v9: no grade ever affected.
+
+## ✅ DONE 2026-10-04 — PII redaction live on dev *(entry backfilled: built 2026-09-29)*
+
+- [x] **Drafted** 2026-09-28 (`78a1cfc`, `PII_Redaction_refactor.md`); **executed on the test stack**
+  2026-09-29 (`1c18214`): Presidio + spaCy `lg`, fails closed (503), test_pii 21/21, smoke 44/44.
+- [x] **Deployed to dev** 2026-10-04 after v9: test_pii 21/21 in-container; live chat redacted
+  name/email/phone; `audit_logs` holds placeholders only (0 rows with originals).
+- [ ] **Smoke on dev is 43/44** — Groq per-minute 429 when `active-auditor` and the chat check share
+  a minute. Smoke-test pacing fix needs a draft (HANDOFF §0 d).
+- [ ] **Corpus: remove three personal files** — approved 2026-09-29, unblocked now (HANDOFF 0b).
+
+## ✅ EXECUTED 2026-09-27 — Golden Mapping for enumeration queries #4, #12, #18, #26 · ✅ v9 done 2026-10-04
 
 - [x] `Golden_Mapping_Enumerations_refactor.md` executed: 4 entries (NIST AI RMF GOVERN, OWASP LLM
   Top 10 2025, GDPR Art. 5, ISO/IEC 27001:2022 documented information), official sources with page
   citations; ISO entry paraphrased (copyrighted standard, public repo). Live matcher: each fires on
   its own query only; untouched rewordings 6/8. pytest 65/65.
-- [ ] **v9 benchmark** (next fresh Groq day) — `HANDOFF.md` §0.
+- [x] **v9 benchmark** — done 2026-10-04 (see section above).
 - [ ] **Decision 2 (Efosa):** v6 EU AI Act entries use exact benchmark wording as triggers **and
   misfire on #17 and #21**. Recommended: fix + re-test in a separate change after v9.
 - [ ] **Decision 3 (Efosa):** official `GDPR_Regulation_Text.pdf` text layer is damaged ("purpose":

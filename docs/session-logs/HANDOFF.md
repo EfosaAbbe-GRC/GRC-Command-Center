@@ -1,8 +1,7 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-09-27. **Rewritten clean** after v8 completed — the previous version's §0 ("run the
-clean v8") is done. **If this file starts accumulating update blocks again, rewrite it — do not
-append another.**
+**Date:** 2026-10-04. **Rewritten clean** after v9 ran and PII redaction reached dev. **If this file
+starts accumulating update blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
 `task.md`; the narrative is `SESSION.md`.
@@ -13,105 +12,77 @@ This is the **briefing**: current state and what to do first. The ledger with fu
 
 **Version 1.5.0.** TPRM complete (all tiers). RAG P3 Execution Monitor, Agent Registry de-stubbing,
 the Interview Simulator Tier 1, and all honesty fixes are built and browser-verified. LLM is Groq
-`openai/gpt-oss-120b`.
+`openai/gpt-oss-120b`. **PII redaction is live on dev** (2026-10-04).
 
 **Baselines:**
 
 | | Status | Last verified |
-|---|---|---|
-| `smoke_test.py` (test stack, `:8002`) | **44/44** | 2026-09-25 |
+| --- | --- | --- |
+| `smoke_test.py` (test stack, `:8002`) | **44/44** | 2026-09-29 |
+| `smoke_test.py` (dev, `:8001`) | **43/44** — the one failure is a Groq **per-minute** 429 (see §0) | 2026-10-04 |
+| `test_pii.py` (in the dev container) | **21/21** | 2026-10-04 |
 | `pytest` (from `backend/`) | **65/65** | 2026-09-27 |
-| RAG accuracy | **92.0% (46/50), v8** — legacy and graded both | 2026-09-27 |
+| RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
+| RAG, latest run | v9: legacy 94% (47/50), graded 98% — **not citable as accuracy** | 2026-10-04 |
 | Index | curated: **148 files / 17,123 chunks** | re-ingested 2026-09-21 |
 
-**How to quote the RAG figure:** *"42% → 92%"*. 92% means **answered without refusing**, not
-graded-correct — see `docs/reports/RAG_Benchmark_Report_v8.md`. Spot-checking the flipped queries
-found **#12 is a wrong answer scored as a pass** and **#36 a correct refusal scored as a failure**;
-and #4's pass did not reproduce across three runs. The other 43 answers have not been graded for
-correctness. **v7's 90% was never valid** (3 engine errors scored as answers — corrected
-2026-09-27); v8 is the first valid Groq-era figure. Never quote 90%.
+**How to quote the RAG figure:** *"42% → 92%"*. v9's 94/98% include #12 with an **invented item**
+and leave 40 of 50 answers ungraded — see `docs/reports/RAG_Benchmark_Report_v9.md`. v7's 90% was
+never valid. Never quote 90%.
 
 **⚠ Do not read the repo's `faiss_index/` folder to learn the index state.** It is an April 11
 decoy. The live index is in the `grc-faiss` Docker volume.
 
 ---
 
-## ▶ 0. FIRST: run the v9 benchmark — measures Golden Mapping (EXECUTED 2026-09-27)
+## ▶ 0. FIRST: Efosa's decisions from v9, then the next corpus change
 
-The four entries are **live** (`Golden_Mapping_Enumerations_refactor.md`, status block has the
-verification). **One variable changed since v8:** those four `golden_mappings.json` entries. Run v9
-on a fresh Groq day using §"Running a benchmark" below (**Mufasa's AI analysis paused** — it shares
-this Groq org; detached; ~21 min). **Deferred 2026-09-28** — Efosa needed Mufasa running that day,
-and only ~176k of 200k tokens remained (Mufasa had spent 23,249), too tight for a 154–200k run.
-The CPU is clear: the transcription job finished 2026-09-28 03:44.
-**Scheduled: weekend of Sat 3 / Sun 4 Oct 2026** (Efosa, 2026-09-29): Mufasa trades on market days, so
-the shared budget should be free. **Still pre-flight it:** Mufasa's spend so far that day via
-`GET localhost:8000/api/admin/costs` inside `mufasa_backend` (expect ~0), plus the usual RPD probe.
-Archive as `rag_benchmark_results.v9_golden_enumerations.json`. **Success:** #4, #12, #18, #26
-graded `COMPLETE`, every other query's grade unchanged (report any change as noise, not a gain).
-Label the four **mapping-attributed** in the report. Then take the two open decisions to Efosa:
-(2) fix the v6 entries' exact-wording triggers — they also misfire on #17 and #21; (3) re-extract
-the damaged GDPR PDF.
+v9 (2026-10-04) measured Golden Mapping: **#4 and #26 fixed and correct; #12 complete plus one
+invented item** ("information security guideline, 5.2 e" — not in ISO/IEC 27001:2022, checked
+against the official text); **#18 still fails** — list correct, 7 of 10 explanations refused, and
+the query says "Explain". All other 46 grades unchanged. Full reading in the v9 report.
 
-### Background (written before EXECUTE)
+Independent of each other — take them to Efosa:
 
-Queue item 1 below, promoted: the scorer and the v7 correction are both done, and the new grader's
-completeness checks are exactly what shows whether Golden Mapping works (today: #4 4/6, #12
-0/11, #18 and #26 refused). Draft-first. One variable per run; the next benchmark costs a day's Groq budget.
+- **a. #18:** add official short descriptions to the OWASP mapping (recommended) or narrow the
+  expectation to the list.
+- **b. #12's invented item:** tighten the golden-mapping instruction ("list only what the canonical
+  context lists") or add a negative grader check. Its own variable and benchmark.
+- **c. `Grader_Hyphen_refactor.md`** — DRAFTED, awaiting EXECUTE. Zero tokens; no grade changes.
+- **d. Smoke test vs Groq TPM:** the `active-auditor` run (makes several RAG calls) is followed
+  ~12 s later by the chat check; together they exceed 8,000 tokens/minute, so "Chat generation"
+  fails with a 429 (seen twice on dev, 2026-10-04). Not caused by PII: a standalone chat with
+  made-up PII returned 200 and correct redactions. Fix candidate: pause ~60 s before the chat check,
+  or retry it once after a 429. Needs a draft.
+- Carried: fix the v6 entries' exact-wording triggers (misfire on #17/#21); re-extract the damaged
+  GDPR PDF.
 
-**DRAFTED 2026-09-27 — `docs/refactors/Golden_Mapping_Enumerations_refactor.md`, awaiting EXECUTE.**
-Data-only (**4** JSON entries: #4, #12, #18, #26), triggers tested at zero tokens in-container: all
-four match their query and rewordings with **zero false matches** against the other queries.
-~~#12 excluded — no official ISO source in the corpus.~~ *Corrected same day at Efosa's prompt:*
-`GRC_Analyst/ISO 27001-2022 BookLet.pdf` **is** the official ISO/IEC 27001:2022 (verified by
-content) — the first check only searched filenames. The ISO entry paraphrases clause references
-rather than quoting (copyrighted standard, public repo). Two decisions left in the draft. New finding inside
-it: the official **GDPR PDF's text layer is damaged** (~1 in 10 words split: "pur pose limitation"),
-a likely contributing cause of #26 and of weak GDPR retrieval generally.
-
-### Done 2026-09-27 — scorer fix and v7 correction
-
-**The scorer fix is DONE** (2026-09-27, `047cbc0`, `Benchmark_Grading_refactor.md` Parts A–D):
-`backend/tests/rag_grading.py` grades 7 outcomes (closed-list completeness for 8 queries, expected
-refusals for #36/#50, engine errors re-detected from text); `rag_benchmark.py` now records `grade`
-per query and `graded_*` summary fields next to the unchanged legacy `accuracy_percentage`;
-`scripts/rescore_benchmarks.py` re-grades every archive (zero tokens, archives untouched). pytest
-**65/65**. **v8 is 92% graded as well (46/50; checkable 6/10).**
-
-**Part E — DONE, approved by Efosa 2026-09-27.** Re-grading found **v7 stored three engine-error
-messages as ANSWERED** (#35, #39, #45 = "I encountered an error processing your request.") — the
-three "zero-source answers" the v7 report had read as possible hallucinations. v7 was 42/50 with 3
-engine errors: **invalid**. Corrected with strikethrough + dated callouts in
-`RAG_Benchmark_Report_v7.md`, `RAG_Benchmark_Report_v8.md` ("+2 vs v7", "zero-source resolved"),
-`MEMORY.md` and `CLAUDE.md`. Historical `SESSION.md`/`task.md` entries were left as written — they
-are the record of what was believed at the time. v8's 92% and the README are unaffected.
+**Then, sequential — one corpus/config variable per benchmark day:** 0b below (remove the three
+personal files, re-ingest, benchmark), then whichever of a/b Efosa picks. Weekend benchmarks only
+while Mufasa trades on market days; pre-flight per "Running a benchmark".
 
 ---
 
 ## The rest of the queue — independent of each other, except where noted
 
-**0b. Remove three personal (non-GRC) files from the corpus — APPROVED 2026-09-29, do AFTER v9.**
-File names are recorded in the owner's **private** workspace `GRC resources/task.md` (not here: they
-are personal). Move them from `GRC_Analyst/` to `GRC_Analyst/Excluded Docs/` (archive, don't delete),
-re-ingest (~36.5 min, blocks the backend), then benchmark it as its own variable. Treatment I3 in the
-owner's ISO 42001 impact assessment. Archives already redacted (`docs/reports/REDACTIONS.md`).
+**0b. Remove three personal (non-GRC) files from the corpus — APPROVED 2026-09-29, now unblocked
+(v9 done).** File names are recorded in the owner's **private** workspace `GRC resources/task.md`
+(not here: they are personal). Move them from `GRC_Analyst/` to `GRC_Analyst/Excluded Docs/`
+(archive, don't delete), re-ingest (~36.5 min, blocks the backend), then benchmark it as its own
+variable. Treatment I3 in the owner's ISO 42001 impact assessment. Archives already redacted
+(`docs/reports/REDACTIONS.md`).
 
-**0a. PII redaction — EXECUTED 2026-09-29, verified on the TEST stack; DEPLOY TO DEV AFTER v9** (added
-2026-09-28). Deploy: `docker compose -f docker-compose-v2.yml up -d --build backend frontend`, then
-smoke 44/44 and one redaction check (see the refactor's Execution record). Original note:
-`docs/refactors/PII_Redaction_refactor.md`: redact personal data locally (Microsoft Presidio)
-before a question is sent to Groq or written to the immutable `audit_logs`. Efosa decided the
-approach 2026-09-28; it's the treatment for impacts I6/I7 in his ISO 42001 impact assessment.
-Two open choices in the draft: spaCy model size (recommend `lg`), and a pre-flight check that the
-model downloads past this PC's firewall. Groq's Services Agreement §4.2 (last modified
-2026-06-22) prohibits training on inputs/outputs; Efosa doesn't rely on it alone. **Zero Data Retention enabled 2026-09-29** by Efosa
-(org-wide: covers Mufasa; Batch and Fine-tuning off, unused by both projects).
+**0a. PII redaction — DONE, live on dev 2026-10-04.** Rebuilt `backend frontend` (~10 min: pip
+cache had been evicted; spaCy `lg` downloaded fine). Verified on dev: `test_pii` 21/21; live chat
+with a made-up name/email/phone → `redactions: {PHONE_NUMBER:1, EMAIL_ADDRESS:1, PERSON:1}`;
+`audit_logs.query` stored `[PERSON] ([EMAIL_ADDRESS], [PHONE_NUMBER])`, **0** rows with the
+originals. Smoke 43/44 (see §0 d). Execution record: `docs/refactors/PII_Redaction_refactor.md`.
+Groq **Zero Data Retention** enabled 2026-09-29 (org-wide).
 
-**1. Golden Mapping for the enumeration queries — #4, #12, #18, #26.** #12 **rejoins** (answered,
-but wrong); #6 stays off (fixed by curation, correct, stable across all three v8 attempts). Root
-cause: 1000-char chunking shatters multi-page enumerations. **Do not re-diagnose #18 as a retrieval
-bug** — disproved, `RAG_Benchmark_Report_v7.md` §Correction. Easier to measure after §0 lands, since
-the completeness check is what shows whether it worked.
+**1. ~~Golden Mapping for the enumeration queries — #4, #12, #18, #26.~~ DONE — executed
+2026-09-27, measured by v9 2026-10-04 (3 of 4; follow-ups are §0 a/b).** Root cause it addressed:
+1000-char chunking shatters multi-page enumerations. **Do not re-diagnose #18 as a retrieval bug**
+— disproved, `RAG_Benchmark_Report_v7.md` §Correction.
 
 **2. Acquire an authoritative NIST CSF ↔ ISO 27001 crosswalk** (NIST Informative References) for
 query #36. Corpus gap, not a code fix. Until then, refusing is correct.

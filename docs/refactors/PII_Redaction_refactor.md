@@ -113,7 +113,7 @@ assessment.
 ## Verification (all must pass before commit)
 
 | # | Check | Pass condition |
-|---|---|---|
+| --- | --- | --- |
 | V1 | Unit tests `test_pii.py`: name, email, phone, SSN, card, IP each redacted; mixed sentence keeps its non-personal words | All pass |
 | V2 | **No-harm test:** run `redact()` over **all 50 benchmark questions** | **Zero changes.** Any change is a false positive and blocks the release. This proves the benchmark is unaffected. |
 | V3 | Framework terms: "NIST", "ISO 27001 Annex A", "GDPR Article 17", "SOC 2 CC6.1", "Microsoft", "AWS" | Unchanged |
@@ -169,7 +169,7 @@ against it this weekend. **Deploy to dev after v9:** `docker compose -f docker-c
 **Verification:**
 
 | # | Check | Result |
-|---|---|---|
+| --- | --- | --- |
 | V1 | `test_pii.py` in container | **21/21 passed** |
 | V2 | All 50 benchmark questions unchanged (release gate) | **Pass**: 0 changed |
 | V3 | 10 framework references in tests + 18 in the pre-build trial (incl. "HIPAA 164.312", "PCI DSS v4.0", "Regulation (EU) 2024/1689") | **Pass**: 0 changed |
@@ -184,3 +184,16 @@ Cost is one replaced word; the benchmark gate is unaffected.
 **Also noticed (not introduced by this change):** only top-level packages are pinned, so any image
 rebuild pulls newer transitive versions (this build moved the LangChain family forward). Tests pass
 on the new versions. A full lock file is a separate supply-chain hardening item.
+
+## Dev deployment record — 2026-10-04 (after v9)
+
+`docker compose -f docker-compose-v2.yml up -d --build backend frontend` — ~10 min (pip layer cache
+had been evicted; the 400 MB spaCy `lg` wheel downloaded without a firewall problem). Startup log:
+`PII redaction engine loaded`.
+
+| # | Check (dev, `:8001`) | Result |
+| --- | --- | --- |
+| D1 | `test_pii.py` copied into `grc-backend` | **21/21 passed** (includes the 50-question release gate) |
+| D2 | Live chat, made-up name/email/phone | HTTP 200, `redactions: {PHONE_NUMBER:1, EMAIL_ADDRESS:1, PERSON:1}` |
+| D3 | Dev `audit_logs` | stored `Our vendor contact [PERSON] ([EMAIL_ADDRESS], [PHONE_NUMBER]) …`; **0** rows contain the originals |
+| D4 | `smoke_test.py` | **43/44** twice. The failure is "Chat generation": a Groq **tokens-per-minute** 429 (8,000 TPM) because the smoke test's `active-auditor` run and the chat check land in the same minute. Not caused by this change — D2 is a successful chat through the redaction path. Fix belongs to the smoke test (HANDOFF §0 d). |

@@ -1,3 +1,73 @@
+# Session Log — 2026-10-04 ("Three of four, and one invented item")
+
+**Outcome:** v9 ran clean and measured Golden Mapping — **#4 and #26 fixed and correct, #12
+complete plus one invented item, #18 still failing** (list right, explanations refused). PII
+redaction then went live on dev and was verified end to end. Report:
+`docs/reports/RAG_Benchmark_Report_v9.md`.
+
+## v9
+
+Pre-flight: the other Groq-org project's spend $0.00 (before and after), RPD 999/1000, readiness
+4/4. Detached 11:02:50 → ~11:24, 50/50, 0 errors, two re-logins. Legacy 94% (47/50), graded 98%.
+**One variable verified, not assumed:** the dev image was built 2026-09-27 20:07 — after the mapping
+commit, before the PII commit (no Presidio inside) — and its `golden_mappings.json` is
+byte-identical to the repo's.
+
+**Reading the answers changed the headline again** (as on v8): #12's list carries an item that
+isn't in ISO/IEC 27001:2022 — checked against the official booklet's clause 5.2 text — and isn't in
+the mapping either; #18's mapping fixed the list, but the query asks to *explain*, and seven
+explanations were refused. The partial-refusal rule that fails #18 is the deliberate 2026-08-05
+scorer fix; left as is.
+
+**Grader finding:** patterns use spaces, answers hyphenate (`internal‑audit`). Re-grading v1–v9
+with hyphens flattened changes one detail and **no grade, ever**. Drafted
+`Grader_Hyphen_refactor.md`.
+
+**Corrections made during the session, before they reached a doc:** the hyphen cause was first
+stated as "the special hyphen" (the grader already normalises that; the space is the cause); #18 was
+first called a scorer problem (it is the intended rule); a "~50k tokens left" estimate was a guess
+(Groq has no TPD header) and was withdrawn.
+
+## PII redaction → dev
+
+Rebuild ~10 min (pip cache evicted). test_pii 21/21 in the dev container; live chat with made-up
+PII → three redactions, `audit_logs` placeholders only. Smoke **43/44 twice** — "Chat generation"
+hit a Groq tokens-per-minute 429: the smoke test's `active-auditor` run and its chat check share a
+minute. First diagnosis on the re-run said "no 429" — the log window searched was too short; the
+full log shows the same 429. Not a PII fault (the standalone chat passed through redaction).
+
+## Next
+
+HANDOFF §0: Efosa's decisions (#18 descriptions, #12 invented item, grader hyphen EXECUTE, smoke
+pacing draft), then 0b — remove three personal files, re-ingest, benchmark — on a weekend.
+
+---
+
+# Session Log — 2026-09-28/29 ("Privacy before the next benchmark") — *backfilled 2026-10-04*
+
+*Not written at the time; reconstructed on 2026-10-04 from the commits (`bc98eb6`…`1c18214`), this
+project's `HANDOFF.md`, and the PII refactor's execution record. Facts only, no new claims.*
+
+- **2026-09-28 — v9 deferred; Groq org confirmed shared** (`bc98eb6`). One ~90-token probe per key
+  showed `mufasa_backend` (a separate project) and this one share a Groq organization, so a
+  benchmark needs that project's AI analysis paused. ~176k tokens left that day: too tight.
+- **2026-09-28 — PII redaction drafted** (`78a1cfc`, `PII_Redaction_refactor.md`): redact personal
+  data locally before a question reaches Groq or the immutable `audit_logs`. Groq Services Agreement
+  §4.2 prohibits training on inputs/outputs; the owner chose not to rely on that alone.
+- **2026-09-29 — Groq Zero Data Retention enabled org-wide** by the owner; v9 scheduled for the
+  weekend of 3/4 Oct (`1dbd57e`).
+- **2026-09-29 — repo hygiene:** MIT licence + third-party-material / advisory-use note (`7198277`);
+  README unit-test count 50 → 65 (`9d93a11`); personal, non-GRC references removed from public docs
+  and redacted from archived reports (`add49fc`, `8e45c31`, `916ebd0`, `2c22ee8`,
+  `docs/reports/REDACTIONS.md`). Three personal files are queued to leave the corpus after v9
+  (HANDOFF 0b).
+- **2026-09-29 — PII redaction EXECUTED on the test stack** (`1c18214`): Presidio + spaCy `lg`,
+  fails closed (503). `test_pii` 21/21, all 50 benchmark questions unchanged, pytest 65, smoke 44/44,
+  live check stored placeholders only. Read-only scan of the dev `audit_logs`: no real personal data
+  ever stored (one false positive, "warmup"). **Dev deploy held until after v9.**
+
+---
+
 # Session Log — 2026-09-27 ("v8 lands at 92% — and the scorer is caught lying in both directions")
 
 **Outcome:** the clean v8 benchmark ran to completion on the third attempt: **92.0% (46/50), 0
