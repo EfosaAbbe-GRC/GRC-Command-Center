@@ -35,6 +35,10 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 
 ---
 
+> **Next conversation (owner's call, 2026-10-04) opens with a guided, owner-driven walkthrough of the
+> Vendor Risk terminal** (TPRM, no Groq use), tracked in the owner's private workspace. This repo's
+> next engineering action is still §0 below, on the weekend.
+
 ## ▶ 0. FIRST: v10 benchmark — measures the OWASP descriptions (next weekend)
 
 **One variable:** the OWASP entry's `canonical_context` now carries official descriptions of all
