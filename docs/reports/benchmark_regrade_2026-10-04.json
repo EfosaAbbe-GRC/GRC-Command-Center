@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-04T19:25:38",
+  "generated": "2026-10-04T19:44:03",
   "grader": "backend/tests/rag_grading.py",
   "runs": [
     {
@@ -13,6 +13,7 @@
       "grade_counts": {
         "COMPLETE": 2,
         "INCOMPLETE": 1,
+        "UNSUPPORTED_ITEM": 0,
         "CORRECT_REFUSAL": 2,
         "UNSUPPORTED_ANSWER": 0,
         "WRONG_REFUSAL": 27,
@@ -161,6 +162,7 @@
       "grade_counts": {
         "COMPLETE": 3,
         "INCOMPLETE": 2,
+        "UNSUPPORTED_ITEM": 0,
         "CORRECT_REFUSAL": 2,
         "UNSUPPORTED_ANSWER": 0,
         "WRONG_REFUSAL": 13,
@@ -261,6 +263,7 @@
       "grade_counts": {
         "COMPLETE": 3,
         "INCOMPLETE": 2,
+        "UNSUPPORTED_ITEM": 0,
         "CORRECT_REFUSAL": 2,
         "UNSUPPORTED_ANSWER": 0,
         "WRONG_REFUSAL": 10,
@@ -349,6 +352,7 @@
       "grade_counts": {
         "COMPLETE": 3,
         "INCOMPLETE": 3,
+        "UNSUPPORTED_ITEM": 0,
         "CORRECT_REFUSAL": 1,
         "UNSUPPORTED_ANSWER": 1,
         "WRONG_REFUSAL": 9,
@@ -437,6 +441,7 @@
       "grade_counts": {
         "COMPLETE": 3,
         "INCOMPLETE": 3,
+        "UNSUPPORTED_ITEM": 0,
         "CORRECT_REFUSAL": 2,
         "UNSUPPORTED_ANSWER": 0,
         "WRONG_REFUSAL": 6,
@@ -513,6 +518,7 @@
       "grade_counts": {
         "COMPLETE": 4,
         "INCOMPLETE": 3,
+        "UNSUPPORTED_ITEM": 0,
         "CORRECT_REFUSAL": 2,
         "UNSUPPORTED_ANSWER": 0,
         "WRONG_REFUSAL": 2,
@@ -577,6 +583,7 @@
       "grade_counts": {
         "COMPLETE": 3,
         "INCOMPLETE": 0,
+        "UNSUPPORTED_ITEM": 0,
         "CORRECT_REFUSAL": 1,
         "UNSUPPORTED_ANSWER": 1,
         "WRONG_REFUSAL": 4,
@@ -645,6 +652,7 @@
       "grade_counts": {
         "COMPLETE": 4,
         "INCOMPLETE": 2,
+        "UNSUPPORTED_ITEM": 0,
         "CORRECT_REFUSAL": 2,
         "UNSUPPORTED_ANSWER": 0,
         "WRONG_REFUSAL": 2,
@@ -697,14 +705,15 @@
     {
       "archive": "v9_golden_enumerations",
       "legacy_answered": 47,
-      "graded_pass": 49,
-      "graded_percentage": 98.0,
-      "checked_pass": 9,
+      "graded_pass": 48,
+      "graded_percentage": 96.0,
+      "checked_pass": 8,
       "checked_total": 10,
       "ungraded": 40,
       "grade_counts": {
-        "COMPLETE": 7,
+        "COMPLETE": 6,
         "INCOMPLETE": 0,
+        "UNSUPPORTED_ITEM": 1,
         "CORRECT_REFUSAL": 2,
         "UNSUPPORTED_ANSWER": 0,
         "WRONG_REFUSAL": 1,
@@ -725,8 +734,8 @@
           "detail": "4/4"
         },
         "12": {
-          "grade": "COMPLETE",
-          "detail": "11/11"
+          "grade": "UNSUPPORTED_ITEM",
+          "detail": "11/11; not in source: '**Information security guideline**   referenced in clause 5.2 e (minimum documen'"
         },
         "16": {
           "grade": "COMPLETE",

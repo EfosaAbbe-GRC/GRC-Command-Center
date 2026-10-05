@@ -75,6 +75,43 @@ CLOSED_LIST = {
         r"post.incident|lessons learned"]),
 }
 
+# Every LEGITIMATE item for closed-list queries whose full official list is known -- a superset of
+# the CLOSED_LIST patterns above. A listed item matching none of these is content the source
+# doesn't contain (v9 #12 invented an "information security guideline" under ISO 27001 5.2 e).
+# See docs/refactors/Grader_Unsupported_Items_refactor.md. Matched against hyphen-flattened text.
+ALLOWED_ITEMS = {
+    4: [r"polic", r"accountab", r"diversity|equity|inclusion|accessib",
+        r"cultur|communicat",                            # GOVERN 4 (paraphrases accepted)
+        r"engage|feedback|ai actors", r"third.party|supply.chain"],
+    12: [r"scope", r"polic", r"risk assessment", r"risk treatment",
+         r"statement of applicability|\bsoa\b", r"objective", r"competen",
+         r"7\.5\.1|further documented|necessary for (the )?(isms )?effectiveness",   # 7.5.1 b
+         r"8\.1|operational planning|carried out as planned",                       # 8.1
+         r"monitoring|measurement", r"internal audit", r"management review",
+         r"nonconformit|corrective action"],
+    # 2025 and 2023 (v1.1) names: either edition is accepted.
+    18: [r"prompt injection", r"sensitive information", r"supply chain", r"poisoning",
+         r"output handling", r"excessive agency", r"system prompt", r"vector|embedding",
+         r"misinformation", r"unbounded consumption", r"insecure plugin", r"overreliance",
+         r"model theft", r"denial of service"],
+    26: [r"lawful|fair|transparen", r"purpose", r"minimi", r"accura", r"storage",
+         r"integrity|confidential|security", r"accountab"],
+}
+
+# Top-level list items: numbered lines and markdown table rows. Bullets are NOT checked (limit
+# stated in the refactor) -- most enumeration answers in the archives are numbered.
+_LIST_ITEM = re.compile(r"^\s*(?:\d+[.)]|\|\s*\*\*LLM|\|\s*\*?\*?\d+)\s*(.+)$", re.M)
+
+
+def unsupported_items(query_id, flat_text):
+    """Listed items matching no allowed pattern for this query ([] if the query has no list)."""
+    allowed = ALLOWED_ITEMS.get(query_id)
+    if not allowed:
+        return []
+    items = [m.group(1).strip() for m in _LIST_ITEM.finditer(flat_text)]
+    return [i for i in items if not any(re.search(p, i, re.I) for p in allowed)]
+
+
 # Queries whose source is ABSENT from the corpus: refusing is the correct behaviour. Each records
 # the corpus state it was verified against -- the expectation stops being true the moment the
 # source is added (e.g. #36 once an authoritative crosswalk is ingested), so move it to
@@ -85,8 +122,8 @@ EXPECT_REFUSAL = {
 }
 
 PASSING = frozenset({"COMPLETE", "CORRECT_REFUSAL", "UNGRADED_ANSWER"})
-ALL_GRADES = ("COMPLETE", "INCOMPLETE", "CORRECT_REFUSAL", "UNSUPPORTED_ANSWER",
-              "WRONG_REFUSAL", "UNGRADED_ANSWER", "ERROR")
+ALL_GRADES = ("COMPLETE", "INCOMPLETE", "UNSUPPORTED_ITEM", "CORRECT_REFUSAL",
+              "UNSUPPORTED_ANSWER", "WRONG_REFUSAL", "UNGRADED_ANSWER", "ERROR")
 
 
 def grade(query_id, outcome, answer):
@@ -108,7 +145,13 @@ def grade(query_id, outcome, answer):
         hits = [bool(re.search(p, flat, re.I)) for p in items]
         missing = [n + 1 for n, h in enumerate(hits) if not h]
         detail = f"{sum(hits)}/{len(hits)}" + (f" missing items {missing}" if missing else "")
-        return ("COMPLETE" if sum(hits) / len(hits) >= bar else "INCOMPLETE"), detail
+        if sum(hits) / len(hits) < bar:
+            return "INCOMPLETE", detail
+        extra = unsupported_items(query_id, flat)
+        if extra:
+            return "UNSUPPORTED_ITEM", f"{detail}; not in source: {extra[0][:80]!r}" + (
+                f" (+{len(extra) - 1} more)" if len(extra) > 1 else "")
+        return "COMPLETE", detail
     return "UNGRADED_ANSWER", ""
 
 

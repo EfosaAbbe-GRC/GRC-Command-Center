@@ -257,6 +257,9 @@ def run_smoke_tests():
     test("Trigger agent run (active-auditor)", "POST", f"{V1}/run-agent",
          json_body={"agent_id": "active-auditor", "args": {}},
          check_fields=["status", "agent", "result", "run_id"])
+    # Its RAG calls count against Groq's per-minute token limit (8,000 TPM); the chat check
+    # below must not land in the same minute. See docs/refactors/Smoke_TPM_Pacing_refactor.md.
+    auditor_done = time.monotonic()
 
     test("Operations jobs", "GET", f"{V1}/ops/jobs",
          check_contains=1)
@@ -315,6 +318,11 @@ def run_smoke_tests():
 
     # ─── 8. RAG / Chat ───
     print("\n── RAG / CHAT ──")
+    tpm_wait = float(os.getenv("GRC_SMOKE_TPM_WAIT", "62"))
+    wait = tpm_wait - (time.monotonic() - auditor_done)
+    if wait > 0:
+        print(f"     ⏳ waiting {wait:.0f}s so chat doesn't share the auditor's Groq minute")
+        time.sleep(wait)
     chat_result = test("Chat endpoint", "POST", f"{V1}/chat",
                        json_body={"query": "What is ISO 42001?"},
                        check_fields=["response", "sources"])

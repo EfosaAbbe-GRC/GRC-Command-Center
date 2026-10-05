@@ -1,6 +1,10 @@
 # Smoke test: keep the chat check out of the active-auditor's Groq minute
 
-**Status:** DRAFT 2026-10-04 — awaiting EXECUTE. Approved in principle by Efosa 2026-10-04 ("yes"
+**Status:** EXECUTED 2026-10-04 (EXECUTE from Efosa). Dev smoke **44/44** — waited 60 s, chat
+answered with 6 sources (was 43/44 twice). **Test stack: not verified** — the run that followed got
+43/44 because the org-wide **daily** budget was spent (Groq log: TPD 199,708 / 200,000 used, after
+v9 + three smoke runs + pytest). The wait itself ran (60 s). Re-run the test-stack smoke on a fresh
+day. **Was:** DRAFT 2026-10-04. Approved in principle by Efosa 2026-10-04 ("yes"
 to v9 decision c/d). Tests-only; no rebuild.
 
 ## Problem

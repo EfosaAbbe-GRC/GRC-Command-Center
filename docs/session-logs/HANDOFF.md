@@ -18,15 +18,15 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 
 | | Status | Last verified |
 | --- | --- | --- |
-| `smoke_test.py` (test stack, `:8002`) | **44/44** | 2026-09-29 |
-| `smoke_test.py` (dev, `:8001`) | **43/44** — the one failure is a Groq **per-minute** 429 (see §0) | 2026-10-04 |
+| `smoke_test.py` (test stack, `:8002`) | **44/44** on 2026-09-29; re-run 2026-10-04 hit the Groq **daily** cap (43/44) — re-check on a fresh day | 2026-09-29 |
+| `smoke_test.py` (dev, `:8001`) | **44/44** (chat check now waits out the auditor's Groq minute) | 2026-10-04 |
 | `test_pii.py` (in the dev container) | **21/21** | 2026-10-04 |
-| `pytest` (from `backend/`) | **66 passed, 1 skipped** (test_pii skips on host) | 2026-10-04 |
+| `pytest` (from `backend/`) | **71 passed, 1 skipped** (test_pii skips on host) | 2026-10-04 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
-| RAG, latest run | v9: legacy 94% (47/50), graded 98% — **not citable as accuracy** | 2026-10-04 |
+| RAG, latest run | v9: legacy 94% (47/50), graded 96% (corrected from 98%) — **not citable as accuracy** | 2026-10-04 |
 | Index | curated: **148 files / 17,123 chunks** | re-ingested 2026-09-21 |
 
-**How to quote the RAG figure:** *"42% → 92%"*. v9's 94/98% include #12 with an **invented item**
+**How to quote the RAG figure:** *"42% → 92%"*. v9's 94/96% (96 corrected from 98) include #12's **invented item** in the legacy figure
 and leave 40 of 50 answers ungraded — see `docs/reports/RAG_Benchmark_Report_v9.md`. v7's 90% was
 never valid. Never quote 90%.
 
@@ -35,35 +35,37 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 
 ---
 
-## ▶ 0. FIRST: Efosa's decisions from v9, then the next corpus change
+## ▶ 0. FIRST: v10 benchmark — measures the OWASP descriptions (next weekend)
 
-v9 (2026-10-04) measured Golden Mapping: **#4 and #26 fixed and correct; #12 complete plus one
-invented item** ("information security guideline, 5.2 e" — not in ISO/IEC 27001:2022, checked
-against the official text); **#18 still fails** — list correct, 7 of 10 explanations refused, and
-the query says "Explain". All other 46 grades unchanged. Full reading in the v9 report.
+**One variable:** the OWASP entry's `canonical_context` now carries official descriptions of all
+ten risks (`Golden_Mapping_OWASP_Descriptions_refactor.md`, EXECUTED and live on dev 2026-10-04).
+The dev image also now has PII redaction, proven not to change any of the 50 questions
+(`test_pii` release gate), so it is not a second variable. Run it per "Running a benchmark" below
+(Mufasa paused, pre-flight, detached, ~21 min). Archive as
+`rag_benchmark_results.v10_owasp_descriptions.json`.
 
-Independent of each other — take them to Efosa:
+**Success:** #18 `ANSWERED` and `COMPLETE` — no `INSUFFICIENT_DATA` text, descriptions consistent
+with the mapping; every other grade unchanged (report any change as noise, not a gain). The grader
+now also fails invented list items (`UNSUPPORTED_ITEM`), so v9's baseline for comparison is
+**graded 96% (48/50)**, not 98%. As always, read the answer text of every flipped query.
 
-- **a. #18 — approved; DRAFTED, awaiting EXECUTE:** `Golden_Mapping_OWASP_Descriptions_refactor.md`
-  (official descriptions from the corpus PDF, wording checked page by page). Measured by **v10**,
-  which pushes the corpus removal (0b) to v11 — one variable per run.
-- **b. #12's invented item — Efosa chose the grader route; DRAFTED, awaiting EXECUTE:**
-  `Grader_Unsupported_Items_refactor.md` (new `UNSUPPORTED_ITEM` grade; prototype over v1–v9: one
-  true catch, one borderline paraphrase, no false alarms; v9 graded 49 → 48). Prompt tightening
-  stays a possible later variable.
-- **c. ~~`Grader_Hyphen_refactor.md`~~ — EXECUTED 2026-10-04.** pytest 66 + 1 skipped; no grade
-  changed in any archive.
-- **d. Smoke test vs Groq TPM — approved; DRAFTED, awaiting EXECUTE:** `Smoke_TPM_Pacing_refactor.md`. the `active-auditor` run (makes several RAG calls) is followed
-  ~12 s later by the chat check; together they exceed 8,000 tokens/minute, so "Chat generation"
-  fails with a 429 (seen twice on dev, 2026-10-04). Not caused by PII: a standalone chat with
-  made-up PII returned 200 and correct redactions. Fix candidate: pause ~60 s before the chat check,
-  or retry it once after a 429. Needs a draft.
-- Carried: fix the v6 entries' exact-wording triggers (misfire on #17/#21); re-extract the damaged
-  GDPR PDF.
+**Then v11 (the weekend after):** 0b below — remove the three personal files, re-ingest, benchmark.
 
-**Then, sequential — one variable per benchmark day:** v10 = the OWASP descriptions (a); v11 = 0b
-below (remove the three personal files, re-ingest, benchmark). Weekend benchmarks only
-while Mufasa trades on market days; pre-flight per "Running a benchmark".
+### Done 2026-10-04 (all EXECUTED by Efosa, verified)
+
+- v9 ran; report `RAG_Benchmark_Report_v9.md` (graded corrected 98% → 96% the same day).
+- PII redaction live on dev (0a below).
+- `Grader_Hyphen_refactor.md` — hyphenated items match; no grade changed in any archive.
+- `Grader_Unsupported_Items_refactor.md` — new `UNSUPPORTED_ITEM` grade; v9 #12 is the only catch.
+- `Smoke_TPM_Pacing_refactor.md` — chat check waits out the auditor's Groq minute; dev smoke 44/44.
+- README: PII redaction line under Security & Governance.
+
+### Still Efosa's to decide (independent, no rush)
+
+- Fix the v6 entries' exact-wording triggers (they also fire on #17/#21).
+- Re-extract the damaged GDPR PDF ("purpose" 0 intact / 261 broken).
+- Optional later variable: tell the model to list only what a golden mapping lists (the cure for
+  #12's invented item; the grader only measures it).
 
 ---
 
@@ -80,7 +82,7 @@ variable. Treatment I3 in the owner's ISO 42001 impact assessment. Archives alre
 cache had been evicted; spaCy `lg` downloaded fine). Verified on dev: `test_pii` 21/21; live chat
 with a made-up name/email/phone → `redactions: {PHONE_NUMBER:1, EMAIL_ADDRESS:1, PERSON:1}`;
 `audit_logs.query` stored `[PERSON] ([EMAIL_ADDRESS], [PHONE_NUMBER])`, **0** rows with the
-originals. Smoke 43/44 (see §0 d). Execution record: `docs/refactors/PII_Redaction_refactor.md`.
+originals. Dev smoke 43/44 at deploy (Groq TPM inside the smoke test); 44/44 after `Smoke_TPM_Pacing_refactor.md`. Execution record: `docs/refactors/PII_Redaction_refactor.md`.
 Groq **Zero Data Retention** enabled 2026-09-29 (org-wide).
 
 **1. ~~Golden Mapping for the enumeration queries — #4, #12, #18, #26.~~ DONE — executed
@@ -158,7 +160,7 @@ The procedure that worked on 2026-09-27, first try:
 docker compose -f docker-compose-v2.yml ps
 docker compose -f docker-compose.test.yml ps
 $env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 44/44 (hits :8002)
-cd backend; python -m pytest -q; cd ..                   # expect 65/65 -- MUST run from backend/
+cd backend; python -m pytest -q; cd ..                   # expect 71 passed, 1 skipped -- MUST run from backend/
 python scripts/rescore_benchmarks.py                     # re-grade all archives, zero tokens
 Invoke-RestMethod http://localhost:8001/api/v1/readiness # dev stack health, read-only, safe anytime
 ```

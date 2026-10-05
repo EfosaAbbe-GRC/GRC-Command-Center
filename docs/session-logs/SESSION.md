@@ -36,10 +36,29 @@ hit a Groq tokens-per-minute 429: the smoke test's `active-auditor` run and its 
 minute. First diagnosis on the re-run said "no 429" — the log window searched was too short; the
 full log shows the same 429. Not a PII fault (the standalone chat passed through redaction).
 
+## Later the same day — Efosa's decisions, all executed
+
+Efosa chose: descriptions for #18; the grader route for #12 (Claude's view: right first step — the
+grader measures; telling the model to list only mapped items is the cure, kept as a later
+variable); the hyphen fix and smoke pacing. Four changes, each drafted, approved, verified:
+`Grader_Hyphen_refactor.md` (no grade changed anywhere), `Grader_Unsupported_Items_refactor.md`
+(prototyped over v1–v9 first: one true catch, one paraphrase allowed, no false alarms; v9 graded
+49 → 48, report corrected with strikethrough), `Golden_Mapping_OWASP_Descriptions_refactor.md`
+(descriptions from the official PDF, two of Claude's own wording slips caught against the pages;
+fires on #18 only), `Smoke_TPM_Pacing_refactor.md` (dev smoke 44/44). README gained a PII line.
+pytest 71 + 1 skipped. A last test-stack smoke run hit the Groq **daily** cap (199,708 / 200,000
+used) — today is spent; re-check on a fresh day.
+
+**Tooling lesson (twice):** inline scripts passed through Git Bash heredocs lost backslashes — once
+turning a regex `\b` into a literal backspace character in `rag_grading.py`, which would have
+silently broken the SoA pattern. Caught by inspecting raw bytes; fixed via script files. A
+whole-file `json.dumps` rewrite also reformatted unrelated entries; reverted and redone as a
+targeted edit (+5/−1). Check diffs and raw bytes after scripted edits.
+
 ## Next
 
-HANDOFF §0: Efosa's decisions (#18 descriptions, #12 invented item, grader hyphen EXECUTE, smoke
-pacing draft), then 0b — remove three personal files, re-ingest, benchmark — on a weekend.
+HANDOFF §0: **v10 next weekend** (one variable: the OWASP descriptions), then v11 = remove three
+personal files, re-ingest, benchmark.
 
 ---
 

@@ -1,6 +1,10 @@
 # Golden Mapping: add official descriptions to the OWASP LLM Top 10 entry (#18)
 
-**Status:** DRAFT 2026-10-04 — awaiting EXECUTE. Approved in principle by Efosa 2026-10-04
+**Status:** EXECUTED 2026-10-04 (EXECUTE from Efosa). Targeted JSON edit: only this entry changed
+(+5/−1 lines; the other six entries verified identical). Dev backend rebuilt; in-container trigger
+check over all 50 queries: OWASP fires on **#18 only**, other matches unchanged (incl. the known
+#17/#21 misfires); loaded context 269 words, 3 citations. pytest 71 + 1 skipped; dev smoke 44/44.
+Measured by v10. **Was:** DRAFT 2026-10-04. Approved in principle by Efosa 2026-10-04
 ("yes" to v9 decision a). Data-only; needs a backend rebuild (`golden_mappings.json` is baked
 into the image); zero Groq tokens to build and test.
 

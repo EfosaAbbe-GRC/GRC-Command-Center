@@ -1,6 +1,9 @@
 # Grader: fail closed-list answers that add items the official list doesn't have
 
-**Status:** DRAFT 2026-10-04 — awaiting EXECUTE. Efosa's choice for v9 decision b (2026-10-04):
+**Status:** EXECUTED 2026-10-04 (EXECUTE from Efosa), with the recommended paraphrase allowance
+(`cultur|communicat` for GOVERN 4). 5 new tests; pytest 71 + 1 skipped. Regrade: v1–v8 per-query
+identical; v9 graded 49 → 48, #12 `UNSUPPORTED_ITEM`. v9 report corrected (strikethrough).
+**Was:** DRAFT 2026-10-04. Efosa's choice for v9 decision b (2026-10-04):
 "have the grader catch made-up items". Tests-only; zero Groq tokens; no rebuild.
 
 ## Why

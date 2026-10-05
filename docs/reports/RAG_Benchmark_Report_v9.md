@@ -1,7 +1,13 @@
 # RAG Benchmark v9 — Golden Mapping for the enumeration queries
 
-**Run date:** 2026-10-04 · **Legacy: 94.0% (47/50) · Graded: 98.0% (49/50, checkable 9/10)** ·
-avg latency **3.81s** · 0 system errors
+**Run date:** 2026-10-04 · **Legacy: 94.0% (47/50) · Graded: ~~98.0% (49/50, checkable 9/10)~~
+96.0% (48/50, checkable 8/10)** · avg latency **3.81s** · 0 system errors
+
+> **Corrected 2026-10-04 (same day, `Grader_Unsupported_Items_refactor.md`, approved by Efosa):**
+> the grader now fails a closed-list answer that adds an item the official list doesn't contain.
+> #12's invented "information security guideline" makes it `UNSUPPORTED_ITEM`, so graded drops
+> 49 → 48. Re-grading v1–v8 with the new rule changed nothing. The archive is untouched; the
+> original figure is struck through, not deleted.
 **Archive:** `rag_benchmark_results.v9_golden_enumerations.json`
 **What changed since v8 — one thing:** the four `golden_mappings.json` entries for
 queries #4, #12, #18 and #26 (`2656906`, `Golden_Mapping_Enumerations_refactor.md`). Verified, not assumed: the dev
@@ -11,7 +17,7 @@ byte-identical to the repo's (SHA-256 `cb68d8cc…`); the only non-test `backend
 and the build is `2656906`. Model, corpus (148 files / 17,123 chunks), chunking, embeddings,
 re-ranker, `k` and prompt are unchanged.
 
-**Do not quote 94% or 98% as accuracy.** The figure to cite stays *"42% → 92%"* (v8). See
+**Do not quote 94% or 96% (originally 98%) as accuracy.** The figure to cite stays *"42% → 92%"* (v8). See
 §"What the number means".
 
 ## The run
@@ -30,22 +36,24 @@ query's grade unchanged.*
 | Query | v8 grade | v9 grade | Answer text, read in full | Attribution |
 | --- | --- | --- | --- | --- |
 | #4 AI RMF GOVERN outcomes | INCOMPLETE 4/6 | **COMPLETE 6/6** | **Correct.** All six GOVERN categories with accurate summaries. | mapping-attributed |
-| #12 ISO 27001 mandatory documentation | INCOMPLETE 0/11 | **COMPLETE** (9/11 reported, really 11/11 — see below) | **Complete, plus one invented item.** All 14 clause requirements in the mapping appear, plus item 3: *"Information security guideline — referenced in clause 5.2 e"*. Checked against the official text in the corpus (`ISO 27001-2022 BookLet.pdf`): 5.2 e) only requires the **policy** to be available as documented information; the standard contains no "guideline" requirement. The item is not in the mapping text either — the model added it. | mapping-attributed, **with a fabricated item** |
+| #12 ISO 27001 mandatory documentation | INCOMPLETE 0/11 | ~~**COMPLETE**~~ **UNSUPPORTED_ITEM** (11/11 + 1 invented; corrected 2026-10-04) | **Complete, plus one invented item.** All 14 clause requirements in the mapping appear, plus item 3: *"Information security guideline — referenced in clause 5.2 e"*. Checked against the official text in the corpus (`ISO 27001-2022 BookLet.pdf`): 5.2 e) only requires the **policy** to be available as documented information; the standard contains no "guideline" requirement. The item is not in the mapping text either — the model added it. | mapping-attributed, **with a fabricated item** |
 | #18 OWASP Top 10 for LLMs | WRONG_REFUSAL | **WRONG_REFUSAL** (unchanged) | **List fixed, explanation not.** All ten 2025 category names are now correct. The query says *"Explain"*; the mapping holds names only, so the model described three risks (LLM04, LLM08, LLM10 — descriptions read as accurate, not yet traced to the retrieved chunks; `sources_count` 1) and wrote `INSUFFICIENT_DATA` against the other seven. The benchmark counts any `INSUFFICIENT_DATA` substring as a refusal — **deliberately** (the 2026-08-05 scorer fix). Had it been classed ANSWERED, the grader would give 6/6. The honest reading is the one the rule gives: incomplete. | criterion **not met** |
 | #26 GDPR seven principles | WRONG_REFUSAL | **COMPLETE 7/7** | **Correct.** All seven Article 5 principles, accurate. | mapping-attributed |
 
 **Every other query:** outcome and grade identical to v8 (all 46). For the 40 ungraded queries this
 only means each was answered again; their answer text was not compared for correctness.
 
-**Criterion: 3 of 4 met.** #18 needs a decision (below), not a re-run.
+**Criterion: ~~3 of 4 met~~ 2 of 4 met** (corrected 2026-10-04: #12 is no longer `COMPLETE` under the
+unsupported-item rule). #18 and #12 each got a follow-up (below), not a re-run.
 
 ## What the number means
 
 - **Legacy 94% (47/50)** = answered without refusing. +1 vs v8 is #26.
-- **Graded 98% (49/50)** = legacy, plus #36 and #50 counted as correct refusals, minus nothing. It
-  counts #12 as a pass despite its invented item, and 40 of 50 answers are not checked at all.
-- **Quotable:** *"A targeted fix took three failing enumeration questions to complete answers with no
-  regressions on the other 46."* Not quotable: 98% as an accuracy figure.
+- **Graded ~~98% (49/50)~~ 96% (48/50)** = legacy, plus #36 and #50 counted as correct refusals,
+  minus #12 for its invented item (corrected 2026-10-04). 40 of 50 answers are still not checked.
+- **Quotable:** *"A targeted fix turned two failing list questions into correct answers and a third
+  into a complete list with one invented item, which my grader now catches — with no regressions on
+  the other 46."* Not quotable: 96% (or 98%) as an accuracy figure.
 - **Single run.** v8 showed #4 flipping between runs; with the mapping its context is now fixed
   text, which should stabilise it, but v9 is one observation.
 
@@ -62,6 +70,10 @@ item pattern also match a hyphen (`Grader_Hyphen_refactor.md`; tests-only, zero 
 **executed 2026-10-04**, regrade confirms the above.
 
 ## Open decisions (Efosa's)
+
+> **Decided and executed 2026-10-04:** (1) descriptions added — `Golden_Mapping_OWASP_Descriptions_refactor.md`,
+> measured by v10; (2) grader route — `Grader_Unsupported_Items_refactor.md` (prompt tightening stays a
+> possible later variable). Text below kept as written.
 
 1. **#18:** add short official descriptions to the OWASP mapping's canonical text (from the OWASP
    2025 PDF in the corpus), or narrow the expectation to the list. The query asks for explanation,

@@ -15,16 +15,18 @@
   ("information security guideline, 5.2 e" — not in the standard, checked against the official
   text); **#18 still WRONG_REFUSAL** — list now correct, 7 of 10 explanations refused (query says
   "Explain"; mapping holds names only). All other 46 grades unchanged.
-- [ ] **Decision (Efosa): #18** — add official short descriptions to the OWASP mapping, or narrow
-  the expectation to the list. Recommended: descriptions.
-- [ ] **Decision (Efosa): #12's invented item** — tighten the golden-mapping instruction ("list
-  only what the canonical context lists") or add a negative grader check. Own variable, own run.
+- [x] **Decision (Efosa): #18** — descriptions (2026-10-04).
+- [x] **Decision (Efosa): #12's invented item** — grader route (2026-10-04). Prompt tightening
+  remains an optional later variable.
 - [x] **`Grader_Hyphen_refactor.md`** — EXECUTED 2026-10-04: pytest 66 + 1 skipped; regrade of
   v1–v9 identical except v9 #12 detail (11/11).
-- [ ] **`Golden_Mapping_OWASP_Descriptions_refactor.md`** (#18) — approved in principle, DRAFTED,
-  awaiting EXECUTE. Measured by v10; corpus removal moves to v11.
-- [ ] **`Grader_Unsupported_Items_refactor.md`** (#12, Efosa's choice) — DRAFTED, awaiting EXECUTE.
-- [ ] **`Smoke_TPM_Pacing_refactor.md`** — approved in principle, DRAFTED, awaiting EXECUTE.
+- [x] **`Golden_Mapping_OWASP_Descriptions_refactor.md`** (#18) — EXECUTED 2026-10-04, live on dev;
+  fires on #18 only. **Measured by v10 (next weekend)**; corpus removal moves to v11.
+- [x] **`Grader_Unsupported_Items_refactor.md`** (#12, Efosa's choice) — EXECUTED 2026-10-04: v9
+  graded 49 → 48 (report corrected); v1–v8 unchanged; pytest 71 + 1 skipped.
+- [x] **`Smoke_TPM_Pacing_refactor.md`** — EXECUTED 2026-10-04: dev smoke 44/44.
+- [ ] **Test-stack smoke re-check** on a fresh Groq day — the 2026-10-04 run hit the daily cap
+  (199,708 / 200,000), not a code fault.
 - [x] README: PII-redaction line added to Security & Governance (2026-10-04).
 
 ## ✅ DONE 2026-10-04 — PII redaction live on dev *(entry backfilled: built 2026-09-29)*
@@ -33,9 +35,9 @@
   2026-09-29 (`1c18214`): Presidio + spaCy `lg`, fails closed (503), test_pii 21/21, smoke 44/44.
 - [x] **Deployed to dev** 2026-10-04 after v9: test_pii 21/21 in-container; live chat redacted
   name/email/phone; `audit_logs` holds placeholders only (0 rows with originals).
-- [ ] **Smoke on dev is 43/44** — Groq per-minute 429 when `active-auditor` and the chat check share
-  a minute. Smoke-test pacing fix needs a draft (HANDOFF §0 d).
-- [ ] **Corpus: remove three personal files** — approved 2026-09-29, unblocked now (HANDOFF 0b).
+- [x] **Smoke on dev was 43/44** (Groq per-minute 429) — fixed by `Smoke_TPM_Pacing_refactor.md`, 44/44.
+- [ ] **Corpus: remove three personal files** — approved 2026-09-29; **v11** (after v10), HANDOFF 0b.
+- [ ] **v10 benchmark** (next weekend) — measures the OWASP descriptions; HANDOFF §0.
 
 ## ✅ EXECUTED 2026-09-27 — Golden Mapping for enumeration queries #4, #12, #18, #26 · ✅ v9 done 2026-10-04
 

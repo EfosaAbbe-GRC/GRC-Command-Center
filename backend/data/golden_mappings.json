@@ -82,7 +82,7 @@
       "OWASP Top 10 risks for generative AI and LLM applications",
       "Which vulnerabilities does OWASP list for LLM apps?"
     ],
-    "canonical_context": "The OWASP Top 10 for LLM Applications 2025 lists: LLM01:2025 Prompt Injection; LLM02:2025 Sensitive Information Disclosure; LLM03:2025 Supply Chain; LLM04:2025 Data and Model Poisoning; LLM05:2025 Improper Output Handling; LLM06:2025 Excessive Agency; LLM07:2025 System Prompt Leakage; LLM08:2025 Vector and Embedding Weaknesses; LLM09:2025 Misinformation; LLM10:2025 Unbounded Consumption.",
+    "canonical_context": "The OWASP Top 10 for LLM Applications 2025 lists: LLM01:2025 Prompt Injection - user or external input alters the model's behaviour or output in unintended ways, even when the input is not human-visible; RAG and fine-tuning do not fully prevent it. LLM02:2025 Sensitive Information Disclosure - the model or application exposes personal data, credentials, confidential business data or proprietary details through its output. LLM03:2025 Supply Chain - third-party models, training data, fine-tuning adapters and deployment platforms can be tampered with or poisoned, compromising integrity. LLM04:2025 Data and Model Poisoning - pre-training, fine-tuning or embedding data is manipulated to introduce vulnerabilities, backdoors or biases; an integrity attack. LLM05:2025 Improper Output Handling - model output is passed downstream without sufficient validation or sanitisation, enabling XSS, CSRF, SSRF, privilege escalation or remote code execution. LLM06:2025 Excessive Agency - the system is granted more functionality, permissions or autonomy than needed, so unexpected or manipulated model output can trigger damaging actions. LLM07:2025 System Prompt Leakage - system prompts contain sensitive information (credentials, connection strings, roles and permissions) that can be extracted; the system prompt must not be treated as a secret or a security control. LLM08:2025 Vector and Embedding Weaknesses - weaknesses in how vectors and embeddings are generated, stored or retrieved in RAG systems are exploited to inject content, manipulate output or access sensitive information. LLM09:2025 Misinformation - the model produces false or misleading information that appears credible, chiefly through hallucination, leading to security, reputational and legal harm. LLM10:2025 Unbounded Consumption - the application allows excessive and uncontrolled inference, enabling denial of service, financial loss (denial of wallet) or model theft by cloning.",
     "citations": [
       {
         "section": "Table of contents — LLM01–LLM05",
@@ -91,6 +91,10 @@
       {
         "section": "Table of contents — LLM06–LLM10",
         "pdf_pages": "4"
+      },
+      {
+        "section": "Description sections — LLM01–LLM10",
+        "pdf_pages": "7, 11, 15, 20, 23, 26, 30, 33, 36, 39"
       }
     ],
     "source_file": "OWASP Top 10 for LLM Applications 2025.pdf"

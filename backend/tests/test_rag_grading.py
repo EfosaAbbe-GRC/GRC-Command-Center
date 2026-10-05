@@ -103,6 +103,37 @@ def test_v7_summary_exposes_three_engine_errors(v7):
 def test_hyphenated_items_match():
     # v9 #12 wrote "internal‑audit" / "management‑review" and was reported 9/11.
     v9 = _archive("v9_golden_enumerations")
-    assert grade(12, "ANSWERED", v9[12]["answer"]) == ("COMPLETE", "11/11")
+    # All 11 present; its fate (UNSUPPORTED_ITEM, invented 12th item) is tested separately.
+    assert grade(12, "ANSWERED", v9[12]["answer"])[1].startswith("11/11;")
     hyphen = grade(12, "ANSWERED", "scope, security policy, risk-assessment, internal-audit")
     assert hyphen == ("INCOMPLETE", "4/11 missing items [4, 5, 6, 7, 8, 10, 11]")
+
+
+@pytest.fixture(scope="module")
+def v9():
+    return _archive("v9_golden_enumerations")
+
+
+def test_invented_item_fails_a_complete_list(v9):
+    # v9 #12 lists every real ISO 27001:2022 requirement plus an "information security
+    # guideline" under 5.2 e) that the standard does not contain.
+    g, detail = grade(12, "ANSWERED", v9[12]["answer"])
+    assert g == "UNSUPPORTED_ITEM"
+    assert "guideline" in detail.lower()
+
+
+@pytest.mark.parametrize("qid", [4, 26])
+def test_faithful_lists_stay_complete(v9, qid):
+    assert grade(qid, "ANSWERED", v9[qid]["answer"])[0] == "COMPLETE"
+
+
+def test_paraphrase_is_not_an_invention(v8):
+    # v8 #4 called GOVERN 4 "Risk documentation and communication" -- loose, not invented.
+    # It stays INCOMPLETE for missing items, not UNSUPPORTED_ITEM.
+    assert grade(4, "ANSWERED", v8[4]["answer"])[0] == "INCOMPLETE"
+
+
+def test_v9_summary_counts_the_invented_item(v9):
+    s = summarise(list(v9.values()))
+    assert s["grade_counts"]["UNSUPPORTED_ITEM"] == 1
+    assert s["graded_pass"] == 48
