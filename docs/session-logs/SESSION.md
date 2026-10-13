@@ -1,3 +1,44 @@
+# Session Log — 2026-10-12 ("Using it for real, the tool gets audited too")
+
+**Outcome:** no code changed. Two things happened:
+
+1. **The owner settled the three open benchmark decisions** by taking the recommendation on each.
+   All three are queued as separate variables after v10/v11: **v12** removes the v6
+   exact-wording triggers (expect #16/#19/#49 to drop: their passes were inflated by design), **v13**
+   re-extracts the damaged GDPR PDF and re-ingests, **v14** adds the "list only what the mapping
+   lists" instruction. Each still needs its own draft and EXECUTE. See HANDOFF.
+2. **First guided, owner-driven use of the Vendor Risk terminal on a realistic audit task** (owner
+   clicks, Claude guides; the task is tracked in the owner's private workspace). It created a fictional
+   cloud-hosting vendor with one API egress flow and recorded a verdict on all 11 applicable
+   stages. Notes still to be added next session. **Eleven findings about the app itself** were
+   logged privately, each checked against code or data before logging. Those relevant to this repo:
+   - **Smoke tests pollute dev:** the 2026-10-04 dev smoke run (`GRC_TEST_BASE=:8001`) left 3
+     "SmokeTest Vendor" vendors and their integrations in the dev register.
+   - **Risk tier ignores direction and transfer method**, and "volume per transfer" can't describe a
+     hosting provider. A host holding all production PII tiers as MEDIUM unless a regulated keyword
+     matches (`compute_risk_tier`, `tprm.py:186`).
+   - **`REGULATED_KEYWORDS` has 4 entries** (hipaa/phi/gdpr/pci): CCPA, US state breach laws, GLBA
+     are not recognised.
+   - **No contract/DPA/certification fields on `Vendor`** (name + email only), even though stage 13
+     asks for exactly that evidence.
+   - **Intake can't be edited or withdrawn** (no PUT/PATCH/DELETE). A wrong intake answer forced a
+     duplicate "(corrected)" integration; the erroneous one remains.
+   - **Vendor chips go stale after a create.** `/tprm/vendors` isn't refreshed, so the chip showed
+     MEDIUM while the DB held CRITICAL, i.e. the screen understated risk.
+   - **Pass/Gap accept empty notes**: only N/A requires a justification (`tprm.py:448`).
+   - Cosmetic: header hardcodes `v2.5.0-STABLE` (project is 1.5.0); the "Universal Time" clock shows
+     local time; the session ID falls back to `USR_ANONYMOUS_…` while logged in.
+
+**Agreed fix order (owner, 2026-10-12): build only after the walkthrough finishes**, so the
+assessment isn't split across two rule sets: (1) quick wins: vendor refresh, version source, UTC
+clock, username, smoke tests refuse dev unless overridden and clean up; (2) contract/certification
+tracking on the vendor (ISO 27001 5.20 clause checklist); (3) inherent-risk rating redesign
+(access type, total data, operational criticality, regulations from a checklist; analyst can
+raise with a reason, lowering needs a second approver); (4) versioned corrections ("withdrawn:
+entered in error", never delete). Each is draft-first.
+
+---
+
 # Session Log — 2026-10-04 ("Three of four, and one invented item")
 
 **Outcome:** v9 ran clean and measured Golden Mapping — **#4 and #26 fixed and correct, #12

@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-10-04. **Rewritten clean** after v9 ran and PII redaction reached dev. **If this file
+**Date:** 2026-10-04, light update 2026-10-12 (decisions + walkthrough pointer). **Rewritten clean** after v9 ran and PII redaction reached dev. **If this file
 starts accumulating update blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -35,11 +35,14 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 
 ---
 
-> **Next conversation (owner's call, 2026-10-04) opens with a guided, owner-driven walkthrough of the
-> Vendor Risk terminal** (TPRM, no Groq use), tracked in the owner's private workspace. This repo's
-> next engineering action is still §0 below, on the weekend.
+> **Next conversation (owner's call, 2026-10-12) RESUMES the guided Vendor Risk walkthrough**
+> (TPRM, no Groq use), tracked in the owner's private workspace: add evidence notes to the
+> 11 stage verdicts already recorded on the cloud-host vendor's "(corrected)" integration, then the
+> second vendor. **Don't change TPRM code until the walkthrough finishes.** The agreed fix list and order are
+> in `SESSION.md` 2026-10-12, so the assessment isn't split across two rule sets. This repo's next
+> engineering action is still §0 below, on the weekend.
 
-## ▶ 0. FIRST: v10 benchmark — measures the OWASP descriptions (next weekend)
+## ▶ 0. FIRST: v10 benchmark — measures the OWASP descriptions (weekend of 2026-10-17/18; the 10-10/11 weekend passed without a run)
 
 **One variable:** the OWASP entry's `canonical_context` now carries official descriptions of all
 ten risks (`Golden_Mapping_OWASP_Descriptions_refactor.md`, EXECUTED and live on dev 2026-10-04).
@@ -64,12 +67,18 @@ now also fails invented list items (`UNSUPPORTED_ITEM`), so v9's baseline for co
 - `Smoke_TPM_Pacing_refactor.md` — chat check waits out the auditor's Groq minute; dev smoke 44/44.
 - README: PII redaction line under Security & Governance.
 
-### Still Efosa's to decide (independent, no rush)
+### Decided 2026-10-12 (Efosa: "go with the recommendation"): all three, one variable per benchmark
 
-- Fix the v6 entries' exact-wording triggers (they also fire on #17/#21).
-- Re-extract the damaged GDPR PDF ("purpose" 0 intact / 261 broken).
-- Optional later variable: tell the model to list only what a golden mapping lists (the cure for
-  #12's invented item; the grader only measures it).
+Each one still gets its own draft first and waits for EXECUTE (GOVERNANCE.md). They queue **after**
+v10 (§0) and v11 (0b). The order is sequential because each benchmark should measure one change:
+
+- **v12: remove the v6 entries' exact-wording triggers** (they also fire on #17/#21). Code-only,
+  no re-ingest. **Expect #16/#19/#49 to drop:** their passes were inflated by design. The
+  citable "42% → 92%" is v8's historical result and is unaffected.
+- **v13: re-extract or replace the damaged GDPR PDF** ("purpose" 0 intact / 261 broken), then
+  re-ingest (~36.5 min). This affects every GDPR query, not just #26.
+- **v14: tell the model to list only what a golden mapping lists** (the cure for #12's invented
+  item; the grader only measures it).
 
 ---
 

@@ -48,8 +48,12 @@
 - [x] **v9 benchmark** — done 2026-10-04 (see section above).
 - [ ] **Decision 2 (Efosa):** v6 EU AI Act entries use exact benchmark wording as triggers **and
   misfire on #17 and #21**. Recommended: fix + re-test in a separate change after v9.
+  **DECIDED 2026-10-12: fix it** (queued as v12, after v10/v11; see HANDOFF).
 - [ ] **Decision 3 (Efosa):** official `GDPR_Regulation_Text.pdf` text layer is damaged ("purpose":
   0 intact / 261 broken). Recommended: re-extract or replace, re-ingest (~36.5 min), benchmark.
+  **DECIDED 2026-10-12: do it** (queued as v13).
+- [ ] **Decision 4 (Efosa):** list-only instruction for golden mappings (#12's invented item).
+  **DECIDED 2026-10-12: do it** (queued as v14).
 
 ## ✅ DONE 2026-09-27 — benchmark grading (scorer fix), Parts A–D · ✅ Part E done
 
