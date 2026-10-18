@@ -4,6 +4,18 @@
 
 ---
 
+## ✅ DONE 2026-10-17 — v10 benchmark: OWASP descriptions measured (criterion met)
+
+- [x] **v10 run** — legacy 96.0% (48/50), graded 98.0% (49/50, checkable 9/10), 0 errors, avg
+  3.70 s. One variable verified (no `backend/` commit since `c4b03a5`; container mapping file
+  byte-identical, SHA-256 `dbc03e1d…`). Archive `rag_benchmark_results.v10_owasp_descriptions.json`;
+  report `docs/reports/RAG_Benchmark_Report_v10.md`. **Not quotable as accuracy** — citable figure
+  stays 42% → 92%.
+- [x] Answer read in full: **#18 now ANSWERED / COMPLETE**, all ten 2025 risks with descriptions
+  matching the mapping, no `INSUFFICIENT_DATA`. Only flip; #12 still `UNSUPPORTED_ITEM` (v14's job).
+- [x] Regrade `benchmark_regrade_2026-10-17.json`: v1–v9 unchanged.
+- [ ] **v11** (weekend of 10-24/25) — personal files out, re-ingest, benchmark; HANDOFF §0.
+
 ## ✅ DONE 2026-10-04 — v9 benchmark: Golden Mapping measured (3 of 4 targets)
 
 - [x] **v9 run** — legacy 94.0% (47/50), graded 98.0% (49/50, checkable 9/10), 0 errors, avg 3.81 s
@@ -37,7 +49,7 @@
   name/email/phone; `audit_logs` holds placeholders only (0 rows with originals).
 - [x] **Smoke on dev was 43/44** (Groq per-minute 429) — fixed by `Smoke_TPM_Pacing_refactor.md`, 44/44.
 - [ ] **Corpus: remove three personal files** — approved 2026-09-29; **v11** (after v10), HANDOFF 0b.
-- [ ] **v10 benchmark** (next weekend) — measures the OWASP descriptions; HANDOFF §0.
+- [x] **v10 benchmark** — DONE 2026-10-17 (see top).
 
 ## ✅ EXECUTED 2026-09-27 — Golden Mapping for enumeration queries #4, #12, #18, #26 · ✅ v9 done 2026-10-04
 

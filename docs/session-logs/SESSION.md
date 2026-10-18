@@ -1,3 +1,17 @@
+# Session Log — 2026-10-17 ("The descriptions were the missing piece")
+
+**Outcome:** v10 ran clean and met its criterion. #18 (OWASP Top 10 for LLMs), refused in every
+run so far, is now `ANSWERED` / `COMPLETE`: all ten 2025 risks, each described in line with the
+official text the mapping now carries. No other query changed grade. #12's invented item is still
+there, as expected (v14). Report: `docs/reports/RAG_Benchmark_Report_v10.md`.
+
+- Pre-flight: readiness 4/4, RPD 999/1000. Mufasa is off at weekends (owner) and its log showed no
+  Groq calls in 12 h; its `/api/admin/costs` needs an admin login (403), so its spend wasn't read.
+- Ran 23:33–23:54, zero 401/429/errors, avg 3.70 s. No smoke run afterwards (benchmark-day budget rule).
+- Next: v11 next weekend (HANDOFF §0). The guided Vendor Risk walkthrough is still open.
+
+---
+
 # Session Log — 2026-10-12 ("Using it for real, the tool gets audited too")
 
 **Outcome:** no code changed. Two things happened:

@@ -1,7 +1,7 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-10-04, light update 2026-10-12 (decisions + walkthrough pointer). **Rewritten clean** after v9 ran and PII redaction reached dev. **If this file
-starts accumulating update blocks again, rewrite it — do not append another.**
+**Date:** 2026-10-17. **Rewritten clean** after v10 ran. **If this file starts accumulating update
+blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
 `task.md`; the narrative is `SESSION.md`.
@@ -23,54 +23,48 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 | `test_pii.py` (in the dev container) | **21/21** | 2026-10-04 |
 | `pytest` (from `backend/`) | **71 passed, 1 skipped** (test_pii skips on host) | 2026-10-04 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
-| RAG, latest run | v9: legacy 94% (47/50), graded 96% (corrected from 98%) — **not citable as accuracy** | 2026-10-04 |
+| RAG, latest run | v10: legacy 96% (48/50), graded 98% (49/50) — **not citable as accuracy** | 2026-10-17 |
 | Index | curated: **148 files / 17,123 chunks** | re-ingested 2026-09-21 |
 
-**How to quote the RAG figure:** *"42% → 92%"*. v9's 94/96% (96 corrected from 98) include #12's **invented item** in the legacy figure
-and leave 40 of 50 answers ungraded — see `docs/reports/RAG_Benchmark_Report_v9.md`. v7's 90% was
-never valid. Never quote 90%.
+**How to quote the RAG figure:** *"42% → 92%"*. v10's 96/98% leave 40 of 50 answers ungraded, and
+the legacy figure counts #12's **invented item** as a pass — see
+`docs/reports/RAG_Benchmark_Report_v10.md`. v7's 90% was never valid. Never quote 90%.
 
 **⚠ Do not read the repo's `faiss_index/` folder to learn the index state.** It is an April 11
 decoy. The live index is in the `grc-faiss` Docker volume.
 
 ---
 
-> **Next conversation (owner's call, 2026-10-12) RESUMES the guided Vendor Risk walkthrough**
-> (TPRM, no Groq use), tracked in the owner's private workspace: add evidence notes to the
-> 11 stage verdicts already recorded on the cloud-host vendor's "(corrected)" integration, then the
-> second vendor. **Don't change TPRM code until the walkthrough finishes.** The agreed fix list and order are
-> in `SESSION.md` 2026-10-12, so the assessment isn't split across two rule sets. This repo's next
-> engineering action is still §0 below, on the weekend.
+> **The guided Vendor Risk walkthrough is still open** (TPRM, no Groq use), tracked in the owner's
+> private workspace: add evidence notes to the 11 stage verdicts on the cloud-host vendor's
+> "(corrected)" integration, then the second vendor. **Don't change TPRM code until it finishes.**
+> The agreed fix list and order are in `SESSION.md` 2026-10-12.
 
-## ▶ 0. FIRST: v10 benchmark — measures the OWASP descriptions (weekend of 2026-10-17/18; the 10-10/11 weekend passed without a run)
+## ▶ 0. FIRST: v11 benchmark — remove the three personal files (weekend of 2026-10-24/25)
 
-**One variable:** the OWASP entry's `canonical_context` now carries official descriptions of all
-ten risks (`Golden_Mapping_OWASP_Descriptions_refactor.md`, EXECUTED and live on dev 2026-10-04).
-The dev image also now has PII redaction, proven not to change any of the 50 questions
-(`test_pii` release gate), so it is not a second variable. Run it per "Running a benchmark" below
-(Mufasa paused, pre-flight, detached, ~21 min). Archive as
-`rag_benchmark_results.v10_owasp_descriptions.json`.
+**One variable:** the corpus. Approved 2026-09-29. File names are in the owner's **private**
+workspace `GRC resources/task.md` (not here: they are personal). Sequential steps:
 
-**Success:** #18 `ANSWERED` and `COMPLETE` — no `INSUFFICIENT_DATA` text, descriptions consistent
-with the mapping; every other grade unchanged (report any change as noise, not a gain). The grader
-now also fails invented list items (`UNSUPPORTED_ITEM`), so v9's baseline for comparison is
-**graded 96% (48/50)**, not 98%. As always, read the answer text of every flipped query.
+1. Move them from `GRC_Analyst/` to `GRC_Analyst/Excluded Docs/` (archive, don't delete).
+2. Re-ingest (~36.5 min, blocks the backend). Record the new file/chunk count (148 − 3 = 145 if all three were indexed).
+3. Benchmark per "Running a benchmark" below; archive as
+   `rag_benchmark_results.v11_personal_files_removed.json`.
 
-**Then v11 (the weekend after):** 0b below — remove the three personal files, re-ingest, benchmark.
+**Success:** no grade changes versus v10 (graded 98%, 49/50). The files are non-GRC, so any query
+that moves is evidence they were being retrieved, and its answer text must be read. Treatment I3
+in the owner's ISO 42001 impact assessment. Archives already redacted (`docs/reports/REDACTIONS.md`).
 
-### Done 2026-10-04 (all EXECUTED by Efosa, verified)
+### Done 2026-10-17
 
-- v9 ran; report `RAG_Benchmark_Report_v9.md` (graded corrected 98% → 96% the same day).
-- PII redaction live on dev (0a below).
-- `Grader_Hyphen_refactor.md` — hyphenated items match; no grade changed in any archive.
-- `Grader_Unsupported_Items_refactor.md` — new `UNSUPPORTED_ITEM` grade; v9 #12 is the only catch.
-- `Smoke_TPM_Pacing_refactor.md` — chat check waits out the auditor's Groq minute; dev smoke 44/44.
-- README: PII redaction line under Security & Governance.
+- **v10 ran clean; criterion met.** #18 now `ANSWERED` / `COMPLETE`: all ten OWASP 2025 risks with
+  descriptions matching the mapping. Every other grade unchanged, including #12's invented item
+  (v14's job). Report `RAG_Benchmark_Report_v10.md`; regrade `benchmark_regrade_2026-10-17.json`
+  leaves v1–v9 unchanged.
 
 ### Decided 2026-10-12 (Efosa: "go with the recommendation"): all three, one variable per benchmark
 
 Each one still gets its own draft first and waits for EXECUTE (GOVERNANCE.md). They queue **after**
-v10 (§0) and v11 (0b). The order is sequential because each benchmark should measure one change:
+v11 (§0). The order is sequential because each benchmark should measure one change:
 
 - **v12: remove the v6 entries' exact-wording triggers** (they also fire on #17/#21). Code-only,
   no re-ingest. **Expect #16/#19/#49 to drop:** their passes were inflated by design. The
@@ -84,12 +78,7 @@ v10 (§0) and v11 (0b). The order is sequential because each benchmark should me
 
 ## The rest of the queue — independent of each other, except where noted
 
-**0b. Remove three personal (non-GRC) files from the corpus — APPROVED 2026-09-29, now unblocked
-(v9 done).** File names are recorded in the owner's **private** workspace `GRC resources/task.md`
-(not here: they are personal). Move them from `GRC_Analyst/` to `GRC_Analyst/Excluded Docs/`
-(archive, don't delete), re-ingest (~36.5 min, blocks the backend), then benchmark it as its own
-variable. Treatment I3 in the owner's ISO 42001 impact assessment. Archives already redacted
-(`docs/reports/REDACTIONS.md`).
+**0b. Remove three personal (non-GRC) files from the corpus — now §0 (v11).**
 
 **0a. PII redaction — DONE, live on dev 2026-10-04.** Rebuilt `backend frontend` (~10 min: pip
 cache had been evicted; spaCy `lg` downloaded fine). Verified on dev: `test_pii` 21/21; live chat
