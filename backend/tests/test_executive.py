@@ -18,6 +18,7 @@ GRC_TEST_BASE to target a different stack. Tests skip (not fail) when the
 backend is unreachable.
 """
 import os
+from tests._creds import ADMIN_PASS
 import subprocess
 
 import pytest
@@ -39,7 +40,7 @@ FIXTURE_ACTIVE_USERS = 142
 
 
 def _login(role="admin"):
-    creds = {"admin": ("admin", "grc-admin-2026")}[role]
+    creds = {"admin": ("admin", ADMIN_PASS)}[role]
     try:
         r = requests.post(f"{V1}/auth/login",
                           json={"username": creds[0], "password": creds[1]}, timeout=30)

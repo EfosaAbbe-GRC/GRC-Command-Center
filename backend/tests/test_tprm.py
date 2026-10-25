@@ -17,6 +17,7 @@ Tests skip (not fail) when the backend is unreachable, so a bare `pytest` run
 without the stack does not produce false red.
 """
 import os
+from tests._creds import ADMIN_PASS, ANALYST_PASS, VIEWER_PASS
 import uuid
 import subprocess
 from datetime import datetime, timezone
@@ -37,9 +38,9 @@ DB_NAME = os.environ.get(
     "GRC_TEST_DB_NAME", "grc_audit_test" if _is_test_stack else "grc_audit")
 
 CREDS = {
-    "admin":   ("admin",   "grc-admin-2026"),
-    "analyst": ("analyst", "grc-analyst-2026"),
-    "viewer":  ("viewer",  "grc-viewer-2026"),
+    "admin":   ("admin",   ADMIN_PASS),
+    "analyst": ("analyst", ANALYST_PASS),
+    "viewer":  ("viewer",  VIEWER_PASS),
 }
 
 

@@ -52,11 +52,21 @@ The production stack is fully containerized and hardened. This is the recommende
 ### Quick Start
 
 1. **Configure Environment:**
-   Create `backend/.env` with your `GROQ_API_KEY`, plus `ADMIN_PASSWORD` / `ANALYST_PASSWORD` /
-   `VIEWER_PASSWORD` and `JWT_SECRET_KEY`. The checked-in defaults for those four are non-functional
-   placeholders (`CHANGE-ME-...`), so the seeded accounts won't log in until you set real values.
-   (`GOOGLE_API_KEY` still appears in the settings model, but it is retained only for parked
-   Gemini-pinned diagnostic scripts — it is **not** used by the live RAG pipeline.)
+   Create a `.env` in the **repository root** (gitignored; Docker Compose reads it) with:
+
+   ```bash
+   GROQ_API_KEY=...
+   JWT_SECRET_KEY=...        # 32+ chars, e.g. python -c "import secrets; print(secrets.token_hex(32))"
+   POSTGRES_PASSWORD=...
+   ADMIN_PASSWORD=...        # 12+ chars each
+   ANALYST_PASSWORD=...
+   VIEWER_PASSWORD=...
+   DOCUMENTS_PATH=/absolute/path/to/your/PDF/corpus
+   ```
+
+   Every secret is required: Compose refuses to start if one is missing, and the backend refuses to
+   start on a placeholder, short, or publicly known value. The tests read the same file
+   (`backend/tests/_creds.py`). The stack listens on `127.0.0.1` only.
 
 2. **Launch the Hardened Stack:**
 

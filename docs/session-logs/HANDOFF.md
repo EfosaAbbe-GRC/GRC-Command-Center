@@ -21,7 +21,7 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 | `smoke_test.py` (test stack, `:8002`) | **44/44** on 2026-09-29; re-run 2026-10-04 hit the Groq **daily** cap (43/44) — re-check on a fresh day | 2026-09-29 |
 | `smoke_test.py` (dev, `:8001`) | **44/44** (chat check now waits out the auditor's Groq minute) | 2026-10-04 |
 | `test_pii.py` (in the dev container) | **21/21** | 2026-10-04 |
-| `pytest` (from `backend/`) | **71 passed, 1 skipped** (test_pii skips on host) | 2026-10-04 |
+| `pytest` (from `backend/`) | **76 passed, 1 skipped** excluding `test_interview_sim.py` (12, needs Groq); full suite = 88 + 1 skipped expected | 2026-10-25 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
 | RAG, latest run | v11: legacy 96% (48/50), graded 96% (48/50) — **not citable as accuracy** | 2026-10-25 |
 | Index | curated, personal files out: **145 files / 16,998 chunks** | re-ingested 2026-10-25 |
@@ -40,14 +40,21 @@ decoy. The live index is in the `grc-faiss` Docker volume.
 > "(corrected)" integration, then the second vendor. **Don't change TPRM code until it finishes.**
 > The agreed fix list and order are in `SESSION.md` 2026-10-12.
 
-## ▶ 0. FIRST: the owner's security change plan (EXECUTE pending)
+## ▶ 0. FIRST: finish verifying the security hardening (needs a fresh Groq day)
 
-A change plan from the 2026-10-25 security sweep is waiting for the owner's EXECUTE. It's held in
-the owner's local working tree (git-excluded, deliberately not published until applied) and named
-in the owner's private workspace board. **Execute it before the next benchmark:** it rotates the
-credentials the benchmark and tests log in with, and it adds the test-suite changes to match.
-After it runs, verify per its own table (two smoke runs, so ~18k Groq tokens; not on a benchmark
-day).
+**Executed 2026-10-25** (`docs/refactors/Security_Hardening_refactor.md`): loopback-only ports,
+secrets out of images, required secrets in compose, fail-closed startup, login throttling, password
+policy, no credentials in tests, and every exposed secret rotated. Everything verifiable without
+Groq passed (see that file's table). **Still to run, in this order, on a day with Groq budget:**
+
+1. `pytest tests/test_interview_sim.py` (from `backend/`) → 12 pass.
+2. `smoke_test.py` on the test stack → **44/44**, then on dev (`GRC_TEST_BASE=http://localhost:8001`) → **44/44**.
+3. `test_pii` in the dev container → **21/21**.
+
+**What changed for anyone running things:** all secrets live in the repo-root `.env` (gitignored).
+`backend/.env` is gone. Tests and the benchmark read passwords via `backend/tests/_creds.py`;
+nothing is hard-coded. The stack answers on `127.0.0.1` only. Five wrong logins pause that username
+for 15 minutes.
 
 ### Done 2026-10-25
 
@@ -63,7 +70,7 @@ day).
 ### Decided 2026-10-12 (Efosa: "go with the recommendation"): all three, one variable per benchmark
 
 Each one still gets its own draft first and waits for EXECUTE (GOVERNANCE.md). They queue **after**
-the security change above. The order is sequential because each benchmark should measure one change:
+§0's verification. The order is sequential because each benchmark should measure one change:
 
 - **v12: remove the v6 entries' exact-wording triggers** (they also fire on #17/#21). Code-only,
   no re-ingest. **Expect #16/#19/#49 to drop:** their passes were inflated by design. The
@@ -161,7 +168,7 @@ The procedure that worked on 2026-09-27, first try:
 docker compose -f docker-compose-v2.yml ps
 docker compose -f docker-compose.test.yml ps
 $env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 44/44 (hits :8002)
-cd backend; python -m pytest -q; cd ..                   # expect 71 passed, 1 skipped -- MUST run from backend/
+cd backend; python -m pytest -q; cd ..                   # expect 88 passed, 1 skipped -- MUST run from backend/
 python scripts/rescore_benchmarks.py                     # re-grade all archives, zero tokens
 Invoke-RestMethod http://localhost:8001/api/v1/readiness # dev stack health, read-only, safe anytime
 ```

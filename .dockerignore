@@ -2,8 +2,10 @@
 # Keeps build context small and prevents secrets from leaking into images.
 
 # Secrets — never in image
-.env
-*.env
+# Unanchored: a bare `.env` matched the context root only, so backend/.env was
+# baked into the image at /app/.env until 2026-10-25.
+**/.env
+**/*.env
 secrets/
 
 # Git
@@ -27,7 +29,9 @@ env/
 node_modules/
 
 # Runtime data — mounted as volumes, not baked into image
-backend/data/grc_audit.db
+**/*.db
+**/*.db-*
+backend/pytest_output.txt
 backend/faiss_index/
 GRC_Analyst/
 

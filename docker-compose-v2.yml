@@ -13,7 +13,7 @@ services:
     environment:
       POSTGRES_DB: grc_audit
       POSTGRES_USER: ${POSTGRES_USER:-grc_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grc_password_2026}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     volumes:
       - grc-db-data:/var/lib/postgresql/data
     networks:
@@ -38,7 +38,7 @@ services:
       POSTGRES_HOST: db
       POSTGRES_DB: grc_audit
       POSTGRES_USER: ${POSTGRES_USER:-grc_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grc_password_2026}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       SCHEDULE: "@daily"
       BACKUP_KEEP_DAYS: 30
       BACKUP_KEEP_WEEKS: 4
@@ -56,12 +56,14 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-grc_admin}:${POSTGRES_PASSWORD:-grc_password_2026}@db:5432/grc_audit
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-grc_admin}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/grc_audit
+      - GROQ_API_KEY=${GROQ_API_KEY:?set GROQ_API_KEY in .env}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?set JWT_SECRET_KEY in .env}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      - ANALYST_PASSWORD=${ANALYST_PASSWORD:?set ANALYST_PASSWORD in .env}
+      - VIEWER_PASSWORD=${VIEWER_PASSWORD:?set VIEWER_PASSWORD in .env}
       - DOCUMENTS_PATH=/app/GRC_Analyst
       - AUTH_ENABLED=true
     volumes:
@@ -85,7 +87,7 @@ services:
     container_name: grc-frontend
     restart: unless-stopped
     ports:
-      - "3006:3006"
+      - "127.0.0.1:3006:3006"
     depends_on:
       backend:
         condition: service_healthy

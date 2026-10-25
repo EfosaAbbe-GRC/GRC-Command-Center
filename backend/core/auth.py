@@ -35,6 +35,10 @@ def get_password_hash(password: str) -> str:
     # Bcrypt 72-byte limit handled by native encode('utf-8')
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+# Checked against when a username doesn't exist (see authenticate_user). Same cost
+# factor as real hashes; the plaintext is irrelevant because nothing can log in with it.
+_DUMMY_HASH = get_password_hash("timing-equaliser-not-a-credential")
+
 # --- SSO AUTHENTICATOR STUB (PHASE 4) ---
 # This is currently inert but provides the integration hook for OIDC/SAML.
 class SSOAuthenticator:
@@ -53,6 +57,8 @@ def authenticate_user(username: str, password: str) -> Optional[dict]:
     """Verify credentials against the persistent database-backed identity store."""
     user = audit_logger.get_user_by_username(username)
     if not user:
+        # Same bcrypt work as a real check, so response time doesn't reveal which usernames exist.
+        verify_password(password, _DUMMY_HASH)
         return None
     
     if user.get("status") != "enabled":

@@ -40,6 +40,8 @@ from core.auth import (
     log_security_event
 )
 from core.ws import manager
+from core.security_config import assert_secure_config, password_problem, KNOWN_PUBLIC_PASSWORDS
+from core.login_throttle import login_throttle
 from core.tprm import router as tprm_router   # also registers TPRM models on Base.metadata
 from core.interview_sim import router as interview_sim_router   # also registers Interview Simulator models on Base.metadata
 from schemas import (
@@ -53,7 +55,10 @@ from schemas import (
 @asynccontextmanager
 async def lifespan(app):
     logger.info("System startup", version=settings.VERSION, mode="POSTGRES_V2")
-    
+
+    # Fail closed: never boot with a placeholder or publicly known secret.
+    assert_secure_config()
+
     # Initialize PostgreSQL schema + SECURITY DEFINER triggers
     await audit_logger.init_db()
     
@@ -73,6 +78,20 @@ async def lifespan(app):
             if not result.scalar_one_or_none():
                 logger.info("Security: Seeding user", user=uname, role=urole)
                 session.add(UserModel(username=uname, hashed_password=get_password_hash(upass), role=urole))
+        await session.commit()
+
+        # Seeding never touches existing accounts, so one created with a publicly known
+        # password keeps it. Force a change at next login (2026-10-25 hardening, S5).
+        from core.models import SecurityEvent as SecurityEventModel
+        for uname in (settings.ADMIN_USERNAME, settings.ANALYST_USERNAME, settings.VIEWER_USERNAME):
+            result = await session.execute(select(UserModel).where(UserModel.username == uname))
+            account = result.scalar_one_or_none()
+            if account and any(verify_password(pw, account.hashed_password) for pw in KNOWN_PUBLIC_PASSWORDS):
+                account.must_change_password = True
+                session.add(SecurityEventModel(
+                    event_type="PUBLIC_PASSWORD_DETECTED", user=uname, ip_address="startup",
+                    detail="Account password is a publicly known value; forced change at next login"))
+                logger.error("Security: account uses a publicly known password; forced reset", user=uname)
         await session.commit()
 
         # Seed Strategic Policy Engine (IAM-09)
@@ -220,9 +239,15 @@ async def login(payload: LoginRequest, request: Request):
     Token-based auth using the centralized user registry.
     Phase 3: Returns both a short-lived access token and a rotating refresh token.
     """
-    
+    wait = login_throttle.retry_after(payload.username)
+    if wait:
+        log_security_event(request, "LOGIN_THROTTLED", f"Login throttled for user '{payload.username}'", user_override=payload.username)
+        raise HTTPException(status_code=429, detail="Too many failed login attempts. Try again later.",
+                            headers={"Retry-After": str(wait)})
+
     user = authenticate_user(payload.username, payload.password)
     if user:
+        login_throttle.record_success(payload.username)
         access_token = create_access_token(data={
             "sub": user["username"], 
             "role": user["role"],
@@ -237,6 +262,7 @@ async def login(payload: LoginRequest, request: Request):
             must_change_password=user.get("must_change_password", False)
         )
     
+    login_throttle.record_failure(payload.username)
     log_security_event(request, "LOGIN_FAIL", f"Failed authentication attempt for user '{payload.username}'", user_override=payload.username)
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
@@ -286,7 +312,13 @@ async def change_password(request: Request, payload: ChangePasswordRequest):
     if not verify_password(payload.old_password, user["hashed_password"]):
         logger.warn("Security: Password change failed - old password incorrect", user=username)
         raise HTTPException(status_code=400, detail="Incorrect old password")
-        
+
+    if payload.new_password == payload.old_password:
+        raise HTTPException(status_code=400, detail="New password must differ from the old one")
+    why = password_problem(payload.new_password)
+    if why:
+        raise HTTPException(status_code=400, detail=f"New password {why}")
+
     new_hashed = get_password_hash(payload.new_password)
     if audit_logger.update_password(user["id"], new_hashed):
         log_security_event(request, "PASSWORD_CHANGE", "Self-service credential rotation successful")

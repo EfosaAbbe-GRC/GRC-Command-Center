@@ -17,8 +17,20 @@ stay removed. Report: `docs/reports/RAG_Benchmark_Report_v11.md`.
 - **Security (`fa6ee8d`):** an April SQLite file under `backend/backend/data/` was tracked and listed
   personal corpus filenames. The `.gitignore` rule for it was slash-anchored to `backend/data/` only.
   Untracked it and added unanchored `*.db` rules. Found while assessing an unsolicited marketplace
-  email about this repo's `.agents/skills/` (no action taken on the email). A broader security
-  sweep followed; its change plan awaits the owner's EXECUTE and isn't in the repo until applied.
+  email about this repo's `.agents/skills/` (no action taken on the email).
+- **Security hardening, drafted and EXECUTED the same night** (`Security_Hardening_refactor.md`).
+  The sweep found the stack published on `0.0.0.0`, reachable from the LAN through a Public-profile
+  firewall rule, while all six live accounts (dev + test) still used passwords hard-coded in this
+  public repo. It also found `backend/.env` baked into the images (the `.dockerignore` had the same
+  slash-anchoring mistake as the `.gitignore`), no login throttling, and IP-keyed rate limits made
+  global by Docker NAT. Fixed: loopback ports, secrets required via compose, fail-closed startup,
+  per-username throttle, password policy, timing-equal unknown-user check, creds out of tests, and
+  every exposed secret rotated (6 accounts, JWT, Postgres). Verified without Groq; the Groq-dependent
+  checks (interview-sim tests, both smokes, test_pii) wait for a fresh day. No evidence of outside
+  login attempts, though NAT means the log can't prove there were none.
+- Two of my own claims were corrected before publishing: the baked `.env` did **not** contain the
+  Google key (its line was empty), and "unset in the container env" didn't mean unset, because
+  settings also load from a `.env` *file*.
 - No smoke run afterwards (benchmark-day budget rule).
 
 ---

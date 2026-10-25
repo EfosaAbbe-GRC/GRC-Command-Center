@@ -8,6 +8,7 @@ import requests
 import json
 import time
 import os
+from _creds import ADMIN_PASS
 import sys
 
 # Run as a script, so this directory is on sys.path. See Benchmark_Grading_refactor.md.
@@ -16,7 +17,6 @@ from rag_grading import grade, summarise
 # Configuration
 BASE_URL = "http://localhost:8001/api/v1"
 ADMIN_USER = "admin"
-ADMIN_PASS = "grc-admin-2026"
 OUTPUT_FILE = "rag_benchmark_results.json"
 
 # The backend's JWT_EXPIRE_MINUTES is 15, and a paced 50-query run takes ~32 minutes, so a

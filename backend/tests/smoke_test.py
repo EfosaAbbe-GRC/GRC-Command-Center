@@ -8,6 +8,7 @@ different stack (e.g. http://localhost:8001 for the dev stack).
 import requests
 import json
 import os
+from _creds import ADMIN_PASS, ANALYST_PASS, VIEWER_PASS
 import sys
 import time
 
@@ -43,7 +44,7 @@ REFRESH_TOKEN = None
 AUTH_HEADERS = {}
 
 
-def get_token(username="admin", password="grc-admin-2026"):
+def get_token(username="admin", password=ADMIN_PASS):
     """Authenticate and store tokens. Returns True on success."""
     global ACCESS_TOKEN, REFRESH_TOKEN, AUTH_HEADERS
     try:
@@ -73,11 +74,11 @@ def get_token(username="admin", password="grc-admin-2026"):
 def get_token_for_role(role):
     """Return auth headers for a specific role without overwriting global state."""
     creds = {
-        "admin":   ("admin",   "grc-admin-2026"),
-        "analyst": ("analyst", "grc-analyst-2026"),
-        "viewer":  ("viewer",  "grc-viewer-2026"),
+        "admin":   ("admin",   ADMIN_PASS),
+        "analyst": ("analyst", ANALYST_PASS),
+        "viewer":  ("viewer",  VIEWER_PASS),
     }
-    username, password = creds.get(role, ("admin", "grc-admin-2026"))
+    username, password = creds.get(role, ("admin", ADMIN_PASS))
     try:
         r = requests.post(
             f"{V1}/auth/login",
@@ -180,7 +181,7 @@ def run_smoke_tests():
 
     # ─── 0. Authenticate ───
     print("\n── AUTHENTICATION SETUP ──")
-    if not get_token("admin", "grc-admin-2026"):
+    if not get_token("admin", ADMIN_PASS):
         print("\n  🚨 Cannot authenticate — all protected tests will fail.")
         print("     Make sure the backend is running and DB is seeded.")
         print("     Continuing to run public endpoint checks only...\n")
@@ -213,7 +214,7 @@ def run_smoke_tests():
     # ─── 3. Auth Endpoints ───
     print("\n── AUTH ENDPOINTS ──")
     test("Login — valid credentials", "POST", f"{V1}/auth/login",
-         json_body={"username": "admin", "password": "grc-admin-2026"},
+         json_body={"username": "admin", "password": ADMIN_PASS},
          check_fields=["access_token", "token_type"],
          headers={})
 
@@ -455,7 +456,7 @@ def run_smoke_tests():
 
         if row_id is None:
             # Trigger a new log to ensure we have data to test
-            requests.post(f"{V1}/auth/login", json={"username": "admin", "password": "grc-admin-2026"})
+            requests.post(f"{V1}/auth/login", json={"username": "admin", "password": ADMIN_PASS})
             result = subprocess.run(
                 ["docker", "exec", DB_CONTAINER, "psql", "-U", "grc_admin", "-d", DB_NAME,
                  "-c", "SELECT id FROM audit_logs ORDER BY id DESC LIMIT 1;"],

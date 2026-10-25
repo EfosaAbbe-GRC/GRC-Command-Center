@@ -1,6 +1,7 @@
 import requests
 import time
 import os
+from tests._creds import ADMIN_PASS, ANALYST_PASS
 
 BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 
@@ -9,13 +10,13 @@ def test_iam_10_agent_sync():
     
     # 1. Login as Admin to manage policies
     print("[1] Logging in as Admin...")
-    admin_login = requests.post(f"{BASE_URL}/auth/login", json={"username": "admin", "password": "grc-admin-2026"})
+    admin_login = requests.post(f"{BASE_URL}/auth/login", json={"username": "admin", "password": ADMIN_PASS})
     admin_tokens = admin_login.json()
     admin_headers = {"Authorization": f"Bearer {admin_tokens['access_token']}"}
     
     # 2. Login as Analyst to test access
     print("[2] Logging in as Analyst...")
-    analyst_login = requests.post(f"{BASE_URL}/auth/login", json={"username": "analyst", "password": "grc-analyst-2026"})
+    analyst_login = requests.post(f"{BASE_URL}/auth/login", json={"username": "analyst", "password": ANALYST_PASS})
     analyst_tokens = analyst_login.json()
     analyst_headers = {"Authorization": f"Bearer {analyst_tokens['access_token']}"}
 

@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import os
+from tests._creds import ADMIN_PASS, ANALYST_PASS
 
 BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 
@@ -9,7 +10,7 @@ def test_iam_09_policy_engine():
     print("--- IAM-09: Strategic Policy Engine Smoke Test ---")
     
     # 1. Login as Admin
-    login_res = requests.post(f"{BASE_URL}/auth/login", json={"username": "admin", "password": "grc-admin-2026"})
+    login_res = requests.post(f"{BASE_URL}/auth/login", json={"username": "admin", "password": ADMIN_PASS})
     if login_res.status_code != 200:
         print(f"FAIL: Admin Login Error: {login_res.text}")
         return
@@ -35,7 +36,7 @@ def test_iam_09_policy_engine():
     
     # 4. Login as Analyst
     print("[2] Logging in as Analyst...")
-    analyst_login = requests.post(f"{BASE_URL}/auth/login", json={"username": "analyst", "password": "grc-analyst-2026"})
+    analyst_login = requests.post(f"{BASE_URL}/auth/login", json={"username": "analyst", "password": ANALYST_PASS})
     if analyst_login.status_code != 200:
         print(f"FAIL: Analyst Login Error ({analyst_login.status_code}): {analyst_login.text}")
         return

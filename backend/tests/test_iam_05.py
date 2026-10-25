@@ -1,6 +1,10 @@
 import requests
 import time
 import os
+from tests._creds import ADMIN_PASS
+
+# A second valid password for the rotate-and-restore check; never a literal.
+ROTATED_PASS = ADMIN_PASS + "-rotated-x"
 
 BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 
@@ -9,7 +13,7 @@ def test_iam_05():
     
     # 1. Login to get token
     login_url = f"{BASE_URL}/auth/login"
-    login_data = {"username": "admin", "password": "grc-admin-2026"}
+    login_data = {"username": "admin", "password": ADMIN_PASS}
     resp = requests.post(login_url, json=login_data)
     assert resp.status_code == 200, f"Initial Login failed: {resp.status_code} {resp.text}"
     data = resp.json()
@@ -49,15 +53,15 @@ def test_iam_05():
     # 6. Change password to clear flag
     change_url = f"{BASE_URL}/auth/change-password"
     change_data = {
-        "old_password": "grc-admin-2026",
-        "new_password": "grc-admin-new-2026"
+        "old_password": ADMIN_PASS,
+        "new_password": ROTATED_PASS
     }
     resp = requests.post(change_url, headers=headers, json=change_data)
     assert resp.status_code == 200, "Password change failed"
     print("✅ User successfully updated password")
 
     # 7. Verify flag cleared (login again)
-    login_data_new = {"username": "admin", "password": "grc-admin-new-2026"}
+    login_data_new = {"username": "admin", "password": ROTATED_PASS}
     resp = requests.post(login_url, json=login_data_new)
     data = resp.json()
     assert data["must_change_password"] is False, "Flag not cleared after password change"
@@ -65,8 +69,8 @@ def test_iam_05():
 
     # 8. Revert password for subsequent tests
     change_data_revert = {
-        "old_password": "grc-admin-new-2026",
-        "new_password": "grc-admin-2026"
+        "old_password": ROTATED_PASS,
+        "new_password": ADMIN_PASS
     }
     requests.post(change_url, headers=headers, json=change_data_revert)
     print("✅ Reverted password to original for the next tests")

@@ -1,6 +1,7 @@
 import requests
 import time
 import os
+from tests._creds import ADMIN_PASS
 
 BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 
@@ -9,7 +10,7 @@ def test_iam_08():
     
     # 1. Login as admin
     login_url = f"{BASE_URL}/auth/login"
-    login_data = {"username": "admin", "password": "grc-admin-2026"}
+    login_data = {"username": "admin", "password": ADMIN_PASS}
     resp = requests.post(login_url, json=login_data)
     assert resp.status_code == 200
     tokens = resp.json()
@@ -36,7 +37,7 @@ def test_iam_08():
     print("✅ Replay protection verified (JTI/Rotation Check)")
 
     # 4. Verify Logout Revocation
-    login_data_v2 = {"username": "admin", "password": "grc-admin-2026"}
+    login_data_v2 = {"username": "admin", "password": ADMIN_PASS}
     resp_v2 = requests.post(login_url, json=login_data_v2)
     new_refresh = resp_v2.json()["refresh_token"]
     

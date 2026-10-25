@@ -14,7 +14,10 @@
   removed file (`audit_logs`); 1/50 v10 answers touched one, 0/50 in v11. Files stay removed.
 - [x] Regrade `benchmark_regrade_2026-10-25.json`: v1–v10 unchanged.
 - [x] `fa6ee8d`: stopped tracking `backend/backend/data/grc_audit.db`; unanchored `*.db` ignore rules.
-- [ ] Owner's EXECUTE on the security change plan (held outside the repo until applied).
+- [x] **Security hardening EXECUTED** (`Security_Hardening_refactor.md`): ports, images, secrets,
+  fail-closed boot, throttle, password policy, creds out of tests, full rotation. pytest 76 + 1
+  skipped (all but interview-sim).
+- [ ] Groq-day verification: `test_interview_sim.py` (12), smoke test + dev (44/44 each), `test_pii` (21/21).
 - [ ] Undecided: #39 targets 800-61 r2's four phases while the corpus has r3 (CSF 2.0 structure).
 
 ## ✅ DONE 2026-10-17 — v10 benchmark: OWASP descriptions measured (criterion met)

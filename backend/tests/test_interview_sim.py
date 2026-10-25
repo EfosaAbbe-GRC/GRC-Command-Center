@@ -16,6 +16,7 @@ creation, RBAC, pool-selection edge cases, spoiler redaction, double-submit)
 is exercised without triggering the LLM.
 """
 import os
+from tests._creds import ADMIN_PASS, ANALYST_PASS, VIEWER_PASS
 import uuid
 
 import pytest
@@ -25,9 +26,9 @@ BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8002")
 V1 = f"{BASE}/api/v1"
 
 CREDS = {
-    "admin":   ("admin",   "grc-admin-2026"),
-    "analyst": ("analyst", "grc-analyst-2026"),
-    "viewer":  ("viewer",  "grc-viewer-2026"),
+    "admin":   ("admin",   ADMIN_PASS),
+    "analyst": ("analyst", ANALYST_PASS),
+    "viewer":  ("viewer",  VIEWER_PASS),
 }
 
 

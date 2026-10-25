@@ -1,6 +1,7 @@
 import requests
 import time
 import os
+from tests._creds import ADMIN_PASS, VIEWER_PASS
 
 BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 
@@ -14,7 +15,7 @@ def test_iam_07():
     print("✅ Generated LOGIN_FAIL event")
 
     # 2. Login as admin to access audit
-    login_data_admin = {"username": "admin", "password": "grc-admin-2026"}
+    login_data_admin = {"username": "admin", "password": ADMIN_PASS}
     resp = requests.post(login_url, json=login_data_admin)
     assert resp.status_code == 200, "Admin login failed"
     admin_token = resp.json()["access_token"]
@@ -35,7 +36,7 @@ def test_iam_07():
     print("✅ Audit trail verified with LOGIN_FAIL (admin)")
 
     # 4. Verify Admin-Only Gating (Login as viewer)
-    login_data_viewer = {"username": "viewer", "password": "grc-viewer-2026"}
+    login_data_viewer = {"username": "viewer", "password": VIEWER_PASS}
     resp = requests.post(login_url, json=login_data_viewer)
     viewer_token = resp.json()["access_token"]
     

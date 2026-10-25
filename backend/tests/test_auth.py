@@ -8,6 +8,7 @@ different stack (e.g. http://localhost:8001 for the dev stack).
 import requests
 import json
 import os
+from tests._creds import ADMIN_PASS, ANALYST_PASS, VIEWER_PASS
 import sys
 
 # Windows consoles default to cp1252, which cannot encode the box-drawing /
@@ -27,9 +28,9 @@ ERRORS = []
 
 # --- Test User Registry (Must match .env / core/auth.py) ---
 USERS = {
-    "admin": {"user": "admin", "pass": "grc-admin-2026", "role": "admin"},
-    "analyst": {"user": "analyst", "pass": "grc-analyst-2026", "role": "analyst"},
-    "viewer": {"user": "viewer", "pass": "grc-viewer-2026", "role": "viewer"},
+    "admin": {"user": "admin", "pass": ADMIN_PASS, "role": "admin"},
+    "analyst": {"user": "analyst", "pass": ANALYST_PASS, "role": "analyst"},
+    "viewer": {"user": "viewer", "pass": VIEWER_PASS, "role": "viewer"},
 }
 
 def check(name, condition, detail=""):
