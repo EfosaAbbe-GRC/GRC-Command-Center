@@ -9,6 +9,11 @@ build/
 backend/.env
 backend/data/grc_audit.db*
 backend/data/*.db*
+# Any SQLite file anywhere (a slash-anchored rule above missed backend/backend/data/ until 2026-10-25)
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
 faiss_index/
 logs/
 *.log
