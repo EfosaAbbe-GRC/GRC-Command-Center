@@ -1,3 +1,28 @@
+# Session Log — 2026-10-25 ("The criterion did its job by failing")
+
+**Outcome:** v11 ran clean. Its criterion ("no grade changes") was **not met, and that's the
+useful result.** #39 (NIST 800-61 steps) fell from COMPLETE 4/4 to INCOMPLETE 3/4, and `audit_logs`
+show why: v10's #39 had retrieved one of the three removed personal files, and its SANS-style
+wording came with it. Without it, the answer cites only official NIST sources but omits the
+post-incident phase. Exactly 1 of v10's 50 answers touched a removed file; 0 of v11's did. Files
+stay removed. Report: `docs/reports/RAG_Benchmark_Report_v11.md`.
+
+- Corpus: three files moved to `Excluded Docs/` (archived). Re-ingest 145 files / **16,998 chunks**,
+  0 errors, 30 min. Confirmed first that the ingest endpoint doesn't descend into subfolders.
+- Pre-flight RPD 999/1000 (twice). Run ~00:35–00:56, zero 401/429/errors, avg 4.1 s. Regrade
+  `benchmark_regrade_2026-10-25.json`: v1–v10 unchanged.
+- Checked rather than assumed: 800-61 **r3** has no "Detection and Analysis" / "Post-Incident
+  Activity" phase names (CSF 2.0 structure). Those are the withdrawn r2's, which is what the
+  grader checks. Open question for later, not decided.
+- **Security (`fa6ee8d`):** an April SQLite file under `backend/backend/data/` was tracked and listed
+  personal corpus filenames. The `.gitignore` rule for it was slash-anchored to `backend/data/` only.
+  Untracked it and added unanchored `*.db` rules. Found while assessing an unsolicited marketplace
+  email about this repo's `.agents/skills/` (no action taken on the email). A broader security
+  sweep followed; its change plan awaits the owner's EXECUTE and isn't in the repo until applied.
+- No smoke run afterwards (benchmark-day budget rule).
+
+---
+
 # Session Log — 2026-10-17 ("The descriptions were the missing piece")
 
 **Outcome:** v10 ran clean and met its criterion. #18 (OWASP Top 10 for LLMs), refused in every

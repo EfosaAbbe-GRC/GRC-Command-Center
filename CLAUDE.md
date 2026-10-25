@@ -3,8 +3,8 @@
 ## System Reference for AI-Assisted Development
 
 **Version:** 1.5.0 (TPRM Interview Simulator)
-**Last Updated:** 2026-09-27 — RAG accuracy is **92.0% (46/50), v8**, on the current curated
-corpus (148 files/17,123 chunks) under Groq/`openai/gpt-oss-120b` — see
+**Last Updated:** 2026-09-27 — RAG accuracy is **92.0% (46/50), v8**, on the 2026-09-21 curated
+corpus (148 files/17,123 chunks; 145/16,998 since v11, 2026-10-25) under Groq/`openai/gpt-oss-120b` — see
 `docs/reports/RAG_Benchmark_Report_v8.md`. It means *answered without refusing*: #12 is a wrong
 answer scored as a pass, #36 a correct refusal scored as a failure. The 86% below is a stale,
 pre-correction, pre-provider-migration figure. **v7's 90.0% was never valid** — 3 engine errors

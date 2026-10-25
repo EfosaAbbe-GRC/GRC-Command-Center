@@ -4,6 +4,19 @@
 
 ---
 
+## ✅ DONE 2026-10-25 — v11 benchmark: personal files removed (criterion not met, by design)
+
+- [x] Three personal files → `GRC_Analyst/Excluded Docs/`; re-ingest **145 files / 16,998 chunks**, 0 errors.
+- [x] **v11 run**: legacy 96.0% (48/50), graded 96.0% (48/50, checkable 8/10), 0 errors, avg 4.1 s.
+  Archive `rag_benchmark_results.v11_personal_files_removed.json`; report
+  `docs/reports/RAG_Benchmark_Report_v11.md`. **Not quotable as accuracy.**
+- [x] Only flip: **#39 COMPLETE → INCOMPLETE** (missing post-incident). v10's #39 had retrieved a
+  removed file (`audit_logs`); 1/50 v10 answers touched one, 0/50 in v11. Files stay removed.
+- [x] Regrade `benchmark_regrade_2026-10-25.json`: v1–v10 unchanged.
+- [x] `fa6ee8d`: stopped tracking `backend/backend/data/grc_audit.db`; unanchored `*.db` ignore rules.
+- [ ] Owner's EXECUTE on the security change plan (held outside the repo until applied).
+- [ ] Undecided: #39 targets 800-61 r2's four phases while the corpus has r3 (CSF 2.0 structure).
+
 ## ✅ DONE 2026-10-17 — v10 benchmark: OWASP descriptions measured (criterion met)
 
 - [x] **v10 run** — legacy 96.0% (48/50), graded 98.0% (49/50, checkable 9/10), 0 errors, avg
@@ -14,7 +27,7 @@
 - [x] Answer read in full: **#18 now ANSWERED / COMPLETE**, all ten 2025 risks with descriptions
   matching the mapping, no `INSUFFICIENT_DATA`. Only flip; #12 still `UNSUPPORTED_ITEM` (v14's job).
 - [x] Regrade `benchmark_regrade_2026-10-17.json`: v1–v9 unchanged.
-- [ ] **v11** (weekend of 10-24/25) — personal files out, re-ingest, benchmark; HANDOFF §0.
+- [x] **v11** (weekend of 10-24/25) — personal files out, re-ingest, benchmark. **Done 2026-10-25**, above.
 
 ## ✅ DONE 2026-10-04 — v9 benchmark: Golden Mapping measured (3 of 4 targets)
 
