@@ -21,6 +21,12 @@
 - [x] **Clarity cleanup EXECUTED** (`Clarity_Cleanup_refactor.md`): skills retired, dead code and
   scripts removed, stale strings fixed, launcher repaired.
 - [ ] Follow-up: point `create_snapshot.py` at the `grc-faiss` volume instead of a local folder.
+- [ ] **v12 drafted 2026-10-26** (`Golden_Mapping_Leakage_v12_refactor.md`): awaiting EXECUTE, run Sun 11-01.
+- [ ] **Open question for the pipeline draft:** where the embedding model `all-MiniLM-L6-v2` comes
+  from at runtime. It's not in the image (`Dockerfile.backend` has no model step) and there's no HF
+  cache readable by `grcuser`. A second process loading it inside the container hangs at about
+  0% CPU, even with `HF_HUB_OFFLINE=1`. If it's downloaded unpinned at startup, that's a
+  supply-chain and availability gap (SBOM, pinning, offline builds).
 - [ ] Undecided: #39 targets 800-61 r2's four phases while the corpus has r3 (CSF 2.0 structure).
 
 ## ✅ DONE 2026-10-17 — v10 benchmark: OWASP descriptions measured (criterion met)
