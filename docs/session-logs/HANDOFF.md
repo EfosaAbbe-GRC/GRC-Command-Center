@@ -21,7 +21,7 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 | `smoke_test.py` (test stack, `:8002`) | **44/44** on 2026-09-29; re-run 2026-10-04 hit the Groq **daily** cap (43/44) — re-check on a fresh day | 2026-09-29 |
 | `smoke_test.py` (dev, `:8001`) | **44/44** (chat check now waits out the auditor's Groq minute) | 2026-10-04 |
 | `test_pii.py` (in the dev container) | **21/21** | 2026-10-04 |
-| `pytest` (from `backend/`) | **76 passed, 1 skipped** excluding `test_interview_sim.py` (12, needs Groq); full suite = 88 + 1 skipped expected | 2026-10-25 |
+| `pytest` (from `backend/`) | **77 passed, 1 skipped** excluding `test_interview_sim.py` (12, needs Groq); full suite = 89 + 1 skipped expected | 2026-10-26 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
 | RAG, latest run | v11: legacy 96% (48/50), graded 96% (48/50) — **not citable as accuracy** | 2026-10-25 |
 | Index | curated, personal files out: **145 files / 16,998 chunks** | re-ingested 2026-10-25 |
@@ -182,7 +182,7 @@ The procedure that worked on 2026-09-27, first try:
 docker compose -f docker-compose-v2.yml ps
 docker compose -f docker-compose.test.yml ps
 $env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 44/44 (hits :8002)
-cd backend; python -m pytest -q; cd ..                   # expect 88 passed, 1 skipped -- MUST run from backend/
+cd backend; python -m pytest -q; cd ..                   # expect 89 passed, 1 skipped -- MUST run from backend/
 python scripts/rescore_benchmarks.py                     # re-grade all archives, zero tokens
 Invoke-RestMethod http://localhost:8001/api/v1/readiness # dev stack health, read-only, safe anytime
 ```

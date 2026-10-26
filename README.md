@@ -24,7 +24,7 @@ An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered docum
 - **Third-Party Risk Management** — 13-stage vendor assessment workflow
   with automatic risk tiering and admin-signed, append-only risk
   acceptances.
-- **44/44 smoke tests green** (plus 88 unit/integration tests, 1 skipped), including a live probe
+- **44/44 smoke tests green** (plus 89 unit/integration tests, 1 skipped), including a live probe
   that attempts to tamper with an audit row via `docker exec` and asserts the
   trigger rejects it.
 
@@ -140,7 +140,7 @@ Endpoint smoke tests — run from the repository root (expect **44/44**):
 python backend/tests/smoke_test.py
 ```
 
-Unit tests — must run from `backend/`, since the suite imports `core.*` (expect **88 passed, 1 skipped**):
+Unit tests — must run from `backend/`, since the suite imports `core.*` (expect **89 passed, 1 skipped**):
 
 ```bash
 cd backend
