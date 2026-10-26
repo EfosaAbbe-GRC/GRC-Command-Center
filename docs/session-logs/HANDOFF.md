@@ -43,7 +43,18 @@ fails loudly instead of silently snapshotting the wrong index.
 > "(corrected)" integration, then the second vendor. **Don't change TPRM code until it finishes.**
 > The agreed fix list and order are in `SESSION.md` 2026-10-12.
 
-## ▶ 0. FIRST: finish verifying the security hardening (needs a fresh Groq day)
+## ▶ Schedule (owner, 2026-10-26): weekdays have no Groq budget, so the next two days are the weekend
+
+The owner's other Groq-backed project uses the shared organisation budget on weekdays.
+
+- **Mon–Fri (no Groq):** draft only. Write the v12 draft (below) and the DevSecOps pipeline draft.
+- **Saturday 2026-10-31:** EXECUTE a further security change the owner holds privately (drafted
+  2026-10-25; it rebuilds the stack, so it goes first). Then run **one** Groq verification pass
+  covering it and §0 below. **Do it in the morning:** Groq exposes no daily-token header, so if
+  the window is rolling, an early start gives Sunday the fullest budget.
+- **Sunday 2026-11-01:** v12 benchmark (needs its draft approved by then). Pre-flight probe first.
+
+## ▶ 0. Verify the 2026-10-25 security hardening (Saturday's Groq pass)
 
 **Executed 2026-10-25** (`docs/refactors/Security_Hardening_refactor.md`): loopback-only ports,
 secrets out of images, required secrets in compose, fail-closed startup, login throttling, password
