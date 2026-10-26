@@ -213,6 +213,12 @@ Plus F8: `authenticate_user` runs `verify_password` against a fixed dummy bcrypt
 doesn't exist, so unknown and known usernames take the same time. The response stays the same
 generic `401 Invalid credentials`.
 
+**Trade-off, recorded in the 2026-10-26 self-review:** the global backstop (50 failures / 15 min
+across all usernames) means anyone who can reach `/auth/login` can make **every** login return 429
+for up to 15 minutes. That's a deliberate availability-for-integrity trade. It's acceptable while
+the API is loopback-only (S1). Revisit it before any multi-user or networked deployment (e.g. key
+the backstop per client once a real client identity exists behind a proxy).
+
 ### S7. Password policy on change (F7)
 
 `schemas.py`:

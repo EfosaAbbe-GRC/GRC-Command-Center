@@ -27,7 +27,7 @@ GRC.OS is an agentic Governance, Risk, and Compliance platform that orchestrates
 
 ```text
 GRC Command Center v1.5.0
-├── Backend: FastAPI (Python 3.11, port 8001, bound to 127.0.0.1)
+├── Backend: FastAPI (Python 3.11, port 8001; Docker publishes it on 127.0.0.1 only)
 │   ├── LLM: Groq (`openai/gpt-oss-120b`) — migrated from Gemini 2.5 Flash 2026-08-13; Groq retired
 │   │        `llama-3.3-70b-versatile` days later, re-pinned 2026-08-17, see MEMORY.md
 │   ├── Embeddings: all-MiniLM-L6-v2 (local HuggingFace)

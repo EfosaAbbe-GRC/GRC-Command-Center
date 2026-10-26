@@ -68,11 +68,22 @@ to the repo's** (SHA-256), as v10 did.
 ## 5. Pre-registered outcomes (written before the run, so they can't be fitted afterwards)
 
 For each of #16, #19, #49, Sunday's `audit_logs` show whether the entry still fired (through its
-remaining paraphrased triggers), and the grade shows the result.
+remaining paraphrased triggers).
+
+**What can be measured, corrected in the 2026-10-26 self-review:**
+
+- **Only #16 is objectively graded**: it's in `rag_grading.CLOSED_LIST` (the four risk tiers).
+- **#19 and #49 are ungraded**: any non-refusal counts as a pass. Their outcome comes from
+  **reading the answer text against the EU AI Act source**, recorded as a judgement in the report,
+  never as a grade.
+- **Generation runs at temperature 0.7** (the `ChatGroq` default; never set), so a single run can't
+  separate outcome B from sampling noise. A one-question flip is reported as a lead, not an effect
+  (see v11's #39 correction). The proper cure, deterministic evaluation, is a separate
+  one-variable change (proposed in the 2026-10-26 self-review), not bundled here.
 
 | Outcome | Meaning | How it's reported |
 | --- | --- | --- |
-| **A.** Stops firing, still answered correctly | the pass never depended on the copy: **real** | keep the pass |
+| **A.** Stops firing, still answered correctly (graded for #16; read for #19/#49) | the pass never depended on the copy: **real** | keep the pass |
 | **B.** Stops firing, refuses or degrades | the pass was inflated: **the expected case** (2026-10-12 note) | report the drop as a correction, as with #39 in v11 |
 | **C.** Still fires via a paraphrase | the leak is closed; the entry legitimately matches a reworded question, which is its job | a pass, footnoted |
 

@@ -1,9 +1,10 @@
 # Session Log — 2026-10-25 ("The criterion did its job by failing")
 
 **Outcome:** v11 ran clean. Its criterion ("no grade changes") was **not met, and that's the
-useful result.** #39 (NIST 800-61 steps) fell from COMPLETE 4/4 to INCOMPLETE 3/4, and `audit_logs`
-show why: v10's #39 had retrieved one of the three removed personal files, and its SANS-style
-wording came with it. Without it, the answer cites only official NIST sources but omits the
+useful result.** #39 (NIST 800-61 steps) fell from COMPLETE 4/4 to INCOMPLETE 3/4. `audit_logs`
+show v10's #39 had retrieved one of the three removed personal files, a likely cause of its
+SANS-style wording. *(Softened 2026-10-26: generation runs at temperature 0.7, so one run can't
+separate that from sampling noise.)* Without it, the answer cites only official NIST sources but omits the
 post-incident phase. Exactly 1 of v10's 50 answers touched a removed file; 0 of v11's did. Files
 stay removed. Report: `docs/reports/RAG_Benchmark_Report_v11.md`.
 
