@@ -3,7 +3,7 @@
 ## System Reference for AI-Assisted Development
 
 **Version:** 1.5.0 (TPRM Interview Simulator)
-**Last Updated:** 2026-09-27 — RAG accuracy is **92.0% (46/50), v8**, on the 2026-09-21 curated
+**Last Updated:** 2026-10-25 (security hardening + clarity cleanup; see Audit History). RAG accuracy is **92.0% (46/50), v8**, on the 2026-09-21 curated
 corpus (148 files/17,123 chunks; 145/16,998 since v11, 2026-10-25) under Groq/`openai/gpt-oss-120b` — see
 `docs/reports/RAG_Benchmark_Report_v8.md`. It means *answered without refusing*: #12 is a wrong
 answer scored as a pass, #36 a correct refusal scored as a failure. The 86% below is a stale,
@@ -26,8 +26,8 @@ GRC.OS is an agentic Governance, Risk, and Compliance platform that orchestrates
 ## Architecture
 
 ```text
-GRC Command Center v1.2.0
-├── Backend: FastAPI (Python 3.11, port 8001)
+GRC Command Center v1.5.0
+├── Backend: FastAPI (Python 3.11, port 8001, bound to 127.0.0.1)
 │   ├── LLM: Groq (`openai/gpt-oss-120b`) — migrated from Gemini 2.5 Flash 2026-08-13; Groq retired
 │   │        `llama-3.3-70b-versatile` days later, re-pinned 2026-08-17, see MEMORY.md
 │   ├── Embeddings: all-MiniLM-L6-v2 (local HuggingFace)
@@ -69,6 +69,9 @@ GRC_Command_Center/
 │   │   ├── rag.py                 # RAGEngine: Vector Indexing & LLM Orchestration
 │   │   ├── tprm.py                # TPRM: 13-stage vendor egress/ingress assessment, risk acceptances
 │   │   ├── interview_sim.py       # TPRM Interview Simulator: mock-interview sessions grounded in real TPRM stage content, live-graded
+│   │   ├── pii.py                 # PII redaction (Presidio + spaCy), fails closed
+│   │   ├── security_config.py     # Fail-closed startup: refuses placeholder/short/public secrets
+│   │   ├── login_throttle.py      # Per-username login throttle (5 failures / 15 min)
 │   │   └── ws.py                  # Sync Event Bus: WebSocket stream management
 │   ├── data/
 │   │   ├── fixtures.json          # Initial GRC seeding data (policies, KPIs, framework mappings)
@@ -76,7 +79,8 @@ GRC_Command_Center/
 │   ├── data_service.py            # Loads fixtures.json; serves policies/dashboard/framework mappings
 │   ├── requirements.txt           # Backend dependencies
 │   └── tests/
-│       └── smoke_test.py          # Primary functional endpoint verification
+│       ├── smoke_test.py          # Primary functional endpoint verification
+│       └── _creds.py              # Test/benchmark credentials from the root .env (never hard-coded)
 │
 ├── src/
 │   ├── App.jsx                    # Root component with Auth and Reset gates
@@ -106,8 +110,10 @@ GRC_Command_Center/
 
 ## Build, Run & Test Commands
 
+- **Secrets first:** every secret lives in the repo-root `.env` (gitignored). Compose and the
+  backend both refuse to start without real values; see README "Quick Start".
 - **Production Boot (Hardened):** `docker compose -f docker-compose-v2.yml up --build`
-- **Backend Dev:** `cd backend && python main.py` (Port 8001)
+- **Backend Dev:** `cd backend && python main.py` (Port 8001; needs the same secrets in the environment)
 - **Frontend Dev:** `npm run dev` (Port 3006)
 - **Deployment Smoke Test:** `python backend/tests/smoke_test.py`
 - **Lints:** `flake8 backend/`, `npm run lint`
@@ -137,6 +143,10 @@ GRC_Command_Center/
 
 ## Audit History
 
+- **Aug–Oct 2026**: Groq migration (Aug 13); benchmark v8–v11 with an honest grader (citable
+  figure **42% → 92%**, v8); PII redaction live (Oct 4); security hardening (Oct 25: loopback-only
+  ports, fail-closed secrets, login throttle, full rotation; `Security_Hardening_refactor.md`);
+  clarity cleanup (Oct 25: dead code and stale docs removed, April skills retired).
 - **Interview Simulator Sprint (Aug 18)**: TPRM Interview Simulator Tier 1 shipped
   (`interview_sim.py` + `InterviewSimTerminal.jsx`) — mock-interview practice grounded in real
   seeded TPRM stage content and real vendor GAP data, live Groq grading with an honest

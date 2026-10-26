@@ -18,6 +18,9 @@
   fail-closed boot, throttle, password policy, creds out of tests, full rotation. pytest 76 + 1
   skipped (all but interview-sim).
 - [ ] Groq-day verification: `test_interview_sim.py` (12), smoke test + dev (44/44 each), `test_pii` (21/21).
+- [x] **Clarity cleanup EXECUTED** (`Clarity_Cleanup_refactor.md`): skills retired, dead code and
+  scripts removed, stale strings fixed, launcher repaired.
+- [ ] Follow-up: point `create_snapshot.py` at the `grc-faiss` volume instead of a local folder.
 - [ ] Undecided: #39 targets 800-61 r2's four phases while the corpus has r3 (CSF 2.0 structure).
 
 ## ✅ DONE 2026-10-17 — v10 benchmark: OWASP descriptions measured (criterion met)

@@ -97,28 +97,6 @@ class RAGEngine:
         """Return the current ingestion state as a dict."""
         return self.ingestion_state.to_dict()
 
-    def ingest_documents(self):
-        """
-        Reads PDFs from GRC_Analyst and embeds them into FAISS using local
-        HuggingFace embeddings (all-MiniLM-L6-v2) -- not the LLM API key, but
-        gated on it anyway since a corpus with no working chat model is useless.
-        """
-        logger.info(f"Scanning {self.documents_path} for PDFs...")
-
-        if not self.api_key:
-            return {"status": "error", "message": "Missing GROQ_API_KEY"}
-
-        try:
-            # Load PDFs
-            loader = DirectoryLoader(self.documents_path, glob="**/*.pdf", loader_cls=PyPDFLoader)
-            documents = loader.load()
-            logger.info(f"Loaded {len(documents)} PDF document chunks.")
-            
-            return self._process_documents(documents)
-        except Exception as e:
-            logger.error(f"Error ingesting PDFs: {str(e)}")
-            return {"status": "error", "message": str(e)}
-
     def ingest_notes(self, notes_path: str):
         """
         Reads Markdown/Text files from the notebooks directory.

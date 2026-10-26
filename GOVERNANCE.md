@@ -57,6 +57,13 @@ No agent is permitted to write directly to production files without prior author
 
 Agent capabilities reside in `.agents/skills/[skill-name]/SKILL.md`. These files are immutable once certified. Feature enhancements require version bumping (e.g., `v2`), not retroactive editing of established rules.
 
+> **Amended 2026-10-25 (owner decision, `Clarity_Cleanup_refactor.md` D1): the four April skills
+> are retired, not edited.** Moved unchanged to `docs/archive/agents_skills_2026-04/`. No code or
+> tool read them, and they had drifted (one still described the SQLite database replaced in April).
+> Their standing rules already live in this file and `CLAUDE.md`: no subprocess execution, the
+> registry allowlist, append-only audit triggers, and never deleting the `grc-faiss` volume without
+> approval. Any new skill starts at `v1` under the rule above.
+
 ### C. State Checkpointing & Handoffs
 
 When transitioning between specialized agents (e.g., from Backend Infra to Frontend UI), the departing agent must generate a `HANDOFF.md` artifact detailing schema changes, new endpoints, and structural updates for the incoming agent to digest.

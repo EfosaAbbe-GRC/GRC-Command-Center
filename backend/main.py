@@ -382,7 +382,7 @@ async def trigger_ingest(request: Request, background_tasks: BackgroundTasks):
     await manager.broadcast({
         "type": "INGEST_STATUS",
         "status": "STARTED",
-        "message": "Vault rebuild initiated across 18,337 potential splits."
+        "message": "Vault rebuild initiated."
     })
     
     return {"status": "started", "message": "Knowledge ingestion initiated."}

@@ -32,6 +32,15 @@ stay removed. Report: `docs/reports/RAG_Benchmark_Report_v11.md`.
   Google key (its line was empty), and "unset in the container env" didn't mean unset, because
   settings also load from a `.env` *file*.
 - No smoke run afterwards (benchmark-day budget rule).
+- **Evening: clarity cleanup drafted and EXECUTED** (`Clarity_Cleanup_refactor.md`). April skills
+  retired to `docs/archive/` (GOVERNANCE §B amended, files unchanged). Removed the dead
+  `ingest_documents()` trap (known since 2026-09-21), three dead scripts, the SQLite
+  `DATABASE_PATH`, the stale "18,337 splits" UI message and wrong version strings. Fixed the
+  launcher broken by the August move. The Mufasa script and the local decoys went to the owner's
+  workspace archive.
+- **OneDrive restores deletions here.** Files deleted around 01:30 (including the retired
+  `backend/.env`, whose values were all dead) were re-created by OneDrive at 18:20 with original
+  timestamps. Deleted again. A deletion in this folder isn't final until it's re-checked later.
 
 ---
 

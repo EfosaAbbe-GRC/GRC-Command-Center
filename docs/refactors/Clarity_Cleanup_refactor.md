@@ -1,8 +1,24 @@
 # Clarity cleanup: stale docs, dead code, misplaced files
 
-**Status:** DRAFT 2026-10-25, awaiting EXECUTE (GOVERNANCE.md §A). Three decisions are the owner's
-(§Decisions). Every finding below was checked against the files on 2026-10-25, not carried over
-from the quick list made during the security sweep.
+**Status:** **EXECUTED 2026-10-25** (EXECUTE from Efosa). Decisions, all as recommended: **D1 (a)**
+retire the skills (archived unchanged; GOVERNANCE §B amended), **D2 (b)** the Mufasa script went
+to the owner's workspace `_archive/` (byte-identical copy verified before `git rm`), **D3** fixed
+`run_dashboard.bat`. Every finding below was checked against the files on 2026-10-25, not carried
+over from the quick list made during the security sweep.
+
+**Verified:** no stale strings left in code/README/CLAUDE (`ingest_documents`, `DATABASE_PATH`,
+`18,337`, `v1.2.0`, `65/65`). Both backends rebuilt and healthy. Readiness 4/4. The API reports
+`1.5.0`. `trigger_ingest.py`, `debug_imports.py`, `.env` and `pytest_output.txt` are all absent from
+the image. pytest (all but `test_interview_sim.py`): **76 passed, 1 skipped**, unchanged.
+
+**Found during execution: OneDrive restores deleted files in this folder.** Everything deleted
+locally on 2026-10-25 around 01:30 reappeared at 18:20 with its *original* timestamps:
+`backend/.env`, the legacy `docker-compose.yml`, `bench_run.err` and two SQLite scratch files. The
+re-created `.env` was an online-only placeholder, meaning the local deletion never reached the
+cloud copy. **No live secret was exposed:** every value in that file had been rotated or was
+unused. All were deleted again and checked at the end of the session. Consequence for every future
+"delete": in this folder a deletion isn't final until it's confirmed later. Any secret file here,
+including the live root `.env`, also exists in the owner's OneDrive cloud and its version history.
 
 **Why it matters:** each item either tells a reader something false, looks alive but isn't, or
 lives in the wrong project. None of them is a security hole. Together they're what made an outside

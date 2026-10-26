@@ -9,7 +9,7 @@ echo   Starting Frontend Dashboard...
 echo ========================================================
 echo.
 
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 :: Check if node_modules exists, if not install dependencies
 if not exist "node_modules" (

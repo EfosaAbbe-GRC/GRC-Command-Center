@@ -5,7 +5,7 @@ import os
 class Settings(BaseSettings):
     # App Settings
     APP_NAME: str = "Agentic GRC Command Center"
-    VERSION: str = "1.0.0"
+    VERSION: str = "1.5.0"
     DEBUG: bool = False
     
     # API Settings
@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     
     # Paths
     DOCUMENTS_PATH: str = os.getenv("DOCUMENTS_PATH", "GRC_Analyst")
-    DATABASE_PATH: str = os.getenv("DATABASE_PATH", os.path.join("data", "grc_audit.db"))
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://grc_admin:grc_password_2026@localhost:5432/grc_audit")
+    # No password in the default: compose always supplies the real URL from .env.
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://grc_admin@localhost:5432/grc_audit")
     
     # AI
     # GROQ_API_KEY powers the live chat/RAG-generation LLM (core/rag.py) as of

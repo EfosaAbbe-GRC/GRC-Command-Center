@@ -30,8 +30,11 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 the legacy figure counts #12's **invented item** and #39's incomplete list as passes — see
 `docs/reports/RAG_Benchmark_Report_v11.md`. v7's 90% was never valid. Never quote 90%.
 
-**⚠ Do not read the repo's `faiss_index/` folder to learn the index state.** It is an April 11
-decoy. The live index is in the `grc-faiss` Docker volume.
+**The live index is the `grc-faiss` Docker volume.** The April decoy `faiss_index/` folder that
+used to sit in the repo folder was archived to the owner's workspace on 2026-10-25. If one
+reappears, it's stale (OneDrive has restored deleted files here before). Known follow-up:
+`backend/tests/create_snapshot.py` still copies that local path rather than the volume, so it now
+fails loudly instead of silently snapshotting the wrong index.
 
 ---
 
