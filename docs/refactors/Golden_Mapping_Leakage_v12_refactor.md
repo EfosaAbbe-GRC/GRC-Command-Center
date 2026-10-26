@@ -78,8 +78,8 @@ remaining paraphrased triggers).
   never as a grade.
 - **Generation runs at temperature 0.7** (the `ChatGroq` default; never set), so a single run can't
   separate outcome B from sampling noise. A one-question flip is reported as a lead, not an effect
-  (see v11's #39 correction). The proper cure, deterministic evaluation, is a separate
-  one-variable change (proposed in the 2026-10-26 self-review), not bundled here.
+  (see v11's #39 correction). The remedy is **repeated sampling** (§6), not forcing
+  temperature 0: that was briefly proposed in the same review and rejected on vendor guidance.
 
 | Outcome | Meaning | How it's reported |
 | --- | --- | --- |
@@ -96,20 +96,57 @@ remaining paraphrased triggers).
   hangs (found no cache readable by the app user; see the pipeline draft's open question on how
   the model is obtained). The post-run `audit_logs` measurement above replaces it.
 
-## 6. Sunday's run
+## 6. Measuring through the noise (added 2026-10-26 self-review)
+
+**Why:** generation is sampled. `ChatGroq`'s default is temperature 0.7 (never set explicitly). One
+run per version can't tell a real effect from chance, and v8's #4 already failed to reproduce
+across three runs. **Forcing temperature 0 was considered and rejected:** OpenAI's gpt-oss README
+("Recommended Sampling Parameters") says *"We recommend sampling with temperature=1.0 and
+top_p=1.0"*, and Groq's API reference says seeded sampling is "best effort … Determinism is not
+guaranteed." So the noise is **measured** instead: the target questions are asked **3 times on
+each side** of the change.
+
+**Harness change (test tooling only; no app or retrieval change, so it isn't a benchmark
+variable).** `rag_benchmark.py` gains:
+
+- `GRC_BENCH_ONLY=16,19,49,17,21` and `GRC_BENCH_REPEAT=3`;
+- subset runs write `rag_benchmark_repeats_<label>.json`, marked `subset: true` and
+  `valid_full_run: false`. They **never overwrite** `rag_benchmark_results.json`, and the existing
+  rescorer already skips them (not 50 results).
+
+A unit test comes first: argument parsing, the refusal to overwrite, and the output marking.
+
+**Pre-registered decision rule:** a question's outcome counts as **real** only if it holds in **≥ 2
+of 3** samples on *both* sides of the change. Otherwise it's reported as **inconclusive (sampling
+noise)**. Sunday's report is **provisional**; the 3-v-3 verdict lands the following Saturday.
+
+| Sample set | When | Groq cost (≈) |
+| --- | --- | --- |
+| **Before:** #16, #19, #49, #17, #21 × 3, triggers still present | Sat 10-31, morning, after the security verification | ~50k |
+| v12 change applied (data only, rebuild, hash check) | Sat 10-31, after the samples | 0 |
+| **After, sample 1:** full 50-question v12 run | Sun 11-01, **≥ 24 h after Saturday's last Groq call** (in case the daily window rolls) | 150–200k |
+| **After, samples 2–3:** the 5 targets × 2 | Sat 11-07, morning | ~35k |
+
+**Recorded with every run:** model `openai/gpt-oss-120b`, temperature 0.7 (library default),
+pacing. *Not v12's variable:* moving to the vendor-recommended temperature 1.0, or setting it
+explicitly, is a separate one-variable change for later.
+
+## 7. Sunday's run
 
 **Prerequisite:** Saturday's security change touches secrets and DB roles, not retrieval. Confirm no
 change under `backend/core/rag.py`, the prompt, the index or `golden_mappings.json` other than this
 draft's, so v12 stays one variable.
 
-1. Pre-flight probe (RPD near 1,000). Readiness. The container mapping hash equals the repo's.
+1. Pre-flight probe (RPD near 1,000), at least 24 h after Saturday's last Groq call. Readiness.
+   The container mapping hash equals the repo's.
 2. Run per HANDOFF "Running a benchmark". The benchmark reads credentials via `_creds.py`
    (Saturday's change points it at the new secrets location).
 3. Archive as `rag_benchmark_results.v12_no_benchmark_triggers.json`. Rescore all archives.
 4. Run §2's `audit_logs` query for the v12 window, then **read the full answer text** of #16, #19,
-   #49 (and any other flipped question) before writing `RAG_Benchmark_Report_v12.md`.
+   #49 (and any other flipped question) before writing `RAG_Benchmark_Report_v12.md`
+   (**provisional** until the 11-07 samples).
 
-## 7. Verification of the change (before Sunday)
+## 8. Verification of the change (before Sunday)
 
 | Check | Expected |
 | --- | --- |

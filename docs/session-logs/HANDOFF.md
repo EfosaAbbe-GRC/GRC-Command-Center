@@ -52,7 +52,12 @@ The owner's other Groq-backed project uses the shared organisation budget on wee
   2026-10-25; it rebuilds the stack, so it goes first). Then run **one** Groq verification pass
   covering it and §0 below. **Do it in the morning:** Groq exposes no daily-token header, so if
   the window is rolling, an early start gives Sunday the fullest budget.
-- **Sunday 2026-11-01:** v12 benchmark (needs its draft approved by then). Pre-flight probe first.
+  After verification, still Saturday morning: v12's **before** samples (5 target questions × 3,
+  ~50k tokens), then apply the v12 data change (no Groq).
+- **Sunday 2026-11-01:** the full v12 benchmark, **≥ 24 h after Saturday's last Groq call**. Its
+  report is provisional.
+- **Saturday 2026-11-07:** v12's **after** samples (5 × 2, ~35k) → the 3-v-3 verdict. Why repeats
+  and not temperature 0: `Golden_Mapping_Leakage_v12_refactor.md` §6 (vendor guidance).
 
 ## ▶ 0. Verify the 2026-10-25 security hardening (Saturday's Groq pass)
 
