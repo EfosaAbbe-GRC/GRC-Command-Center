@@ -10,7 +10,9 @@ class Settings(BaseSettings):
     
     # API Settings
     PORT: int = 8001
-    HOST: str = "0.0.0.0"
+    # Loopback by default: `python main.py` must not expose the API to the network. Docker
+    # passes --host 0.0.0.0 itself (inside the container) and publishes on 127.0.0.1 only.
+    HOST: str = "127.0.0.1"
     
     # CORS
     CORS_ORIGINS: List[str] = [

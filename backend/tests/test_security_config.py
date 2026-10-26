@@ -45,6 +45,14 @@ def test_auth_disabled_is_rejected():
     assert "AUTH_ENABLED is off" in config_problems(cfg(AUTH_ENABLED=False))
 
 
+def test_default_bind_host_is_loopback():
+    # `python main.py` binds settings.HOST. A 0.0.0.0 default exposed a directly-run backend to
+    # the whole network. Docker is unaffected: its CMD passes --host itself and publishes
+    # 127.0.0.1 only.
+    from core.config import Settings
+    assert Settings.model_fields["HOST"].default == "127.0.0.1"
+
+
 def test_error_names_the_setting_but_never_the_value():
     with pytest.raises(RuntimeError) as exc:
         assert_secure_config(cfg(ADMIN_PASSWORD="grc-admin-2026", VIEWER_PASSWORD="tiny"))

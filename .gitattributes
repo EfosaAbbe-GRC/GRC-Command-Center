@@ -1,0 +1,4 @@
+# Windows batch files must keep CRLF line endings: cmd.exe can misparse LF-only or mixed
+# endings (blocks, labels). run_dashboard.bat had mixed endings until 2026-10-26.
+*.bat text eol=crlf
+*.cmd text eol=crlf
