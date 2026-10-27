@@ -21,6 +21,9 @@
   `pii_redaction`; image test runs redaction in the built image.
 - [x] Test + dev stacks redeployed. pytest 107 passed / 6 skipped (Groq test deselected); unit-only
   58 / 6; image 5/5; `test_pii` 22/22 on the test stack.
+- [x] Morning review (owner's request): `/health` now follows live redaction calls; image tests
+  clean up after a timeout; `init: true` on both backends (zombie processes had blocked container
+  stops). `test_pii` 23/23 on test **and dev**; image 5/5; deployed image ≡ lock.
 - [ ] D1a: bot GitHub account + fine-grained PAT (guided, owner at the keyboard).
 - [ ] EXECUTE Phase 1 (CI workflow), then Phase 2 (repo guardrails).
 - [ ] Later: CPU-only `torch` (after the v12 verdict, 11-07); pip 24.0 in the image.

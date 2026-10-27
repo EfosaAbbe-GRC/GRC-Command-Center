@@ -153,7 +153,7 @@ cd backend
 python -m pytest -q
 ```
 
-Without the stack or any secrets (what CI runs), `python -m pytest -q -m "not integration"`
+Without the stack or any secrets (what CI will run), `python -m pytest -q -m "not integration"`
 expects **58 passed, 6 skipped**. To inspect a built backend image:
 `GRC_IMAGE=<image> python -m pytest -q -m image tests/test_image_hygiene.py` (5 tests).
 

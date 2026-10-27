@@ -53,6 +53,9 @@ def test_backend_runtime_hardening(compose):
     svc = _compose(compose)["services"][BACKEND_SERVICES[compose]]
     assert "no-new-privileges:true" in svc.get("security_opt", [])
     assert svc.get("cap_drop") == ["ALL"]
+    # uvicorn as PID 1 doesn't reap exited children; on 2026-10-27 one left the test container
+    # unstoppable until Docker force-killed it. `init` runs a reaper as PID 1.
+    assert svc.get("init") is True
 
 
 # ── Healthchecks (G12: `localhost` hit IPv6 ::1 and failed for ~39 h) ─────────────

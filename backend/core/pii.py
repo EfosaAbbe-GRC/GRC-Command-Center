@@ -59,11 +59,8 @@ def warm_up() -> None:
     """Load the model in the background so the first real question isn't the slow one, then
     prove it works end to end: loading can succeed while every redact() call still raises."""
     try:
-        _engines()
-        redact("warm-up probe for Maria Gonzalez")
-        _state.update(status="ready", detail="PII redaction active")
+        redact("warm-up probe for Maria Gonzalez")  # sets the reported status either way
     except Exception as e:  # surfaced again, loudly, by redact() on first use
-        _state.update(status="error", detail=f"PII redaction unavailable: {type(e).__name__}")
         logger.error("PII redaction warm-up failed", error=str(e))
 
 
@@ -80,12 +77,20 @@ def redact(text: str) -> tuple[str, dict[str, int]]:
     """
     if not text or not text.strip():
         return text, {}
-    analyzer, anonymizer = _engines()
-    results = analyzer.analyze(text=text, entities=ENTITIES, language="en",
-                               score_threshold=SCORE_THRESHOLD)
-    if not results:
+    # Every real call updates what /health reports, so a failure after start-up shows (and a
+    # transient warm-up failure clears) instead of the start-up result standing forever.
+    try:
+        analyzer, anonymizer = _engines()
+        results = analyzer.analyze(text=text, entities=ENTITIES, language="en",
+                                   score_threshold=SCORE_THRESHOLD)
+        out = anonymizer.anonymize(text=text, analyzer_results=results,
+                                   operators=_OPERATORS) if results else None
+    except Exception as e:
+        _state.update(status="error", detail=f"PII redaction unavailable: {type(e).__name__}")
+        raise
+    _state.update(status="ready", detail="PII redaction active")
+    if out is None:
         return text, {}
-    out = anonymizer.anonymize(text=text, analyzer_results=results, operators=_OPERATORS)
     counts: dict[str, int] = {}
     for item in out.items:  # one per replaced span, after overlapping detections are resolved
         counts[item.entity_type] = counts.get(item.entity_type, 0) + 1

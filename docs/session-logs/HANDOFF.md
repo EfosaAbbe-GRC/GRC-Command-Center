@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-10-27 (DevSecOps Phase 0 executed; PII outage found and fixed). Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-10-27 (DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning). Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -24,7 +24,7 @@ reports `pii_redaction`.
 | --- | --- | --- |
 | `smoke_test.py` (test stack, `:8002`) | **44/44** on 2026-09-29; re-run 2026-10-04 hit the Groq **daily** cap (43/44) — re-check on a fresh day | 2026-09-29 |
 | `smoke_test.py` (dev, `:8001`) | **44/44** (chat check now waits out the auditor's Groq minute) | 2026-10-04 |
-| `test_pii.py` (in the container) | **22/22** on the test stack (21 + the new warm-up test); dev not re-run | 2026-10-27 |
+| `test_pii.py` (in the container) | **23/23** on both the test and dev stacks | 2026-10-27 |
 | `pytest` (from `backend/`) | **107 passed, 6 skipped**, only the one Groq test deselected (`test_interview_sim.py::test_respond_grades_and_never_fabricates_on_failure`); with it, 108 expected. Unit-only (`-m "not integration"`, no stack or secrets): **58 passed, 6 skipped** | 2026-10-27 |
 | `test_image_hygiene.py` (`GRC_IMAGE=…`, `-m image`) | **5/5** on the Phase 0 image | 2026-10-27 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
@@ -71,7 +71,9 @@ Python deps (`requirements.in` → `requirements.txt`, compiled with `uv` inside
 command in the `.in` header), digest-pinned base images, both models baked at pinned revisions with
 `HF_HUB_OFFLINE=1`, multi-stage backend build, `cap_drop: [ALL]` + `no-new-privileges`, IPv4
 healthchecks (the frontend is healthy for the first time since the change), integration/image test
-markers, and 17 new policy/hygiene tests (red-verified). Both stacks redeployed on it. Findings
+markers, and 17 new policy/hygiene tests (red-verified). The same-day review added `init: true`
+(zombie processes blocked container stops) and made `/health` follow live redaction calls, not
+just the start-up probe (§11 rows 25–28). Both stacks redeployed on it. Findings
 during execution, including the PII outage: §11 rows 15–24.
 
 **Next, in order (sequential):**
@@ -97,7 +99,7 @@ Groq passed (see that file's table). **Still to run, in this order, on a day wit
 
 1. `pytest tests/test_interview_sim.py` (from `backend/`) → 12 pass.
 2. `smoke_test.py` on the test stack → **44/44**, then on dev (`GRC_TEST_BASE=http://localhost:8001`) → **44/44**.
-3. `test_pii` in the dev container → **22/22** (procedure in its docstring; `chmod` first, since
+3. `test_pii` in the dev container → **23/23** (procedure in its docstring; `chmod` first, since
    the backend now drops all capabilities).
 
 **What changed for anyone running things:** all secrets live in the repo-root `.env` (gitignored).

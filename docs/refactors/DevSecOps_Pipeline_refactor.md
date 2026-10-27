@@ -212,6 +212,11 @@ enforced backstop; this only makes failures arrive sooner.
 - **Egress allow-list:** once the models are baked in, the backend needs outbound access only to
   the Groq API. Restrict the rest (defense in depth).
 - **OpenSSF Scorecard** as an outside measure of the repo's security practices.
+- **Test tooling in the runtime image.** `pytest` is in the lock because the documented PII test
+  runs inside the container (the host has no spaCy). A separate test image (runtime + pytest)
+  would keep it out of production.
+- **`pip` 24.0 from the base image** stays in the runtime image. Leave it for Phase 1's dependency
+  audit to report, so that gate is seen failing on a real finding before the fix.
 
 ## 8. Control evidence it produces (supports, does not by itself satisfy; mappings hand-reviewed)
 
@@ -295,6 +300,15 @@ The owner asked for a gap check before EXECUTE. Read-only checks against the liv
 | 22 | Policy tests landed as `test_repo_policy.py` (10 tests), `test_suite_hygiene.py` (2) and `test_image_hygiene.py` (5, `-m image`), not the file names in step 5. Red check: 12 failed against the pre-Phase-0 files; the 5 that passed guard the 2026-10-25 fixes | — |
 | 23 | Step 4's credential fixture wasn't needed: `conftest.py` skips importing the 9 integration modules when the run excludes `integration`, and a full run without secrets still fails loudly (both tested) | — |
 | 24 | Image 7.46 → 7.34 GB (compiler gone); CUDA `torch` is the rest, deferred as planned | — |
+
+### Found in the 2026-10-27 morning review (owner asked to review and verify before moving on)
+
+| # | Finding | Action |
+| --- | --- | --- |
+| 25 | Row 16's fix only reported the **start-up** probe: a redaction failure later would still show "healthy", and a one-off warm-up glitch would show "error" forever | `redact()` records every real call's outcome; `test_pii.py::test_status_follows_live_calls_not_just_warm_up` (red first, then 23/23 on test and dev) |
+| 26 | A timed-out image test left its container running (killing the docker CLI doesn't stop it) | containers are named and removed on timeout; timeout 300 → 600 s (the host is shared, and the models took > 5 min to load under load) |
+| 27 | **Zombie processes:** uvicorn as PID 1 doesn't reap orphans. Twice, after an in-container test run, the test backend couldn't be stopped until Docker force-killed it (exit 137), and compose left a half-renamed container | `init: true` on both backends; policy test extended. Checked both ways: orphan probe gives 1 zombie without init, 0 with; the container now exits on SIGTERM (143) |
+| 28 | Deployed dev image vs lock: identical (154 pinned packages), plus `pip`/`wheel` from the base image | — |
 
 ## Rollback
 

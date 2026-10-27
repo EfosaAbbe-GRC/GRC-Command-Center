@@ -22,6 +22,14 @@ whole time. That is gap G2 in the pipeline draft, happening for real.
   compile`); a slow link killed one build (retries + a BuildKit pip cache now); under `cap_drop`,
   even container root can't delete read-only files it didn't `chmod` first.
 - Not done: D1a (bot account, owner at the keyboard), Phases 1–2. No Groq used (weekday).
+- **Morning review, same day (owner asked to review and verify first).** Everything re-checked
+  against the live system: both stacks healthy, deployed image ≡ lock, no OneDrive restorations,
+  unit 58/6. Three gaps in my own Phase 0 work, each fixed red-first: `/health` only reflected the
+  start-up probe (now every real redaction call updates it); a timed-out image test left its
+  container running; and uvicorn as PID 1 leaves zombie processes, which twice stopped a container
+  from shutting down (now `init: true`; proved 1 zombie without, 0 with). A first image-test run
+  "failed" on timeouts only: I had run it alongside the in-container PII tests on a host Mufasa
+  was also loading; run alone it passed 5/5. `test_pii` 23/23 on test and dev.
 
 ---
 

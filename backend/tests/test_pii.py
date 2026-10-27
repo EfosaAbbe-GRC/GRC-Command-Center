@@ -85,3 +85,21 @@ def test_warm_up_proves_redaction_works():
     from core import pii
     pii.warm_up()
     assert pii.status()["status"] == "ready"
+
+
+def test_status_follows_live_calls_not_just_warm_up(monkeypatch):
+    """A failure after start-up must show on /health, and recovery must clear it."""
+    from core import pii
+    pii.warm_up()
+
+    def broken():
+        raise OverflowError("simulated engine fault")
+
+    monkeypatch.setattr(pii, "_engines", broken)
+    with pytest.raises(OverflowError):
+        redact("Our vendor contact Maria Gonzalez hasn't replied")
+    assert pii.status()["status"] == "error"
+
+    monkeypatch.undo()
+    redact("Our vendor contact Maria Gonzalez hasn't replied")
+    assert pii.status()["status"] == "ready"

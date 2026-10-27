@@ -7,6 +7,7 @@ F3, and G4/G11 (models fetched at runtime) in DevSecOps_Pipeline_refactor.md.
 """
 import os
 import subprocess
+import uuid
 
 import pytest
 
@@ -19,9 +20,15 @@ pytestmark = [
 
 def _run(*cmd):
     """(exit code, stdout, stderr) of a command in a throwaway container with no network."""
-    r = subprocess.run(["docker", "run", "--rm", "--network", "none", "--entrypoint", cmd[0],
-                        IMAGE, *cmd[1:]], capture_output=True, text=True, encoding="utf-8",
-                       errors="replace", timeout=300)
+    # Named so a timeout can remove it: killing the docker CLI leaves the container running.
+    name = f"grc-image-test-{uuid.uuid4().hex[:12]}"
+    try:
+        r = subprocess.run(["docker", "run", "--rm", "--name", name, "--network", "none",
+                            "--entrypoint", cmd[0], IMAGE, *cmd[1:]], capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=600)
+    except subprocess.TimeoutExpired:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+        raise
     return r.returncode, r.stdout.strip(), r.stderr.strip()
 
 
