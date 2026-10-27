@@ -1,7 +1,11 @@
 import requests
 import time
 import os
+import pytest
 from tests._creds import ADMIN_PASS
+
+# Needs the live test stack -- CI's unit job deselects it (see pyproject.toml).
+pytestmark = pytest.mark.integration
 
 BASE_URL = os.environ.get("GRC_TEST_BASE", "http://localhost:8002") + "/api/v1"
 

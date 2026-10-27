@@ -6,7 +6,8 @@ services:
 
   # ── PostgreSQL Database ─────────────────────────────────────────────────────
   db:
-    image: postgres:16-alpine
+    # Digest-pinned: the exact image running on 2026-10-26.
+    image: postgres:16-alpine@sha256:16bc17c64a573ef34162af9298258d1aec548232985b33ed7b1eac33ba35c229
     container_name: grc-db-pg
     restart: unless-stopped
     shm_size: 128mb
@@ -26,7 +27,7 @@ services:
 
   # ── Automated Backup Service (GRC Retention) ────────────────────────────────
   db-backup:
-    image: prodrigestivill/postgres-backup-local:16-alpine
+    image: prodrigestivill/postgres-backup-local:16-alpine@sha256:08e7b70879af45a89305b91f4600cfbc88da2419a65948df870cddb082b8cf83
     container_name: grc-db-backup
     restart: unless-stopped
     volumes:
@@ -52,6 +53,11 @@ services:
       dockerfile: Dockerfile.backend
     container_name: grc-backend
     restart: unless-stopped
+    # Runs as a non-root user and needs no Linux capabilities.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     depends_on:
       db:
         condition: service_healthy
@@ -73,7 +79,7 @@ services:
     networks:
       - grc-net
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/v1/health')"]
       interval: 30s
       timeout: 30s
       retries: 5
@@ -94,7 +100,8 @@ services:
     networks:
       - grc-net
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3006/ || exit 1"]
+      # 127.0.0.1, not localhost (IPv6 ::1): failed on every probe until 2026-10-26.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3006/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

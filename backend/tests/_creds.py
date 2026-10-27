@@ -1,14 +1,17 @@
 """Test and benchmark credentials -- read from the environment, never hard-coded.
 
 Lookup order per role: the GRC_<ROLE>_PASSWORD environment variable, then
-<ROLE>_PASSWORD in the repo-root .env (the same gitignored file docker compose
-reads). There is deliberately no fallback value: a missing password fails loudly
-instead of trying a default that is published in this public repo.
+<ROLE>_PASSWORD in the env file docker compose reads (the repo-root .env, or the
+file GRC_ENV_FILE names). There is deliberately no fallback value: a missing
+password fails loudly instead of trying a default that is published in this
+public repo. Only integration tests import this; conftest.py keeps them out of a
+`-m "not integration"` run, so the unit suite needs no secrets at all.
 """
 import os
 from pathlib import Path
 
-ROOT_ENV = Path(__file__).resolve().parents[2] / ".env"
+ROOT_ENV = Path(os.environ.get("GRC_ENV_FILE")
+                or Path(__file__).resolve().parents[2] / ".env")
 
 
 def _read_dotenv(path: Path) -> dict:

@@ -33,6 +33,10 @@ _PHONE_3_3_4 = r"(?<![\w.])(?:\+?1[\s.-]?)?(?:\(\d{3}\)|\d{3})[\s.-]\d{3}[\s.-]\
 _lock = threading.Lock()
 _analyzer = None
 _anonymizer = None
+# What /health and /readiness report. Until 2026-10-27 a failed warm-up was only logged, so the
+# system showed "healthy" all night while every question was refused (fail-closed) because a
+# rebuild had pulled a yanked spaCy dependency (preshed 3.0.14).
+_state = {"status": "loading", "detail": "PII model loading"}
 
 
 def _engines():
@@ -52,11 +56,20 @@ def _engines():
 
 
 def warm_up() -> None:
-    """Load the model in the background so the first real question isn't the slow one."""
+    """Load the model in the background so the first real question isn't the slow one, then
+    prove it works end to end: loading can succeed while every redact() call still raises."""
     try:
         _engines()
+        redact("warm-up probe for Maria Gonzalez")
+        _state.update(status="ready", detail="PII redaction active")
     except Exception as e:  # surfaced again, loudly, by redact() on first use
+        _state.update(status="error", detail=f"PII redaction unavailable: {type(e).__name__}")
         logger.error("PII redaction warm-up failed", error=str(e))
+
+
+def status() -> dict:
+    """{"status": "loading" | "ready" | "error", "detail": str} for the health endpoints."""
+    return dict(_state)
 
 
 def redact(text: str) -> tuple[str, dict[str, int]]:

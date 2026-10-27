@@ -3,11 +3,15 @@ PII redaction -- core/pii.py. See docs/refactors/PII_Redaction_refactor.md.
 
 Needs the spaCy model, which lives in the backend image. Tests aren't baked into the image
 (.dockerignore), so copy them in and run from /app (the logger writes ./logs there):
-    docker exec -u root grc-backend-test sh -c 'rm -rf /tmp/t && mkdir -p /tmp/t'
+    docker exec -u root grc-backend-test sh -c 'chmod -R u+w /tmp/t; rm -rf /tmp/t; mkdir -p /tmp/t'
     docker cp backend/tests grc-backend-test:/tmp/t/tests
     docker exec -w /app -e PYTHONPATH=/app:/tmp/t grc-backend-test \
         python -m pytest -q -p no:cacheprovider --rootdir /tmp/t /tmp/t/tests/test_pii.py
+    docker exec -u root grc-backend-test sh -c 'chmod -R u+w /tmp/t; rm -rf /tmp/t'
 (Git Bash on Windows: set MSYS_NO_PATHCONV=1 first.) Without presidio installed, the module skips.
+The chmod is needed: the backend drops all Linux capabilities, so even root can't delete the
+read-only files docker cp creates until it makes them writable. `GRC_IMAGE=... pytest -m image
+tests/test_image_hygiene.py` also runs redaction inside a built image, with no copying.
 
 The no-harm test (every benchmark question passes through unchanged) is the release gate: a false
 positive there would silently change what the benchmark measures.
@@ -74,3 +78,10 @@ def test_framework_references_are_not_redacted(text):
 def test_empty_and_blank_input():
     assert redact("") == ("", {})
     assert redact("   ") == ("   ", {})
+
+
+def test_warm_up_proves_redaction_works():
+    """The health endpoints report this; on 2026-10-26 a failed warm-up was only logged."""
+    from core import pii
+    pii.warm_up()
+    assert pii.status()["status"] == "ready"

@@ -8,6 +8,7 @@ different stack (e.g. http://localhost:8001 for the dev stack).
 import requests
 import json
 import os
+import pytest
 from tests._creds import ADMIN_PASS, ANALYST_PASS, VIEWER_PASS
 import sys
 
@@ -19,6 +20,9 @@ for _stream in (sys.stdout, sys.stderr):
         _stream.reconfigure(encoding="utf-8")
     except Exception:
         pass
+
+# Needs the live test stack -- CI's unit job deselects it (see pyproject.toml).
+pytestmark = pytest.mark.integration
 
 BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8002")
 V1 = f"{BASE}/api/v1"

@@ -33,6 +33,22 @@ _DB_NAME = os.environ.get(
     "GRC_TEST_DB_NAME", "grc_audit_test" if _is_test_stack else "grc_audit")
 
 
+_INTEGRATION_MARK = "pytestmark = pytest.mark.integration"
+
+
+def pytest_ignore_collect(collection_path, config):
+    """In a `-m "not integration"` run (CI's unit job), don't import integration modules at
+    all. They import tests._creds, which raises when no secrets exist, and marker
+    deselection only happens after import, too late to help. Any other run imports them
+    as usual, so a missing password still fails loudly."""
+    if "not integration" not in " ".join(config.getoption("markexpr", "").split()):
+        return None
+    if collection_path.suffix == ".py" and collection_path.name.startswith("test_"):
+        if _INTEGRATION_MARK in collection_path.read_text(encoding="utf-8"):
+            return True
+    return None
+
+
 def _clear_forced_reset():
     """Best-effort: unlock the seeded accounts via the DB (users is mutable)."""
     try:

@@ -4,6 +4,27 @@
 
 ---
 
+## ✅ DONE 2026-10-27 — DevSecOps Phase 0 (groundwork); PII outage found and fixed
+
+- [x] Python deps hash-locked: `requirements.in` → `requirements.txt` (uv, 154 entries, every one
+  hashed); image freeze equals the pre-change freeze except `preshed` 3.0.14 → 3.0.15.
+- [x] Base images digest-pinned (backend, frontend, postgres, backup). Python 3.11.17 → 3.11.18
+  (new base digest); embeddings and re-ranker scores bit-identical old vs new.
+- [x] Both models baked at pinned revisions + weight sha256 (`docker/bake_models.py`);
+  `HF_HUB_OFFLINE=1`. Multi-stage build (no compiler at runtime; 7.46 → 7.34 GB).
+- [x] Backend `cap_drop: [ALL]` + `no-new-privileges`; healthchecks on `127.0.0.1` (frontend healthy).
+- [x] `integration` / `image` markers; unit run needs no stack or secrets; 17 new tests
+  (`test_repo_policy.py` 10, `test_suite_hygiene.py` 2, `test_image_hygiene.py` 5), red-verified.
+- [x] **PII outage (2026-10-26 22:11 UTC → 10-27 redeploy):** the 10-26 rebuild pulled yanked
+  `preshed 3.0.14`; every redaction raised, so every chat/interview answer was refused (fail-closed,
+  no leak) while `/health` said healthy. Fixed in the lock; `/health` + `/readiness` now report
+  `pii_redaction`; image test runs redaction in the built image.
+- [x] Test + dev stacks redeployed. pytest 107 passed / 6 skipped (Groq test deselected); unit-only
+  58 / 6; image 5/5; `test_pii` 22/22 on the test stack.
+- [ ] D1a: bot GitHub account + fine-grained PAT (guided, owner at the keyboard).
+- [ ] EXECUTE Phase 1 (CI workflow), then Phase 2 (repo guardrails).
+- [ ] Later: CPU-only `torch` (after the v12 verdict, 11-07); pip 24.0 in the image.
+
 ## ✅ DONE 2026-10-25 — v11 benchmark: personal files removed (criterion not met, by design)
 
 - [x] Three personal files → `GRC_Analyst/Excluded Docs/`; re-ingest **145 files / 16,998 chunks**, 0 errors.
@@ -27,7 +48,7 @@
   on disk after a rebuild, and the container reaches huggingface.co. Fix in
   `DevSecOps_Pipeline_refactor.md` Phase 0 (bake a pinned revision into the image, HF offline at
   runtime).
-- [ ] **DevSecOps pipeline drafted 2026-10-26**: awaiting EXECUTE + decision D1 (PR flow).
+- [ ] **DevSecOps pipeline drafted 2026-10-26**: Phase 0 done 2026-10-27 (above); Phases 1–2 await EXECUTE + D1.
 - [ ] *(Original question, kept for history)* Where the embedding model `all-MiniLM-L6-v2` comes
   from at runtime. It's not in the image (`Dockerfile.backend` has no model step) and there's no HF
   cache readable by `grcuser`. A second process loading it inside the container hangs at about

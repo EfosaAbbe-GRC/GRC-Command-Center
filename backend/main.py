@@ -225,6 +225,8 @@ def health_check():
         "faiss_index": "healthy" if os.path.exists("faiss_index") else "not_indexed",
         "auth": "enforced" if settings.AUTH_ENABLED else "disabled",
         "ingestion": rag_engine.ingestion_state.status,
+        # Fail-closed control: when it's down, every question is refused, so it must show here.
+        "pii_redaction": {"ready": "healthy", "loading": "loading"}.get(pii.status()["status"], "error"),
     }
     status = "healthy" if all(v in ("healthy", "enforced", "idle", "completed") for v in checks.values()) else "degraded"
     return {
@@ -466,6 +468,13 @@ def readiness_check():
     checks["authentication"] = {
         "status": "ready" if settings.AUTH_ENABLED else "degraded",
         "detail": "JWT enforcement active" if settings.AUTH_ENABLED else "AUTH_ENABLED=False — not enforced"
+    }
+
+    # 5. PII redaction (fail-closed: if it's down, no question reaches the LLM)
+    pii_state = pii.status()
+    checks["pii_redaction"] = {
+        "status": {"loading": "not_ready"}.get(pii_state["status"], pii_state["status"]),
+        "detail": pii_state["detail"],
     }
 
     # Overall

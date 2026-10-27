@@ -8,7 +8,6 @@ import requests
 import json
 import time
 import os
-from _creds import ADMIN_PASS
 import sys
 
 # Run as a script, so this directory is on sys.path. See Benchmark_Grading_refactor.md.
@@ -177,6 +176,9 @@ QUERIES = [
 
 def authenticate():
     """Acquire JWT token for the benchmarker."""
+    # Imported here, not at module top: test_pii imports QUERIES from this module in the
+    # secret-free unit run. A missing password still fails loudly, before any query.
+    from _creds import ADMIN_PASS
     print(f"Authenticating as {ADMIN_USER}...")
     try:
         r = requests.post(f"{BASE_URL}/auth/login", json={

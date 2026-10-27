@@ -1,0 +1,58 @@
+# GRC Command Center — Backend Dependencies (top-level, human-edited)
+# The image installs the COMPILED, hash-locked requirements.txt, never this file.
+# After editing, recompile from backend/ inside a Linux container (markers differ on
+# Windows); uv keeps every existing pin in requirements.txt unless told to upgrade it:
+#   docker run --rm -v "<backend dir>:/w" -w /w python:3.11-slim sh -c "pip install uv &&
+#     uv pip compile --python-version 3.11 --python-platform x86_64-manylinux_2_28
+#     --generate-hashes --output-file requirements.txt requirements.in"
+# See docs/refactors/DevSecOps_Pipeline_refactor.md (Phase 0, step 1).
+
+# --- Web Framework ---
+fastapi==0.124.0
+uvicorn==0.38.0
+python-multipart==0.0.9
+slowapi==0.1.9
+
+# --- Data Validation ---
+pydantic==2.12.5
+pydantic-settings==2.12.0
+python-dotenv==1.0.1
+
+# --- LangChain / RAG (Groq LLM + local HuggingFace embeddings) ---
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-groq>=0.2.0
+langchain-huggingface>=0.1.0
+sentence-transformers>=3.0.1
+
+# --- Database / ORM (PostgreSQL 16) ---
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+greenlet>=3.0.0
+
+# --- Vector Store ---
+faiss-cpu==1.13.2
+numpy>=1.26.0
+
+# --- PDF Parsing ---
+pypdf==4.0.1
+
+# --- Auth ---
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+
+pytest==8.3.5
+requests==2.33.1
+
+# --- PII Redaction (core/pii.py) ---
+# Local detection, nothing leaves the host. Versions verified together
+# 2026-09-29. The spaCy model is installed from its official release wheel (~560 MB).
+presidio-analyzer==2.2.364
+presidio-anonymizer==2.2.364
+spacy==3.8.16
+# spaCy's own low-level dependency. 3.0.14 (2026-10-24) was yanked upstream for a "Loading issue":
+# with it, every tokenizer call raises OverflowError, so PII redaction failed closed and every
+# question was refused (2026-10-26 rebuild). Fixed in 3.0.15. Treat a "yanked" warning from the
+# compiler as a failure, never as noise.
+preshed!=3.0.14
+en_core_web_lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl#sha256=293e9547a655b25499198ab15a525b05b9407a75f10255e405e8c3854329ab63

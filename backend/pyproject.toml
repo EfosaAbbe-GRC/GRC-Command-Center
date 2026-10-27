@@ -4,4 +4,8 @@ testpaths = ["tests"]
 # smoke_test.py is a standalone script (run directly), not a pytest module —
 # its `test()` helper would otherwise be mis-collected. --ignore is the correct
 # key (the previous `ignore=` was silently invalid).
-addopts = "--ignore=tests/smoke_test.py"
+addopts = "--ignore=tests/smoke_test.py --strict-markers"
+markers = [
+    "integration: needs the live test stack (default localhost:8002) and its credentials",
+    "image: inspects a built backend image (set GRC_IMAGE); run by CI's image job",
+]

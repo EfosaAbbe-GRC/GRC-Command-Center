@@ -1,3 +1,30 @@
+# Session Log — 2026-10-27 ("The gap we were closing had already bitten")
+
+**Outcome:** DevSecOps Phase 0 executed (owner's go). While proving the new dependency lock matched
+the running image, the backend turned out to have been **refusing every chat question and interview
+answer since 2026-10-26 22:11 UTC.** The previous evening's rebuild (security fixes) had re-resolved
+the unpinned requirements and pulled `preshed 3.0.14`, a spaCy dependency published 10-24 and
+yanked upstream. Every tokenizer call raised, so PII redaction failed, and redaction fails closed:
+no unredacted text reached Groq, but nothing was answered either. `/health` said "healthy" the
+whole time. That is gap G2 in the pipeline draft, happening for real.
+
+- Fixed by the lock itself (`preshed==3.0.15`, upstream's fix; `preshed!=3.0.14` in
+  `requirements.in` with the reason). Verified: one-package freeze diff, redaction probe in the
+  image, `test_pii` 22/22 on the test stack, `/health` `pii_redaction: healthy` on both stacks.
+- Made it visible: warm-up now runs a real redaction and `/health` + `/readiness` report it; a new
+  image test runs redaction inside the built image (the host has no spaCy, so nothing else could).
+- Rest of Phase 0: digest pins, baked/pinned models offline, multi-stage build, `cap_drop`,
+  IPv4 healthchecks, test markers, 17 red-verified policy/hygiene tests. Details and the ten
+  execution findings: `DevSecOps_Pipeline_refactor.md` §11 rows 15–24.
+- Corrected my own draft: it claimed the new base still had Python 3.11.17; it has 3.11.18 (the
+  bit-identical model outputs cover the benchmark concern).
+- Tooling lessons: `pip-compile` downloads every platform's wheels (abandoned for `uv pip
+  compile`); a slow link killed one build (retries + a BuildKit pip cache now); under `cap_drop`,
+  even container root can't delete read-only files it didn't `chmod` first.
+- Not done: D1a (bot account, owner at the keyboard), Phases 1–2. No Groq used (weekday).
+
+---
+
 # Session Log — 2026-10-25 ("The criterion did its job by failing")
 
 **Outcome:** v11 ran clean. Its criterion ("no grade changes") was **not met, and that's the

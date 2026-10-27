@@ -326,6 +326,16 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   against a bogus model id — do the same if you touch them. See `RAG_Model_Outage_refactor.md`.
   **This is the second provider-side breakage in five days;** local Ollama remains the standing
   zero-external-dependency fallback if it recurs.
+- **Third silent outage of the same shape (2026-10-26/27): an unpinned rebuild broke PII
+  redaction.** `preshed 3.0.14` (yanked upstream) made every spaCy call raise; redaction fails
+  closed, so every chat/interview answer was refused for ~12 h while `/health` said healthy.
+  **Python deps are now hash-locked** (`backend/requirements.in` is the human-edited list;
+  `requirements.txt` is compiled from it with `uv pip compile … --generate-hashes` inside
+  python:3.11-slim — exact command in the `.in` header; never hand-edit the `.txt`). The image
+  build refuses any file whose hash differs. `/health` and `/readiness` now report
+  `pii_redaction` from a real warm-up redaction, and `test_image_hygiene.py` runs redaction in the
+  built image. Models are baked at pinned revisions with `HF_HUB_OFFLINE=1`; nothing is fetched at
+  runtime.
 - **Ingestion blocks the entire API** for its duration (sync work on the async event loop). Monitor
   via `docker logs grc-backend`, not HTTP. JWTs expire during the wait — re-login per poll.
 - **A struggling Gemini API key turned `active-auditor`'s documented ~43s full-backend block into
@@ -369,8 +379,8 @@ Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, bo
   first (per its `/etc/hosts`), and this Docker network has no IPv6 route, so the healthcheck
   connection-refuses on IPv6 and never retries IPv4 — nginx only binds `0.0.0.0:3006` (IPv4). The
   app itself is fine (`curl localhost:3006` from the host, or `wget http://127.0.0.1:3006/` from
-  inside the container, both return 200). Not fixed — nothing currently depends on this health
-  status — but don't mistake `docker ps`'s "unhealthy" for a real outage on this container.
+  inside the container, both return 200). **Fixed 2026-10-27:** every healthcheck now probes
+  `127.0.0.1`, and `test_repo_policy.py` fails on `localhost`.
 - **On this Windows/Git-Bash setup, `docker cp`/`docker exec` args starting with `/` get silently
   mangled into Windows paths** (MSYS path conversion) — e.g. `docker exec grc-backend ls /tmp/`
   fails looking for a Windows `C:/...` path. Fix: `export MSYS_NO_PATHCONV=1` before the docker

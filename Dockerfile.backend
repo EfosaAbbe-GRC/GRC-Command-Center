@@ -1,24 +1,52 @@
 # ─── GRC Command Center — Backend ───────────────────────────────────────────
-# Python 3.11 slim — small footprint, matches dev environment
-FROM python:3.11-slim
+# Supply chain (docs/refactors/DevSecOps_Pipeline_refactor.md, Phase 0): the base image is
+# pinned by digest, every Python package by version + hash, and both models by revision +
+# weight hash. Nothing is fetched at runtime (HF_HUB_OFFLINE=1).
+# Base: python:3.11-slim (Debian 13, Python 3.11.18), its digest on 2026-10-26. Both stages
+# must use the same digest; written out in full (not an ARG) so Dependabot can bump them.
 
-LABEL maintainer="GRC Command Center"
-LABEL description="FastAPI backend — Gemini 2.0 Flash RAG + RBAC + SQLite"
+# ── Stage 1: install. The compiler lives here only and never reaches the runtime image.
+FROM python:3.11-slim@sha256:9635410349cba3531fabde484e07f14e625abb40e1bc8b23fffa046cb497ce2d AS builder
 
-# System deps: faiss-cpu needs libgomp1, bcrypt needs build-essential
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# requirements.txt is compiled from requirements.in with hashes; --require-hashes refuses
+# any package, direct or transitive, whose file doesn't match the lock. The cache mount keeps
+# downloaded wheels between builds (hashes are still checked); it never enters an image.
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --retries 10 --timeout 60 --require-hashes --prefix=/install -r /tmp/requirements.txt
+
+# ── Stage 2: runtime ────────────────────────────────────────────────────────
+FROM python:3.11-slim@sha256:9635410349cba3531fabde484e07f14e625abb40e1bc8b23fffa046cb497ce2d
+
+LABEL maintainer="GRC Command Center"
+LABEL description="FastAPI backend — Groq LLM RAG (FAISS + local embeddings) + RBAC + PostgreSQL"
+
+# faiss-cpu needs the OpenMP runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Non-root user for security
 RUN useradd -m -u 1001 grcuser
 
-WORKDIR /app
+COPY --from=builder /install /usr/local
 
-# Install Python deps first — this layer caches until requirements.txt changes
-COPY backend/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Both models, baked at pinned revisions; the build fails if a weight file's hash differs.
+# Owned by root, so the app can read them but not alter them.
+ENV HF_HOME=/opt/models
+COPY docker/bake_models.py /tmp/bake_models.py
+# Then drop the downloader's logs and staging, and make the cache world-readable: the hub
+# writes some metadata owner-only, which grcuser then can't read (it logs "Permission denied").
+RUN python /tmp/bake_models.py && rm /tmp/bake_models.py && \
+    rm -rf /opt/models/xet /opt/models/.agent_harnesses.json && \
+    chmod -R a+rX,go-w /opt/models
+ENV HF_HUB_OFFLINE=1
+
+WORKDIR /app
 
 # Copy backend source
 COPY backend/ .
@@ -32,9 +60,10 @@ USER grcuser
 
 EXPOSE 8001
 
-# Hits the public /health endpoint — no token required
+# Hits the public /health endpoint — no token required. 127.0.0.1, not localhost, which
+# can resolve to IPv6 ::1 first while uvicorn listens on IPv4.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/v1/health')" || exit 1
 
-# Single worker — SQLite is single-writer. Scale via PostgreSQL migration when ready.
+# Single worker — the login throttle (core/login_throttle.py) keeps its counters in memory.
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]

@@ -15,7 +15,8 @@ name: grc-test
 services:
 
   db-test:
-    image: postgres:16-alpine
+    # Digest-pinned: the exact image running on 2026-10-26.
+    image: postgres:16-alpine@sha256:16bc17c64a573ef34162af9298258d1aec548232985b33ed7b1eac33ba35c229
     container_name: grc-db-pg-test
     restart: unless-stopped
     shm_size: 128mb
@@ -39,6 +40,11 @@ services:
       dockerfile: Dockerfile.backend
     container_name: grc-backend-test
     restart: unless-stopped
+    # Runs as a non-root user and needs no Linux capabilities.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     depends_on:
       db-test:
         condition: service_healthy
@@ -62,7 +68,7 @@ services:
     networks:
       - grc-net-test
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/v1/health')"]
       interval: 30s
       timeout: 30s
       retries: 5

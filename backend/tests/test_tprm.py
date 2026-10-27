@@ -25,6 +25,9 @@ from datetime import datetime, timezone
 import pytest
 import requests
 
+# Needs the live test stack -- CI's unit job deselects it (see pyproject.toml).
+pytestmark = pytest.mark.integration
+
 BASE = os.environ.get("GRC_TEST_BASE", "http://localhost:8002")
 V1 = f"{BASE}/api/v1"
 

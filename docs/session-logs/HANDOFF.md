@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-10-25 (v11 ran; §0 rewritten). Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-10-27 (DevSecOps Phase 0 executed; PII outage found and fixed). Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -12,7 +12,11 @@ This is the **briefing**: current state and what to do first. The ledger with fu
 
 **Version 1.5.0.** TPRM complete (all tiers). RAG P3 Execution Monitor, Agent Registry de-stubbing,
 the Interview Simulator Tier 1, and all honesty fixes are built and browser-verified. LLM is Groq
-`openai/gpt-oss-120b`. **PII redaction is live on dev** (2026-10-04).
+`openai/gpt-oss-120b`. **PII redaction is live on dev** (2026-10-04). **It was broken from
+2026-10-26 22:11 UTC until the 2026-10-27 redeploy** (a yanked spaCy dependency pulled by an
+unpinned rebuild; it failed closed, so every chat/interview answer was refused and nothing
+leaked). Python packages are now hash-locked, so a rebuild can't do that again, and `/health`
+reports `pii_redaction`.
 
 **Baselines:**
 
@@ -20,8 +24,9 @@ the Interview Simulator Tier 1, and all honesty fixes are built and browser-veri
 | --- | --- | --- |
 | `smoke_test.py` (test stack, `:8002`) | **44/44** on 2026-09-29; re-run 2026-10-04 hit the Groq **daily** cap (43/44) — re-check on a fresh day | 2026-09-29 |
 | `smoke_test.py` (dev, `:8001`) | **44/44** (chat check now waits out the auditor's Groq minute) | 2026-10-04 |
-| `test_pii.py` (in the dev container) | **21/21** | 2026-10-04 |
-| `pytest` (from `backend/`) | **77 passed, 1 skipped** excluding `test_interview_sim.py` (12, needs Groq); full suite = 89 + 1 skipped expected | 2026-10-26 |
+| `test_pii.py` (in the container) | **22/22** on the test stack (21 + the new warm-up test); dev not re-run | 2026-10-27 |
+| `pytest` (from `backend/`) | **107 passed, 6 skipped**, only the one Groq test deselected (`test_interview_sim.py::test_respond_grades_and_never_fabricates_on_failure`); with it, 108 expected. Unit-only (`-m "not integration"`, no stack or secrets): **58 passed, 6 skipped** | 2026-10-27 |
+| `test_image_hygiene.py` (`GRC_IMAGE=…`, `-m image`) | **5/5** on the Phase 0 image | 2026-10-27 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
 | RAG, latest run | v11: legacy 96% (48/50), graded 96% (48/50) — **not citable as accuracy** | 2026-10-25 |
 | Index | curated, personal files out: **145 files / 16,998 chunks** | re-ingested 2026-10-25 |
@@ -59,6 +64,30 @@ The owner's other Groq-backed project uses the shared organisation budget on wee
 - **Saturday 2026-11-07:** v12's **after** samples (5 × 2, ~35k) → the 3-v-3 verdict. Why repeats
   and not temperature 0: `Golden_Mapping_Leakage_v12_refactor.md` §6 (vendor guidance).
 
+## ▶ DevSecOps pipeline: Phase 0 DONE 2026-10-27; Phases 1–2 next (weekday work, no Groq)
+
+`docs/refactors/DevSecOps_Pipeline_refactor.md`. Phase 0 (owner's go, 2026-10-26): hash-locked
+Python deps (`requirements.in` → `requirements.txt`, compiled with `uv` inside python:3.11-slim;
+command in the `.in` header), digest-pinned base images, both models baked at pinned revisions with
+`HF_HUB_OFFLINE=1`, multi-stage backend build, `cap_drop: [ALL]` + `no-new-privileges`, IPv4
+healthchecks (the frontend is healthy for the first time since the change), integration/image test
+markers, and 17 new policy/hygiene tests (red-verified). Both stacks redeployed on it. Findings
+during execution, including the PII outage: §11 rows 15–24.
+
+**Next, in order (sequential):**
+1. **D1a, guided, with the owner at the keyboard:** a separate bot GitHub account + fine-grained
+   PAT scoped to this repo, so the AI can't approve or merge its own changes. The owner deferred
+   it until they're at a computer.
+2. **EXECUTE Phase 1** (`.github/workflows/security.yml`) — needs the owner's go.
+3. **EXECUTE Phase 2** (Dependabot, branch protection, CODEOWNERS, SECURITY.md, private
+   vulnerability reporting, non-provider secret patterns) — owner approves each setting.
+4. Saturday's security change then goes through the pipeline as its first PR (break-glass if D1a
+   isn't done).
+
+**Rebuild note:** a cold backend build now takes ~10 min on this connection (pip downloads ~3 GB
+of wheels; `--retries 10` and a BuildKit cache mount make it survive and speed up repeats). A
+changed `requirements.txt` hash must match, or the build stops.
+
 ## ▶ 0. Verify the 2026-10-25 security hardening (Saturday's Groq pass)
 
 **Executed 2026-10-25** (`docs/refactors/Security_Hardening_refactor.md`): loopback-only ports,
@@ -68,7 +97,8 @@ Groq passed (see that file's table). **Still to run, in this order, on a day wit
 
 1. `pytest tests/test_interview_sim.py` (from `backend/`) → 12 pass.
 2. `smoke_test.py` on the test stack → **44/44**, then on dev (`GRC_TEST_BASE=http://localhost:8001`) → **44/44**.
-3. `test_pii` in the dev container → **21/21**.
+3. `test_pii` in the dev container → **22/22** (procedure in its docstring; `chmod` first, since
+   the backend now drops all capabilities).
 
 **What changed for anyone running things:** all secrets live in the repo-root `.env` (gitignored).
 `backend/.env` is gone. Tests and the benchmark read passwords via `backend/tests/_creds.py`;
@@ -187,7 +217,7 @@ The procedure that worked on 2026-09-27, first try:
 docker compose -f docker-compose-v2.yml ps
 docker compose -f docker-compose.test.yml ps
 $env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 44/44 (hits :8002)
-cd backend; python -m pytest -q; cd ..                   # expect 89 passed, 1 skipped -- MUST run from backend/
+cd backend; python -m pytest -q; cd ..                   # expect 108 passed, 6 skipped -- MUST run from backend/
 python scripts/rescore_benchmarks.py                     # re-grade all archives, zero tokens
 Invoke-RestMethod http://localhost:8001/api/v1/readiness # dev stack health, read-only, safe anytime
 ```
@@ -197,8 +227,10 @@ Invoke-RestMethod http://localhost:8001/api/v1/readiness # dev stack health, rea
 - Backend source is **not** bind-mounted. Any change to `backend/` needs
   `docker compose -f docker-compose-v2.yml up -d --build backend` (~20 s warm, ~15 min if the pip
   layer cache has been evicted). The test stack needs the same via `docker-compose.test.yml`.
-- `grc-frontend` shows healthcheck "unhealthy" continuously — harmless, an IPv6/IPv4 loopback
-  mismatch in the check itself. The app serves fine on `http://localhost:3006`.
+- Healthchecks probe `127.0.0.1`, never `localhost` (which resolved to IPv6 and kept
+  `grc-frontend` "unhealthy" until 2026-10-27); `test_repo_policy.py` enforces it.
+- `/health` includes `pii_redaction`: `loading` for ~1–2 min after a start, then `healthy`. Anything
+  else means chat and interviews are refusing every request.
 - `smoke_test.py` / `pytest` target `:8002` by default. For the dev stack set
   `GRC_TEST_BASE=http://localhost:8001` first.
 - `smoke_test.py` calls `/chat` three times (~9k Groq tokens). Don't run it on a benchmark day.

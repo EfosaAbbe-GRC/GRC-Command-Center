@@ -24,7 +24,7 @@ An agentic Governance, Risk, and Compliance (GRC) platform with AI-powered docum
 - **Third-Party Risk Management** — 13-stage vendor assessment workflow
   with automatic risk tiering and admin-signed, append-only risk
   acceptances.
-- **44/44 smoke tests green** (plus 89 unit/integration tests, 1 skipped), including a live probe
+- **44/44 smoke tests green** (plus 108 unit/integration tests), including a live probe
   that attempts to tamper with an audit row via `docker exec` and asserts the
   trigger rejects it.
 
@@ -83,9 +83,13 @@ The production stack is fully containerized and hardened. This is the recommende
 
 ```bash
 cd backend
-pip install -r requirements.txt
+pip install --require-hashes -r requirements.txt
 python main.py
 ```
+
+`requirements.txt` is a hash-locked file compiled from `requirements.in` for the Docker image's
+platform (Linux, Python 3.11). It won't install as-is on Windows; use Docker there. Edit
+`requirements.in`, then recompile with the command in its header.
 
 ### Frontend (Standalone)
 
@@ -140,12 +144,18 @@ Endpoint smoke tests — run from the repository root (expect **44/44**):
 python backend/tests/smoke_test.py
 ```
 
-Unit tests — must run from `backend/`, since the suite imports `core.*` (expect **89 passed, 1 skipped**):
+Unit tests — must run from `backend/`, since the suite imports `core.*` (expect **108 passed,
+6 skipped**; the skips are the in-image checks, which need `GRC_IMAGE`, and `test_pii.py`, which
+needs the spaCy model inside the backend container):
 
 ```bash
 cd backend
 python -m pytest -q
 ```
+
+Without the stack or any secrets (what CI runs), `python -m pytest -q -m "not integration"`
+expects **58 passed, 6 skipped**. To inspect a built backend image:
+`GRC_IMAGE=<image> python -m pytest -q -m image tests/test_image_hygiene.py` (5 tests).
 
 Both target the isolated test stack (`docker-compose.test.yml`, port 8002) by default. To point
 them at the dev stack instead, set `GRC_TEST_BASE=http://localhost:8001` first.

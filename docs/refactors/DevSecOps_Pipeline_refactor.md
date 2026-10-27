@@ -1,7 +1,8 @@
 # DevSecOps pipeline: shift-left security gates, supply-chain pinning, change evidence
 
-**Status:** DRAFT 2026-10-26, **revised the same day after a gap re-assessment (§11)**, awaiting
-EXECUTE (GOVERNANCE.md §A). Needs **no Groq**, so it can run on a weekday. **Principle: shift left,
+**Status:** DRAFT 2026-10-26, **revised the same day after a gap re-assessment (§11)**. **Phase 0
+EXECUTED 2026-10-27** (owner's go; findings in §11). Phases 1–2 await EXECUTE and decision D1
+(GOVERNANCE.md §A). Needs **no Groq**, so it can run on a weekday. **Principle: shift left,
 security first** (owner's standing rule): every gate is a test that fails before the fix, and
 blocks merges after it.
 
@@ -61,8 +62,10 @@ Each step is verified to change **nothing** at runtime, so the benchmark series 
    still on this machine, so their in-use digests are pinned exactly. **Honest limit:**
    `python:3.11-slim`, `node:20-alpine` and `nginx:alpine` have been pruned locally, so the digest
    the current images were built from can't be recovered. Those three are pinned to today's
-   registry digest, and Python is checked to still be 3.11.17. The Python packages are what
-   matters for the benchmark, and those are hash-locked (step 1), but OS packages may differ.
+   registry digest. **Corrected on execution:** today's digest carries Python **3.11.18** (the old
+   image had 3.11.17), a patch release. The Python packages are what matters for the benchmark,
+   and those are hash-locked (step 1); old and new images give bit-identical embeddings and
+   re-ranker scores (§11 row 20). OS packages may differ.
    Dependabot (L2) proposes digest bumps as reviewable PRs instead of silent drift.
 3. **Bake both models into the image at pinned revisions (fixes G4, G11):**
    - a build step `snapshot_download(<repo>, revision=<commit sha>)` into `/opt/models` for
@@ -70,9 +73,11 @@ Each step is verified to change **nothing** at runtime, so the benchmark series 
    - `HF_HOME=/opt/models` and **`HF_HUB_OFFLINE=1` at runtime**, so the backend can't fetch
      models from the internet at all;
    - `rag.py` is unchanged (same model name), which keeps benchmark isolation;
-   - the revision pinned is the one Hugging Face serves today. **Honest limit:** which revision
-     v8–v11 used can't be proven after the fact. The model's `main` branch is believed stable, but
-     that's unverified.
+   - the revision pinned is the one Hugging Face serves today. **Resolved on execution:** the
+     Hugging Face API shows each repo's `main` last changed on 2026-06-01 (embedder) and
+     2026-08-09 (re-ranker), both before v8 (2026-09-27). So v8–v11 downloaded exactly the pinned
+     revisions. Pins: `all-MiniLM-L6-v2@1110a243…`, `ms-marco-MiniLM-L-6-v2@233902d2…`, plus the
+     sha256 of each `model.safetensors`, which the build checks (`docker/bake_models.py`);
    - **Verify:** with outbound network blocked, the first question still works (test stack, no
      Groq needed for the embedding step); and the image's model files hash-match the pinned
      revision.
@@ -275,6 +280,21 @@ The owner asked for a gap check before EXECUTE. Read-only checks against the liv
 | 12 | No `SECURITY.md`, private reporting off, generic secret patterns off | G14; §5 item 4 |
 | 13 | No `no-new-privileges` / `cap_drop` | G15; step 4a |
 | 14 | Stale facts: test count (77 vs README 89), "Gemini … SQLite" label | step 0; step 4a |
+
+### Found during Phase 0 execution (2026-10-27)
+
+| # | Finding | Action |
+| --- | --- | --- |
+| 15 | **G2 happened for real.** The 2026-10-26 rebuild (security fixes A/B) re-resolved the unpinned requirements and pulled `preshed 3.0.14`, a spaCy dependency released 10-24 and **yanked upstream** ("Loading issue"). Every spaCy tokenizer call raised `OverflowError`, so PII redaction failed for every input. Redaction fails closed, so **no unredacted text left the system, but every chat question and interview answer was refused** from 2026-10-26 22:11 UTC. Reproduced in the old and new image; `preshed 3.0.15` (upstream's fix) and the older 3.0.13 set both work. | lock moved to `preshed==3.0.15` (one package; benchmark questions are untouched by redaction, by design); `preshed!=3.0.14` in `requirements.in` with the reason |
+| 16 | **The system reported "healthy" all night during that outage.** A failed PII warm-up was only logged. | warm-up now runs a real redaction probe; `/health` and `/readiness` report `pii_redaction`, so the outage shows as degraded |
+| 17 | Nothing short of running redaction **inside the built image** would have caught #15 (the host has no spaCy) | `test_image_hygiene.py::test_pii_redaction_works_in_image`; CI's image job runs it |
+| 18 | The bake left one model cache file the app user couldn't read; the library logged "Permission denied" and carried on | cache made world-readable; the image test fails on that warning |
+| 19 | `cap_drop: [ALL]` means even `docker exec -u root` can't delete read-only files it didn't make writable, which broke the documented PII test cleanup | `chmod` added to the documented procedure; the hardening stays |
+| 20 | Pinned models confirmed against live use: the running container's own cache held exactly the pinned revisions, and old vs new image give **bit-identical** embeddings (max diff 0.0) and re-ranker scores | — |
+| 21 | The new base digest carries Python 3.11.18 (old image 3.11.17); step 2 had claimed 3.11.17 | step 2 corrected; row 20 covers the benchmark effect |
+| 22 | Policy tests landed as `test_repo_policy.py` (10 tests), `test_suite_hygiene.py` (2) and `test_image_hygiene.py` (5, `-m image`), not the file names in step 5. Red check: 12 failed against the pre-Phase-0 files; the 5 that passed guard the 2026-10-25 fixes | — |
+| 23 | Step 4's credential fixture wasn't needed: `conftest.py` skips importing the 9 integration modules when the run excludes `integration`, and a full run without secrets still fails loudly (both tested) | — |
+| 24 | Image 7.46 → 7.34 GB (compiler gone); CUDA `torch` is the rest, deferred as planned | — |
 
 ## Rollback
 

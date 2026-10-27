@@ -32,6 +32,8 @@ GRC Command Center v1.5.0
 │   │        `llama-3.3-70b-versatile` days later, re-pinned 2026-08-17, see MEMORY.md
 │   ├── Embeddings: all-MiniLM-L6-v2 (local HuggingFace)
 │   ├── Re-Ranker: cross-encoder/ms-marco-MiniLM-L-6-v2 (k=20 → top 10)
+│   │        Both baked into the image at pinned revisions + weight hashes (docker/bake_models.py);
+│   │        the backend runs with HF_HUB_OFFLINE=1 and never downloads a model (2026-10-27)
 │   ├── Vector Store: FAISS (with SHA-256 integrity hashing)
 │   ├── Database: PostgreSQL 16 (Hardened with SECURITY DEFINERTriggers)
 │   ├── Auth: JWT (IAM-10 with Independent Account Seeding)
@@ -77,7 +79,8 @@ GRC_Command_Center/
 │   │   ├── fixtures.json          # Initial GRC seeding data (policies, KPIs, framework mappings)
 │   │   └── seed_tprm_stages.py    # Idempotent seeding of 26 reference TPRM stages (run from lifespan)
 │   ├── data_service.py            # Loads fixtures.json; serves policies/dashboard/framework mappings
-│   ├── requirements.txt           # Backend dependencies
+│   ├── requirements.in            # Top-level backend dependencies (edit this)
+│   ├── requirements.txt           # Compiled from .in: every package pinned + hashed (install this)
 │   └── tests/
 │       ├── smoke_test.py          # Primary functional endpoint verification
 │       └── _creds.py              # Test/benchmark credentials from the root .env (never hard-coded)
