@@ -24,7 +24,10 @@
 - [x] Morning review (owner's request): `/health` now follows live redaction calls; image tests
   clean up after a timeout; `init: true` on both backends (zombie processes had blocked container
   stops). `test_pii` 23/23 on test **and dev**; image 5/5; deployed image ≡ lock.
-- [ ] D1a: bot GitHub account + fine-grained PAT (guided, owner at the keyboard).
+- [x] D1a *(2026-10-28)*: bot account `Grcbot2026` (2FA, collaborator with write), classic token
+  `repo`/`read:org`/`workflow` expiring **2027-01-26** (fine-grained can't write to a repo the
+  bot doesn't own: pipeline draft §11 row 29); owner's admin login removed from this machine.
+- [ ] Renew the bot token before **2027-01-26**.
 - [ ] EXECUTE Phase 1 (CI workflow), then Phase 2 (repo guardrails).
 - [ ] Later: CPU-only `torch` (after the v12 verdict, 11-07); pip 24.0 in the image.
 

@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-10-27 (DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning). Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-10-28 (D1a done: the AI now works as the bot account `Grcbot2026`). 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -77,14 +77,16 @@ just the start-up probe (§11 rows 25–28). Both stacks redeployed on it. Findi
 during execution, including the PII outage: §11 rows 15–24.
 
 **Next, in order (sequential):**
-1. **D1a, guided, with the owner at the keyboard:** a separate bot GitHub account + fine-grained
-   PAT scoped to this repo, so the AI can't approve or merge its own changes. The owner deferred
-   it until they're at a computer.
+1. ~~D1a~~ **DONE 2026-10-28.** The AI now acts on GitHub as **`Grcbot2026`** (write, not admin;
+   classic token, **expires 2027-01-26**). The owner's admin login is gone from this machine, so
+   the owner approves, merges and changes settings **in the browser**. Commits from this clone
+   carry the bot's identity. **Until Phase 2's branch protection is on, nothing enforces "no
+   direct pushes to `main`" yet: the AI pushes branches and opens PRs only.** Why classic, not
+   fine-grained: pipeline draft §11 rows 29–31.
 2. **EXECUTE Phase 1** (`.github/workflows/security.yml`) — needs the owner's go.
 3. **EXECUTE Phase 2** (Dependabot, branch protection, CODEOWNERS, SECURITY.md, private
    vulnerability reporting, non-provider secret patterns) — owner approves each setting.
-4. Saturday's security change then goes through the pipeline as its first PR (break-glass if D1a
-   isn't done).
+4. Saturday's security change then goes through the pipeline as its first gated PR.
 
 **Rebuild note:** a cold backend build now takes ~10 min on this connection (pip downloads ~3 GB
 of wheels; `--retries 10` and a BuildKit cache mount make it survive and speed up repeats). A
