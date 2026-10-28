@@ -1,3 +1,29 @@
+# Session Log — 2026-10-28 ("Check the plan against the vendor before the owner clicks")
+
+**Outcome:** D1a done, guided step by step with the owner at the keyboard. The AI now works on
+GitHub as **`Grcbot2026`**, a separate machine account with 2FA and write access (not admin) on
+this repo only. The owner's admin login is no longer stored on this machine. No code changed and
+no Groq was used (weekday).
+
+- **The drafted plan would have failed at the last step.** Before sending the owner to the token
+  page, GitHub's docs were checked: fine-grained tokens can't contribute to a repo where the
+  account is only a collaborator. The owner chose a classic token over a GitHub App or keeping one
+  identity. The gh source then showed `gh auth login` rejects any token without `repo` +
+  `read:org`, so "public repos only" would have failed too. Final scopes are `repo`, `read:org` and
+  `workflow`, expiring 2027-01-26, with real reach held to this repo by one standing condition: the
+  bot is never added to another repo. Pipeline draft §11 rows 29–31.
+- The token was pasted by the owner into `gh`'s own prompt, never into the chat.
+- `gh auth logout` didn't remove everything: a leftover owner entry and a second owner token from
+  another GitHub client were found in Windows Credential Manager and deleted. That removes the
+  stored path to admin, not every path, since the AI runs as the owner's Windows user.
+- Repo-local `git config` now commits as the bot (`349412009+Grcbot2026@users.noreply.github.com`).
+  Until Phase 2's branch protection exists, "no direct pushes to `main`" is a rule the AI keeps,
+  not one GitHub enforces. This session's own doc commit went in as a branch and PR, the first
+  of the new flow.
+- Next: EXECUTE Phase 1 (CI), then Phase 2 (guardrails), both with the owner's go.
+
+---
+
 # Session Log — 2026-10-27 ("The gap we were closing had already bitten")
 
 **Outcome:** DevSecOps Phase 0 executed (owner's go). While proving the new dependency lock matched

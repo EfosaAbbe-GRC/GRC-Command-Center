@@ -1,8 +1,8 @@
 # DevSecOps pipeline: shift-left security gates, supply-chain pinning, change evidence
 
 **Status:** DRAFT 2026-10-26, **revised the same day after a gap re-assessment (§11)**. **Phase 0
-EXECUTED 2026-10-27** (owner's go; findings in §11). Phases 1–2 await EXECUTE and decision D1
-(GOVERNANCE.md §A). Needs **no Groq**, so it can run on a weekday. **Principle: shift left,
+EXECUTED 2026-10-27** (owner's go; findings in §11). **D1 = (a), bot account set up
+2026-10-28** (§5 item 5). Phases 1–2 await EXECUTE (GOVERNANCE.md §A). Needs **no Groq**, so it can run on a weekday. **Principle: shift left,
 security first** (owner's standing rule): every gate is a test that fails before the fix, and
 blocks merges after it.
 
@@ -179,12 +179,19 @@ That avoids alert fatigue without leaving the gate open-ended.
      original wording overclaimed: Claude's `gh` login *is* the owner's admin account (G10), so a
      PR it opened would show the owner as author and approver, and its token could bypass
      protection. Real separation of duties needs **a second GitHub account for the AI** (GitHub
-     allows one free machine account per person) with a **fine-grained token scoped to this one
-     repo**: contents and pull requests write, no admin. It can push branches and open PRs; it
-     can't approve its own PR, merge past protection, or change settings. Then the record is
-     honest: the bot proposed, the owner approved, the checks passed. That's real CM-3 / AC-5
-     evidence, and Shepard's "AI proposes, human commits" enforced by the platform. **Owner
-     action:** create the account and token (about 10 minutes, guided).
+     allows one free machine account per person) with write access to this one repo and no
+     admin. It can push branches and open PRs; it can't approve its own PR, merge past
+     protection, or change settings. Then the record is honest: the bot proposed, the owner
+     approved, the checks passed. That's real CM-3 / AC-5 evidence, and Shepard's "AI proposes,
+     human commits" enforced by the platform.
+     **DONE 2026-10-28 (owner at the keyboard, guided):** bot account **`Grcbot2026`** (2FA on),
+     repo collaborator (write, not admin). The drafted "fine-grained token" was **not possible**
+     (§11 row 29), so it holds a **classic** token, scopes `repo` + `read:org` + `workflow`,
+     **expires 2027-01-26** (90 days; renew before then). Its reach is this repo only because
+     **the bot is never added to any other repo** (standing condition). The owner's admin login
+     was removed from this machine's `gh` and credential store, so the AI has no stored admin
+     credential; the owner approves, merges and changes settings in the browser. Commits from
+     this clone carry the bot's identity (repo-local `git config`).
    - **(a′) PR-based, same identity:** if the owner prefers not to create a second account, the
      PR flow still gives gates and a change record. But separation of duties is then
      **procedural** (commit trailers say who wrote what), not enforced, and the docs will say so.
@@ -310,7 +317,16 @@ The owner asked for a gap check before EXECUTE. Read-only checks against the liv
 | 27 | **Zombie processes:** uvicorn as PID 1 doesn't reap orphans. Twice, after an in-container test run, the test backend couldn't be stopped until Docker force-killed it (exit 137), and compose left a half-renamed container | `init: true` on both backends; policy test extended. Checked both ways: orphan probe gives 1 zombie without init, 0 with; the container now exits on SIGTERM (143) |
 | 28 | Deployed dev image vs lock: identical (154 pinned packages), plus `pip`/`wheel` from the base image | — |
 
+### Found while setting up D1a (2026-10-28, checked before the owner made the token)
+
+| # | Finding | Action |
+| --- | --- | --- |
+| 29 | **D1a as drafted couldn't work.** GitHub's docs list, as a known gap, using a fine-grained token "to contribute to repositories where the user is an outside or repository collaborator". The bot is a collaborator on a repo owned by another personal account, so a fine-grained token can't push here. | classic token instead (owner's choice over a GitHub App or same identity); reach is held to this repo by the standing condition in §5 item 5 |
+| 30 | A `public_repo`-only classic token would still fail: `gh auth login` requires `repo` and `read:org` (`HeaderHasMinimumScopes` in the gh source). The only way round it is a plain-text `GH_TOKEN` environment variable. | `repo` + `read:org` (the bot owns no repos and is in no orgs, so the real reach is unchanged) and `workflow`, which Phase 1 needs to push `.github/workflows/`; Phase 2's `CODEOWNERS` gates those files |
+| 31 | `gh auth logout` for the owner left a `gh:github.com:<owner>` entry in Windows Credential Manager, and a second owner token from another GitHub client sat there too | both deleted (the second only via the Windows API; `cmdkey` rejects targets containing `/`); `gh api user` → `Grcbot2026`. Not airtight: the AI runs as the owner's Windows user, so this removes the stored path to admin rather than every path |
+
 ## Rollback
 
-Workflow and policy files: `git revert`. Branch protection: `gh api` removal (owner). Lock and
+Workflow and policy files: `git revert`. Branch protection: removed by the owner in the repo's
+browser settings (no admin login is stored on this machine since D1a). Lock and
 digest pinning: revert plus rebuild returns to tag- and range-based resolution (not recommended).
