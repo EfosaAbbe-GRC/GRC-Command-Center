@@ -2,3 +2,6 @@
 # endings (blocks, labels). run_dashboard.bat had mixed endings until 2026-10-26.
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+# Shell scripts run inside Linux containers (docker/db-init/): CRLF would break them.
+*.sh text eol=lf

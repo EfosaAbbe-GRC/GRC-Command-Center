@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 COMPOSE_FILES = ["docker-compose-v2.yml", "docker-compose.test.yml"]
 DOCKERFILES = ["Dockerfile.backend", "Dockerfile.frontend"]
 BACKEND_SERVICES = {"docker-compose-v2.yml": "backend", "docker-compose.test.yml": "backend-test"}
+MIGRATE_SERVICES = {"docker-compose-v2.yml": "db-migrate", "docker-compose.test.yml": "db-migrate-test"}
 DIGEST = re.compile(r"@sha256:[0-9a-f]{64}$")
 
 
@@ -41,7 +42,8 @@ def test_published_ports_are_loopback(compose):
 def test_secrets_are_required(compose):
     text = (ROOT / compose).read_text(encoding="utf-8")
     refs = re.findall(r"\$\{([A-Z0-9_]+)(:?[-?+]?)", text)
-    secret = [(v, op) for v, op in refs if re.search(r"PASSWORD|SECRET|API_KEY|TOKEN", v)]
+    # DATABASE_URL too: a connection URL embeds a password (Secrets_DB_Privilege_refactor.md).
+    secret = [(v, op) for v, op in refs if re.search(r"PASSWORD|SECRET|API_KEY|TOKEN|DATABASE_URL", v)]
     assert secret, "expected secret interpolations to check"
     for var, op in secret:
         assert op == ":?", f"{compose}: ${{{var}}} must be ${{{var}:?...}}, never defaulted"
@@ -49,13 +51,54 @@ def test_secrets_are_required(compose):
 
 # ── Runtime hardening (G15) ─────────────────────────────────────────────────────
 @pytest.mark.parametrize("compose", COMPOSE_FILES)
-def test_backend_runtime_hardening(compose):
-    svc = _compose(compose)["services"][BACKEND_SERVICES[compose]]
+@pytest.mark.parametrize("services", [BACKEND_SERVICES, MIGRATE_SERVICES], ids=["backend", "migrate"])
+def test_backend_runtime_hardening(compose, services):
+    svc = _compose(compose)["services"][services[compose]]
     assert "no-new-privileges:true" in svc.get("security_opt", [])
     assert svc.get("cap_drop") == ["ALL"]
     # uvicorn as PID 1 doesn't reap exited children; on 2026-10-27 one left the test container
     # unstoppable until Docker force-killed it. `init` runs a reaper as PID 1.
     assert svc.get("init") is True
+
+
+# ── Database least privilege (Secrets_DB_Privilege_refactor.md F1, F2, F7) ───────────
+def _env(svc):
+    env = svc.get("environment", {})
+    if isinstance(env, list):
+        env = dict(e.split("=", 1) for e in env)
+    return env
+
+
+@pytest.mark.parametrize("compose", COMPOSE_FILES)
+def test_backend_connects_as_app_role(compose):
+    """F1: the backend ran as the superuser that owns every table, so it could disable the
+    immutability triggers. It must connect as grc_app and never see the owner's password."""
+    env = _env(_compose(compose)["services"][BACKEND_SERVICES[compose]])
+    url = env["DATABASE_URL"]
+    assert url.startswith("postgresql+asyncpg://grc_app:${GRC_APP_DB_PASSWORD:?"), url
+    leaked = [k for k, v in env.items() if re.search(r"OWNER|ADMIN_PG|POSTGRES_PASSWORD|BACKUP_DB", str(v))]
+    assert not leaked, f"{compose}: backend env carries a privileged DB secret via {leaked}"
+
+
+@pytest.mark.parametrize("compose", COMPOSE_FILES)
+def test_schema_changes_gate_the_backend(compose):
+    """F2: schema setup ran inside the app and only logged failures. A one-shot migration
+    service now runs it as grc_owner, and the backend can't start unless it succeeded."""
+    services = _compose(compose)["services"]
+    migrate = services[MIGRATE_SERVICES[compose]]
+    assert migrate.get("command") == ["python", "-m", "core.migrate"]
+    assert "grc_owner:${GRC_OWNER_DB_PASSWORD:?" in _env(migrate)["MIGRATE_DATABASE_URL"]
+    assert migrate.get("restart") == "no"
+    backend = services[BACKEND_SERVICES[compose]]
+    assert backend["depends_on"][MIGRATE_SERVICES[compose]] == {
+        "condition": "service_completed_successfully"}
+
+
+def test_backup_uses_read_only_role():
+    """F7: backups were taken as the superuser."""
+    env = _env(_compose("docker-compose-v2.yml")["services"]["db-backup"])
+    assert env["POSTGRES_USER"] == "grc_backup"
+    assert env["POSTGRES_PASSWORD"].startswith("${GRC_BACKUP_DB_PASSWORD:?")
 
 
 # ── Healthchecks (G12: `localhost` hit IPv6 ::1 and failed for ~39 h) ─────────────

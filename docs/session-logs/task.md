@@ -4,6 +4,26 @@
 
 ---
 
+## ✅ DONE 2026-10-31 — Secrets out of OneDrive, least-privilege DB roles, tamper-evident audit chain
+
+`docs/refactors/Secrets_DB_Privilege_refactor.md` (owner's EXECUTE 2026-10-31; §11 = execution record).
+- [x] Red first: posture 30 failed / 9 passed; 7 new policy rules failed; creds 3/4 failed; guard tests failed at import.
+- [x] Secrets file outside OneDrive (`COMPOSE_ENV_FILES`), owner-only ACL; `_creds.py` refuses OneDrive paths;
+  repo `.env` deleted. Everything that touched OneDrive rotated except the Groq key (owner).
+- [x] Roles `grc_owner` / `grc_app` / `grc_backup` (`docker/db-init/10-roles.sh`); backend runs as `grc_app`
+  and refuses to start otherwise; schema setup moved to the one-shot `db-migrate` (`core/migrate.py`), which
+  gates the backend.
+- [x] SHA-256 hash chain on all 5 evidence tables (`fn_verify_chain`); `security_events` now append-only;
+  `/readiness` `audit_chain`; `scripts/verify_audit_chain.py`.
+- [x] Verified: posture 39/39 (test), negative boots refused, fresh-volume drill, backup restore drill,
+  **pytest 186 passed / 6 skipped (nothing deselected)**, smoke 44/44 test + dev, `test_pii` 23/23 dev.
+  This also closes HANDOFF §0 (the 2026-10-25 hardening's Groq checks).
+- [ ] **Owner:** reissue the Groq API key and paste it into the secrets file; revoke the stray credential
+  found in the old `.env` (see the session log); delete the old `.env` from OneDrive's recycle bin and version
+  history; copy the secrets file's values into the password manager; `gh auth logout -u <owner>`.
+- [ ] Next session: confirm the repo `.env` is still gone.
+- [ ] Merge the PR in the browser.
+
 ## ✅ DONE 2026-10-27 — DevSecOps Phase 0 (groundwork); PII outage found and fixed
 
 - [x] Python deps hash-locked: `requirements.in` → `requirements.txt` (uv, 154 entries, every one
@@ -26,7 +46,9 @@
   stops). `test_pii` 23/23 on test **and dev**; image 5/5; deployed image ≡ lock.
 - [x] D1a *(2026-10-28)*: bot account `Grcbot2026` (2FA, collaborator with write), classic token
   `repo`/`read:org`/`workflow` expiring **2027-01-26** (fine-grained can't write to a repo the
-  bot doesn't own: pipeline draft §11 row 29); owner's admin login removed from this machine.
+  bot doesn't own: pipeline draft §11 row 29); ~~owner's admin login removed from this machine~~
+  **Corrected 2026-10-31:** `gh auth status` still lists the owner's account (inactive; the bot is
+  active). Owner: `gh auth logout -u <owner>` to finish D1a.
 - [ ] Renew the bot token before **2027-01-26**.
 - [ ] EXECUTE Phase 1 (CI workflow), then Phase 2 (repo guardrails).
 - [ ] Later: CPU-only `torch` (after the v12 verdict, 11-07); pip 24.0 in the image.

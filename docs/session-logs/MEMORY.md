@@ -171,7 +171,12 @@ variable, so the immutability probes stay correct either way. Do this sparingly 
 of the split is that routine runs shouldn't touch dev-stack data; reach for it only when you
 specifically need to confirm the dev stack's own health end-to-end (e.g. right after resetting it).
 
-Credentials: `.env` at project root (admin / analyst / viewer seeded on boot, both stacks).
+Credentials: since 2026-10-31 a secrets file **outside OneDrive** (`%USERPROFILE%\.secrets\grc-command-center.env`),
+found through the user env var `COMPOSE_ENV_FILES`; the repo `.env` is gone (re-check: OneDrive restores
+deletions). Git Bash shells may not see the new user variable until restarted: export it. Admin /
+analyst / viewer are seeded on boot, both stacks. **DB roles:** backend = `grc_app` (append + read on the
+5 evidence tables), `db-migrate` = `grc_owner`, `grc_admin` = break-glass (`docker exec … psql -U grc_admin`
+over the socket, as the tests do). Chain check: `python scripts/verify_audit_chain.py [--test]`.
 
 ## Conventions (established, keep following)
 

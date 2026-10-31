@@ -35,7 +35,7 @@ GRC Command Center v1.5.0
 │   │        Both baked into the image at pinned revisions + weight hashes (docker/bake_models.py);
 │   │        the backend runs with HF_HUB_OFFLINE=1 and never downloads a model (2026-10-27)
 │   ├── Vector Store: FAISS (with SHA-256 integrity hashing)
-│   ├── Database: PostgreSQL 16 (Hardened with SECURITY DEFINERTriggers)
+│   ├── Database: PostgreSQL 16 (least-privilege roles, append-only triggers, hash-chained audit tables)
 │   ├── Auth: JWT (IAM-10 with Independent Account Seeding)
 │   ├── Agent Registry: Zero-Trust Python Registry (Subprocess eliminated)
 │   ├── Database Engine: SQLAlchemy 2.0 Async (Asyncpg + NullPool)
@@ -72,7 +72,8 @@ GRC_Command_Center/
 │   │   ├── tprm.py                # TPRM: 13-stage vendor egress/ingress assessment, risk acceptances
 │   │   ├── interview_sim.py       # TPRM Interview Simulator: mock-interview sessions grounded in real TPRM stage content, live-graded
 │   │   ├── pii.py                 # PII redaction (Presidio + spaCy), fails closed
-│   │   ├── security_config.py     # Fail-closed startup: refuses placeholder/short/public secrets
+│   │   ├── security_config.py     # Fail-closed startup: refuses placeholder/short/public secrets and an unsafe DB role
+│   │   ├── migrate.py             # One-shot schema setup as grc_owner (db-migrate service): triggers, audit chain, grants
 │   │   ├── login_throttle.py      # Per-username login throttle (5 failures / 15 min)
 │   │   └── ws.py                  # Sync Event Bus: WebSocket stream management
 │   ├── data/
@@ -83,7 +84,7 @@ GRC_Command_Center/
 │   ├── requirements.txt           # Compiled from .in: every package pinned + hashed (install this)
 │   └── tests/
 │       ├── smoke_test.py          # Primary functional endpoint verification
-│       └── _creds.py              # Test/benchmark credentials from the root .env (never hard-coded)
+│       └── _creds.py              # Test/benchmark credentials from the secrets file (COMPOSE_ENV_FILES; never hard-coded)
 │
 ├── src/
 │   ├── App.jsx                    # Root component with Auth and Reset gates
@@ -113,8 +114,14 @@ GRC_Command_Center/
 
 ## Build, Run & Test Commands
 
-- **Secrets first:** every secret lives in the repo-root `.env` (gitignored). Compose and the
-  backend both refuse to start without real values; see README "Quick Start".
+- **Secrets first:** every secret lives in a file **outside the repo and outside OneDrive**,
+  found through the `COMPOSE_ENV_FILES` user environment variable (since 2026-10-31; the repo
+  `.env` is gone). Compose and the backend both refuse to start without real values; the tests
+  refuse a secrets file inside OneDrive. See README "Quick Start".
+- **Database roles (2026-10-31):** the backend connects as `grc_app` (append + read on the five
+  evidence tables, no owner rights); `grc_owner` runs `core/migrate.py` in the one-shot
+  `db-migrate` service; `grc_admin` is break-glass only. Audit chain check:
+  `python scripts/verify_audit_chain.py [--test]`.
 - **Production Boot (Hardened):** `docker compose -f docker-compose-v2.yml up --build`
 - **Backend Dev:** `cd backend && python main.py` (Port 8001; needs the same secrets in the environment)
 - **Frontend Dev:** `npm run dev` (Port 3006)
@@ -135,6 +142,7 @@ GRC_Command_Center/
 
 - **Subprocess Eradication**: Eliminated all `subprocess.run()` calls. Agents are now hardcoded Python functions in the `AGENT_REGISTRY`.
 - **Hardened Triggers**: Implemented native PL/pgSQL `SECURITY DEFINER` triggers, all bound to a single shared function (`fn_prevent_immutability_violation`), that block all `UPDATE` and `DELETE` operations on `audit_logs`, `evidence_chain`, and `risk_acceptances` at the database layer.
+- **Least privilege + tamper evidence (2026-10-31, `Secrets_DB_Privilege_refactor.md`)**: the triggers used to be the only barrier, and the backend's own superuser login could switch them off. Now the backend's role can't (it owns nothing and has no UPDATE/DELETE/TRUNCATE on the five evidence tables: those three plus `stage_evidence_links` and `security_events`), it refuses to start if that changes, and each of the five tables carries a SHA-256 hash chain (`fn_verify_chain`) so an edit by anyone who gets past the triggers is detectable.
 - **Independent Seeding**: Refactored the `lifespan` startup to check for `admin`, `analyst`, and `viewer` accounts independently, ensuring 100% RBAC test coverage on every boot.
 
 ### 3. Real-Time Telemetry

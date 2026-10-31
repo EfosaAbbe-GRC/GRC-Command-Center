@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-10-28 (D1a done: the AI now works as the bot account `Grcbot2026`). 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-10-31 (secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green). 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -53,12 +53,15 @@ fails loudly instead of silently snapshotting the wrong index.
 The owner's other Groq-backed project uses the shared organisation budget on weekdays.
 
 - **Mon–Fri (no Groq):** draft only. Write the v12 draft (below) and the DevSecOps pipeline draft.
-- **Saturday 2026-10-31:** EXECUTE a further security change the owner holds privately (drafted
+- **✅ Done Saturday 2026-10-31 (afternoon, not morning):** the security change (`Secrets_DB_Privilege_refactor.md`,
+  now public) and the Groq verification pass. **Last Groq call ≈ 16:50 EDT.** v12's before-samples still need
+  their own EXECUTE.
+- ~~**Saturday 2026-10-31:** EXECUTE a further security change the owner holds privately (drafted
   2026-10-25; it rebuilds the stack, so it goes first). Then run **one** Groq verification pass
   covering it and §0 below. **Do it in the morning:** Groq exposes no daily-token header, so if
   the window is rolling, an early start gives Sunday the fullest budget.
   After verification, still Saturday morning: v12's **before** samples (5 target questions × 3,
-  ~50k tokens), then apply the v12 data change (no Groq).
+  ~50k tokens), then apply the v12 data change (no Groq).~~
 - **Sunday 2026-11-01:** the full v12 benchmark, **≥ 24 h after Saturday's last Groq call**. Its
   report is provisional.
 - **Saturday 2026-11-07:** v12's **after** samples (5 × 2, ~35k) → the 3-v-3 verdict. Why repeats
@@ -78,7 +81,7 @@ during execution, including the PII outage: §11 rows 15–24.
 
 **Next, in order (sequential):**
 1. ~~D1a~~ **DONE 2026-10-28.** The AI now acts on GitHub as **`Grcbot2026`** (write, not admin;
-   classic token, **expires 2027-01-26**). The owner's admin login is gone from this machine, so
+   classic token, **expires 2027-01-26**). The owner's admin login should be gone from this machine (**2026-10-31: `gh` still lists it, inactive; owner logs it out**), so
    the owner approves, merges and changes settings **in the browser**. Commits from this clone
    carry the bot's identity. **Until Phase 2's branch protection is on, nothing enforces "no
    direct pushes to `main`" yet: the AI pushes branches and opens PRs only.** Why classic, not
@@ -86,7 +89,8 @@ during execution, including the PII outage: §11 rows 15–24.
 2. **EXECUTE Phase 1** (`.github/workflows/security.yml`) — needs the owner's go.
 3. **EXECUTE Phase 2** (Dependabot, branch protection, CODEOWNERS, SECURITY.md, private
    vulnerability reporting, non-provider secret patterns) — owner approves each setting.
-4. Saturday's security change then goes through the pipeline as its first gated PR.
+4. ~~Saturday's security change then goes through the pipeline as its first gated PR.~~ Phases 1–2
+   weren't done midweek, so it went in as an ordinary bot PR on 2026-10-31 (its tests run locally).
 
 **Rebuild note:** a cold backend build now takes ~10 min on this connection (pip downloads ~3 GB
 of wheels; `--retries 10` and a BuildKit cache mount make it survive and speed up repeats). A
@@ -104,7 +108,11 @@ Groq passed (see that file's table). **Still to run, in this order, on a day wit
 3. `test_pii` in the dev container → **23/23** (procedure in its docstring; `chmod` first, since
    the backend now drops all capabilities).
 
-**What changed for anyone running things:** all secrets live in the repo-root `.env` (gitignored).
+**✅ All three ran green on 2026-10-31** (with the security change below): pytest 186/6 with nothing
+deselected, smoke 44/44 on both stacks, `test_pii` 23/23 on dev.
+
+**What changed for anyone running things:** ~~all secrets live in the repo-root `.env`~~ **since
+2026-10-31 the secrets live outside OneDrive, found through `COMPOSE_ENV_FILES`** (MEMORY.md).
 `backend/.env` is gone. Tests and the benchmark read passwords via `backend/tests/_creds.py`;
 nothing is hard-coded. The stack answers on `127.0.0.1` only. Five wrong logins pause that username
 for 15 minutes.

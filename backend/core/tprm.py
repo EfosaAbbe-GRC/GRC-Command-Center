@@ -7,10 +7,10 @@ Third-Party Risk Management (TPRM) — Vendor Data Integration Assessment.
 Integration notes (reconciled to real code):
   - RBAC via the capability policy engine: authorize("TPRM_*").
     Capabilities are seeded in main.py lifespan.
-  - Tables auto-create via Base.metadata.create_all in init_db().
+  - Tables auto-create via Base.metadata.create_all in core/migrate.py (db-migrate service).
     Import this router in main.py BEFORE lifespan runs so the models
     are registered on Base.metadata.
-  - risk_acceptances immutability trigger is installed in init_db()
+  - risk_acceptances immutability trigger is installed by core/migrate.py
     using fn_prevent_immutability_violation().
 """
 
@@ -147,7 +147,7 @@ class StageResponse(Base):
 
 
 class RiskAcceptance(Base):
-    """Append-only. init_db() installs UPDATE/DELETE-blocking triggers."""
+    """Append-only. core/migrate.py installs UPDATE/DELETE/TRUNCATE-blocking triggers and the audit chain."""
     __tablename__ = "risk_acceptances"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     integration_id = Column(UUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False)
@@ -161,7 +161,7 @@ class RiskAcceptance(Base):
 
 
 class StageEvidenceLink(Base):
-    """Append-only. init_db() installs UPDATE/DELETE/TRUNCATE-blocking triggers."""
+    """Append-only. core/migrate.py installs UPDATE/DELETE/TRUNCATE-blocking triggers and the audit chain."""
     __tablename__ = "stage_evidence_links"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     integration_id = Column(UUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False)
