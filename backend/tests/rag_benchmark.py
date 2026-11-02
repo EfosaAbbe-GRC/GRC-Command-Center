@@ -6,6 +6,7 @@ Categorizes responses into ANSWERED, INSUFFICIENT_DATA, or ERROR.
 """
 import requests
 import json
+import re
 import time
 import os
 import sys
@@ -215,6 +216,158 @@ class _Token:
         return {"Authorization": f"Bearer {tok}"} if tok else None
 
 
+def _ask(token, query):
+    """One /chat call. Returns (outcome, latency, sources_count, answer, latency_counted).
+
+    `latency_counted` is False only when the request itself raised: the full run has never
+    added those latencies to `total_latency`, and archives stay comparable.
+    """
+    start_time = time.time()
+    counted = False
+    try:
+        headers = token.headers()
+        r = requests.post(f"{BASE_URL}/chat", json={"query": query}, headers=headers, timeout=60)
+        # Belt and braces: if the token still aged out (clock skew, a changed
+        # JWT_EXPIRE_MINUTES, an unusually slow query), re-auth once and retry rather
+        # than scoring an infrastructure failure as a result. The 401 itself never
+        # reached the LLM, so this costs no Groq tokens.
+        if r.status_code == 401:
+            retry_headers = token.headers(force=True)
+            if retry_headers:
+                r = requests.post(f"{BASE_URL}/chat", json={"query": query},
+                                  headers=retry_headers, timeout=60)
+        latency = round(time.time() - start_time, 2)
+        counted = True
+
+        if r.status_code != 200:
+            return f"ERROR ({r.status_code})", latency, 0, "", True
+        data = r.json()
+        answer = data.get("response", "")
+        sources_count = len(data.get("sources", []))
+
+        # Substring check, not startswith: the model sometimes leads with a
+        # preamble ("Based on the provided context:") and states
+        # INSUFFICIENT_DATA later for only part of a multi-part question --
+        # a strict prefix check let those slip through as false ANSWERED
+        # (found 2026-08-05, present in every prior run, see
+        # RAG_Benchmark_Report_v6.md and MEMORY.md).
+        # Checked BEFORE the INSUFFICIENT_DATA / length branches: an engine
+        # failure is neither a refusal nor an answer. /chat returns HTTP 200
+        # with the error in the BODY, so status_code cannot detect it, and the
+        # 44-char error string satisfied `len(answer) > 20` -- which scored 32
+        # rate-limit errors as correct and produced a fake 96% on 2026-08-17.
+        # See Benchmark_Scorer_Honesty_refactor.md.
+        if is_engine_failure(answer):
+            outcome = "ERROR (Engine Failure)"
+        elif "INSUFFICIENT_DATA" in answer:
+            outcome = "INSUFFICIENT_DATA"
+        elif len(answer) > 20:
+            outcome = "ANSWERED"
+        else:
+            outcome = "ERROR (Empty Response)"
+        return outcome, latency, sources_count, answer, True
+    except Exception:
+        return "ERROR (Timeout/Exc)", round(time.time() - start_time, 2), 0, "", counted
+
+
+def _count(summary, outcome):
+    if outcome == "ANSWERED":
+        summary["answered"] += 1
+    elif outcome == "INSUFFICIENT_DATA":
+        summary["insufficient_data"] += 1
+    else:
+        summary["error"] += 1
+
+
+# --- Repeated-sample subset runs (Golden_Mapping_Leakage_v12_refactor.md §6) -----------------
+# Generation is sampled (temperature 0.7, the ChatGroq default), so one run per version can't
+# separate an effect from chance. These ask chosen questions several times. Test tooling only:
+# the same /chat call, scoring and pacing as the full run. A subset result is written to its
+# own file and is never a full-run measurement.
+GENERATION_MODEL = "openai/gpt-oss-120b"   # core/rag.py GROQ_MODEL
+GENERATION_TEMPERATURE = 0.7               # ChatGroq default (verified in the image, 1.1.3)
+
+
+def subset_config(env=None, cwd=None):
+    """None for a full run, else {ids, repeat, label, output}. Raises ValueError on bad input."""
+    env = os.environ if env is None else env
+    only = env.get("GRC_BENCH_ONLY", "").strip()
+    repeat_s = env.get("GRC_BENCH_REPEAT", "").strip()
+    label = env.get("GRC_BENCH_LABEL", "").strip()
+    if not only:
+        if repeat_s or label:
+            raise ValueError("GRC_BENCH_REPEAT/GRC_BENCH_LABEL need GRC_BENCH_ONLY")
+        return None
+    try:
+        ids = [int(x) for x in only.split(",")]
+        repeat = int(repeat_s) if repeat_s else 1
+    except ValueError:
+        raise ValueError(f"GRC_BENCH_ONLY / GRC_BENCH_REPEAT must be numbers: {only!r} {repeat_s!r}")
+    if any(not 1 <= n <= len(QUERIES) for n in ids):
+        raise ValueError(f"question ids must be 1-{len(QUERIES)}: {ids}")
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"duplicate question ids: {ids}")
+    if repeat < 1:
+        raise ValueError("GRC_BENCH_REPEAT must be at least 1")
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", label):
+        raise ValueError("GRC_BENCH_LABEL is required: letters, digits, _ and - only")
+    output = os.path.join(str(cwd) if cwd else os.getcwd(), f"rag_benchmark_repeats_{label}.json")
+    if os.path.exists(output):
+        raise ValueError(f"{output} exists; pick a new GRC_BENCH_LABEL (archives are never overwritten)")
+    return {"ids": ids, "repeat": repeat, "label": label, "output": output}
+
+
+def _save_subset(cfg, results, complete):
+    planned = len(cfg["ids"]) * cfg["repeat"]
+    summary = {
+        "subset": True,
+        "valid_full_run": False,
+        "label": cfg["label"],
+        "ids": cfg["ids"],
+        "repeat": cfg["repeat"],
+        "planned": planned,
+        "completed": len(results),
+        "complete": bool(complete and len(results) == planned),
+        "errors": sum(1 for r in results if r["outcome"].startswith("ERROR")),
+        "model": GENERATION_MODEL,
+        "temperature": GENERATION_TEMPERATURE,
+        "pacing_seconds": PACING_SECONDS,
+        "note": "Repeated samples of chosen questions. Not a benchmark score; never cite as accuracy.",
+    }
+    with open(cfg["output"], "w") as f:
+        json.dump({"summary": summary, "results": results}, f, indent=4)
+
+
+def run_subset(cfg):
+    token = _Token()
+    if not token.get():
+        sys.exit(1)
+    plan = [(s, n) for s in range(1, cfg["repeat"] + 1) for n in cfg["ids"]]
+    print(f"\nSubset run '{cfg['label']}': questions {cfg['ids']} x {cfg['repeat']} "
+          f"= {len(plan)} calls, pacing {PACING_SECONDS}s -> {cfg['output']}\n")
+    results = []
+    consecutive_errors = 0
+    for k, (sample, n) in enumerate(plan):
+        outcome, latency, sources_count, answer, _ = _ask(token, QUERIES[n - 1])
+        g, g_detail = grade(n, outcome, answer)
+        results.append({"id": n, "sample": sample, "query": QUERIES[n - 1], "outcome": outcome,
+                        "grade": g, "grade_detail": g_detail, "latency": latency,
+                        "sources_count": sources_count, "answer": answer})
+        print(f"s{sample} #{n:<3} | {outcome:<18} | {g:<8} | {latency:<8} | {sources_count}", flush=True)
+        _save_subset(cfg, results, complete=False)
+        consecutive_errors = consecutive_errors + 1 if outcome.startswith("ERROR") else 0
+        if consecutive_errors >= 3:
+            print("\n!! ABORTING -- 3 consecutive failures. Check /api/v1/readiness and the logs.")
+            break
+        if PACING_SECONDS > 0 and k < len(plan) - 1:
+            time.sleep(PACING_SECONDS)
+    _save_subset(cfg, results, complete=True)
+    errors = sum(1 for r in results if r["outcome"].startswith("ERROR"))
+    print(f"\nSUBSET DONE: {len(results)}/{len(plan)} calls, {errors} errors -> {cfg['output']}")
+    if errors or len(results) != len(plan):
+        sys.exit(1)
+
+
 def run_benchmark():
     token = _Token()
     if not token.get():
@@ -230,73 +383,18 @@ def run_benchmark():
         "error": 0,
         "total_latency": 0
     }
-    
+
     print(f"\n🚀 Starting RAG Benchmark ({len(QUERIES)} queries, "
           f"pacing {PACING_SECONDS}s between queries)...\n")
     print(f"{'#':<3} | {'Outcome':<18} | {'Latency':<8} | {'Sources':<8}")
     print("-" * 50)
-    
+
     for i, query in enumerate(QUERIES):
-        start_time = time.time()
-        outcome = "ERROR"
-        latency = 0
-        sources_count = 0
-        answer = ""
-        
-        try:
-            headers = token.headers()
-            r = requests.post(f"{BASE_URL}/chat", json={"query": query}, headers=headers, timeout=60)
-            # Belt and braces: if the token still aged out (clock skew, a changed
-            # JWT_EXPIRE_MINUTES, an unusually slow query), re-auth once and retry rather
-            # than scoring an infrastructure failure as a result. The 401 itself never
-            # reached the LLM, so this costs no Groq tokens.
-            if r.status_code == 401:
-                retry_headers = token.headers(force=True)
-                if retry_headers:
-                    r = requests.post(f"{BASE_URL}/chat", json={"query": query},
-                                      headers=retry_headers, timeout=60)
-            latency = round(time.time() - start_time, 2)
+        outcome, latency, sources_count, answer, latency_counted = _ask(token, query)
+        if latency_counted:
             summary["total_latency"] += latency
-            
-            if r.status_code == 200:
-                data = r.json()
-                answer = data.get("response", "")
-                sources = data.get("sources", [])
-                sources_count = len(sources)
-                
-                # Substring check, not startswith: the model sometimes leads with a
-                # preamble ("Based on the provided context:") and states
-                # INSUFFICIENT_DATA later for only part of a multi-part question --
-                # a strict prefix check let those slip through as false ANSWERED
-                # (found 2026-08-05, present in every prior run, see
-                # RAG_Benchmark_Report_v6.md and MEMORY.md).
-                # Checked BEFORE the INSUFFICIENT_DATA / length branches: an engine
-                # failure is neither a refusal nor an answer. /chat returns HTTP 200
-                # with the error in the BODY, so status_code cannot detect it, and the
-                # 44-char error string satisfied `len(answer) > 20` -- which scored 32
-                # rate-limit errors as correct and produced a fake 96% on 2026-08-17.
-                # See Benchmark_Scorer_Honesty_refactor.md.
-                if is_engine_failure(answer):
-                    outcome = "ERROR (Engine Failure)"
-                    summary["error"] += 1
-                elif "INSUFFICIENT_DATA" in answer:
-                    outcome = "INSUFFICIENT_DATA"
-                    summary["insufficient_data"] += 1
-                elif len(answer) > 20:
-                    outcome = "ANSWERED"
-                    summary["answered"] += 1
-                else:
-                    outcome = "ERROR (Empty Response)"
-                    summary["error"] += 1
-            else:
-                outcome = f"ERROR ({r.status_code})"
-                summary["error"] += 1
-                
-        except Exception as e:
-            latency = round(time.time() - start_time, 2)
-            outcome = f"ERROR (Timeout/Exc)"
-            summary["error"] += 1
-            
+        _count(summary, outcome)
+
         # Log to list. `outcome` is the legacy refused/answered call, kept unchanged so every
         # archive stays comparable; `grade` is what the answer actually got right.
         g, g_detail = grade(i + 1, outcome, answer)
@@ -405,4 +503,11 @@ def run_benchmark():
         sys.exit(1)
 
 if __name__ == "__main__":
-    run_benchmark()
+    try:
+        _subset = subset_config()
+    except ValueError as e:
+        sys.exit(f"Bad subset settings: {e}")
+    if _subset:
+        run_subset(_subset)
+    else:
+        run_benchmark()
