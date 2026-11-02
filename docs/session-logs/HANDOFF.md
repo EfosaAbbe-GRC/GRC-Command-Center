@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-10-31 (secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green). 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -81,7 +81,7 @@ during execution, including the PII outage: §11 rows 15–24.
 
 **Next, in order (sequential):**
 1. ~~D1a~~ **DONE 2026-10-28.** The AI now acts on GitHub as **`Grcbot2026`** (write, not admin;
-   classic token, **expires 2027-01-26**). The owner's admin login should be gone from this machine (**2026-10-31: `gh` still lists it, inactive; owner logs it out**), so
+   classic token, regenerated 2026-11-01, **expires 2027-01-31**). The owner's admin login is gone from this machine (**logged out 2026-11-01**), so
    the owner approves, merges and changes settings **in the browser**. Commits from this clone
    carry the bot's identity. **Until Phase 2's branch protection is on, nothing enforces "no
    direct pushes to `main`" yet: the AI pushes branches and opens PRs only.** Why classic, not
@@ -89,6 +89,8 @@ during execution, including the PII outage: §11 rows 15–24.
 2. **EXECUTE Phase 1** (`.github/workflows/security.yml`) — needs the owner's go.
 3. **EXECUTE Phase 2** (Dependabot, branch protection, CODEOWNERS, SECURITY.md, private
    vulnerability reporting, non-provider secret patterns) — owner approves each setting.
+   **Proof it's needed (2026-11-01):** PR #2 was merged from a browser still signed in as the bot,
+   and GitHub allowed it. Branch protection must require the owner's approval before a merge.
 4. ~~Saturday's security change then goes through the pipeline as its first gated PR.~~ Phases 1–2
    weren't done midweek, so it went in as an ordinary bot PR on 2026-10-31 (its tests run locally).
 

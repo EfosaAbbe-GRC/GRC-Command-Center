@@ -1,3 +1,23 @@
+# Session Log — 2026-11-01 (owner's credential clean-up; PR #2 merged)
+
+Guided step by step; the owner did each step, the AI verified each one.
+- **Bot token regenerated** (it was the stray credential in the old `.env`). `gh` re-logged with the
+  new one; the API confirms the bot, same scopes, new expiry **2027-01-31**.
+- **PR #2 merged** (`488a653`). GitHub records the bot as the merger: the browser was still signed
+  in as the bot. Nothing stops the bot from merging its own PRs today. Phase 2's branch protection
+  (owner approval required) is the fix; HANDOFF's Phase 2 item now cites this.
+- **Groq key reissued** into the secrets file; the old Command Center key deleted at Groq (the
+  owner's other project has its own key, untouched). Both backends recreated; each container's key
+  matched the file by hash, both healthy; Groq's `/models` accepted it (no tokens used, so v12's
+  24-hour gap is unaffected).
+- Old `.env` and `backend/.env` deleted from OneDrive's online recycle bin; still absent locally.
+- `gh auth logout` for the owner: only the bot remains.
+- Open: a password-manager copy of the secrets file (owner has none set up; low stakes, every value
+  can be reset from this machine); revoke the unused `GOOGLE_API_KEY`.
+- Docs: HANDOFF's baseline table had still shown the 10-27 numbers; corrected to the 10-31 run.
+
+---
+
 # Session Log — 2026-10-31 ("Who could have changed the numbers?" — answered)
 
 **Outcome:** `Secrets_DB_Privilege_refactor.md` executed on the owner's EXECUTE, then the Groq

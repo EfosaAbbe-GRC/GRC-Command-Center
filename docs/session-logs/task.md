@@ -18,11 +18,16 @@
 - [x] Verified: posture 39/39 (test), negative boots refused, fresh-volume drill, backup restore drill,
   **pytest 186 passed / 6 skipped (nothing deselected)**, smoke 44/44 test + dev, `test_pii` 23/23 dev.
   This also closes HANDOFF §0 (the 2026-10-25 hardening's Groq checks).
-- [ ] **Owner:** reissue the Groq API key and paste it into the secrets file; revoke the stray credential
-  found in the old `.env` (see the session log); delete the old `.env` from OneDrive's recycle bin and version
-  history; copy the secrets file's values into the password manager; `gh auth logout -u <owner>`.
-- [ ] Next session: confirm the repo `.env` is still gone.
-- [ ] Merge the PR in the browser.
+- [x] **Owner, 2026-11-01:** the stray credential (the bot's token) regenerated; Groq key reissued into the
+  secrets file and the old key deleted (both backends recreated, the key verified with a no-token `/models`
+  call); old `.env` and `backend/.env` deleted from OneDrive's recycle bin; `gh auth logout -u <owner>` done.
+- [ ] **Owner:** keep a copy of the secrets file in a password manager (none set up yet). Low stakes: every
+  value can be reset or reissued from this machine; it saves a recovery chore.
+- [ ] **Owner:** revoke the unused `GOOGLE_API_KEY` that was in the old `.env` (its Cloud project only).
+- [x] 2026-11-01: repo `.env` and `backend/.env` still gone.
+- [x] PR #2 merged 2026-11-01 (`488a653`). **GitHub records the merge as the bot's**: the browser used was
+  signed in as the bot. Nothing enforces owner-only merges yet; Phase 2's branch protection (required
+  owner approval) closes that.
 
 ## ✅ DONE 2026-10-27 — DevSecOps Phase 0 (groundwork); PII outage found and fixed
 
@@ -48,8 +53,8 @@
   `repo`/`read:org`/`workflow` expiring **2027-01-26** (fine-grained can't write to a repo the
   bot doesn't own: pipeline draft §11 row 29); ~~owner's admin login removed from this machine~~
   **Corrected 2026-10-31:** `gh auth status` still lists the owner's account (inactive; the bot is
-  active). Owner: `gh auth logout -u <owner>` to finish D1a.
-- [ ] Renew the bot token before **2027-01-26**.
+  active). Owner: `gh auth logout -u <owner>` to finish D1a. **Done 2026-11-01:** only the bot remains.
+- [ ] Renew the bot token before **2027-01-31** (regenerated 2026-11-01; was 2027-01-26).
 - [ ] EXECUTE Phase 1 (CI workflow), then Phase 2 (repo guardrails).
 - [ ] Later: CPU-only `torch` (after the v12 verdict, 11-07); pip 24.0 in the image.
 

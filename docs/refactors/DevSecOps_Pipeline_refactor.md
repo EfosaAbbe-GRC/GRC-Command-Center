@@ -187,7 +187,7 @@ That avoids alert fatigue without leaving the gate open-ended.
      **DONE 2026-10-28 (owner at the keyboard, guided):** bot account **`Grcbot2026`** (2FA on),
      repo collaborator (write, not admin). The drafted "fine-grained token" was **not possible**
      (§11 row 29), so it holds a **classic** token, scopes `repo` + `read:org` + `workflow`,
-     **expires 2027-01-26** (90 days; renew before then). Its reach is this repo only because
+     **expires 2027-01-26** (90 days; renew before then; *regenerated 2026-11-01, now expires 2027-01-31*). Its reach is this repo only because
      **the bot is never added to any other repo** (standing condition). The owner's admin login
      was removed from this machine's `gh` and credential store, so the AI has no stored admin
      credential; the owner approves, merges and changes settings in the browser. Commits from
