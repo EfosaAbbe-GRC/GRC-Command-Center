@@ -22,10 +22,10 @@ reports `pii_redaction`.
 
 | | Status | Last verified |
 | --- | --- | --- |
-| `smoke_test.py` (test stack, `:8002`) | **44/44** on 2026-09-29; re-run 2026-10-04 hit the Groq **daily** cap (43/44) — re-check on a fresh day | 2026-09-29 |
-| `smoke_test.py` (dev, `:8001`) | **44/44** (chat check now waits out the auditor's Groq minute) | 2026-10-04 |
-| `test_pii.py` (in the container) | **23/23** on both the test and dev stacks | 2026-10-27 |
-| `pytest` (from `backend/`) | **107 passed, 6 skipped**, only the one Groq test deselected (`test_interview_sim.py::test_respond_grades_and_never_fabricates_on_failure`); with it, 108 expected. Unit-only (`-m "not integration"`, no stack or secrets): **58 passed, 6 skipped** | 2026-10-27 |
+| `smoke_test.py` (test stack, `:8002`) | **44/44** | 2026-10-31 |
+| `smoke_test.py` (dev, `:8001`) | **44/44** (chat check waits out the auditor's Groq minute) | 2026-10-31 |
+| `test_pii.py` (in the container) | **23/23** on dev | 2026-10-31 |
+| `pytest` (from `backend/`) | **186 passed, 6 skipped**, nothing deselected (includes the security change's posture, repo-policy and creds tests) | 2026-10-31 |
 | `test_image_hygiene.py` (`GRC_IMAGE=…`, `-m image`) | **5/5** on the Phase 0 image | 2026-10-27 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
 | RAG, latest run | v11: legacy 96% (48/50), graded 96% (48/50) — **not citable as accuracy** | 2026-10-25 |
