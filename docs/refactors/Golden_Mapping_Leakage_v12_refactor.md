@@ -1,6 +1,8 @@
 # v12: remove benchmark questions copied into golden-mapping triggers
 
-**Status:** DRAFT 2026-10-26, awaiting EXECUTE (GOVERNANCE.md §A). Decided 2026-10-12 (owner: "go
+**Status:** **Part 1 EXECUTED 2026-11-01** (owner's EXECUTE; §9): guard and harness tests, before-samples,
+data change. Full run **Sat 2026-11-07**, after-samples **Sun 11-08** (moved one weekend: the
+before-samples slipped from 10-31). Drafted 2026-10-26 (GOVERNANCE.md §A). Decided 2026-10-12 (owner: "go
 with the recommendation"); first proposed in `Golden_Mapping_Enumerations_refactor.md` Decision 2
 (2026-09-27). **Benchmark: Sunday 2026-11-01** (weekend-only Groq budget). Built shift-left (owner's
 standing rule): the risk first, a failing guard test before the change, and a pre-registered
@@ -67,7 +69,7 @@ to the repo's** (SHA-256), as v10 did.
 
 ## 5. Pre-registered outcomes (written before the run, so they can't be fitted afterwards)
 
-For each of #16, #19, #49, Sunday's `audit_logs` show whether the entry still fired (through its
+For each of #16, #19, #49, the full run's `audit_logs` show whether the entry still fired (through its
 remaining paraphrased triggers).
 
 **What can be measured, corrected in the 2026-10-26 self-review:**
@@ -118,20 +120,20 @@ A unit test comes first: argument parsing, the refusal to overwrite, and the out
 
 **Pre-registered decision rule:** a question's outcome counts as **real** only if it holds in **≥ 2
 of 3** samples on *both* sides of the change. Otherwise it's reported as **inconclusive (sampling
-noise)**. Sunday's report is **provisional**; the 3-v-3 verdict lands the following Saturday.
+noise)**. The full run's report is **provisional**; the 3-v-3 verdict lands the next day (11-08).
 
 | Sample set | When | Groq cost (≈) |
 | --- | --- | --- |
-| **Before:** #16, #19, #49, #17, #21 × 3, triggers still present | Sat 10-31, morning, after the security verification | ~50k |
-| v12 change applied (data only, rebuild, hash check) | Sat 10-31, after the samples | 0 |
-| **After, sample 1:** full 50-question v12 run | Sun 11-01, **≥ 24 h after Saturday's last Groq call** (in case the daily window rolls) | 150–200k |
-| **After, samples 2–3:** the 5 targets × 2 | Sat 11-07, morning | ~35k |
+| **Before:** #16, #19, #49, #17, #21 × 3, triggers still present | ~~Sat 10-31~~ **done Sun 11-01** | ~50k |
+| v12 change applied (data only, rebuild, hash check) | ~~Sat 10-31~~ **done Sun 11-01** | 0 |
+| **After, sample 1:** full 50-question v12 run | ~~Sun 11-01~~ **Sat 11-07** (≥ 24 h after the last Groq call) | 150–200k |
+| **After, samples 2–3:** the 5 targets × 2 | ~~Sat 11-07~~ **Sun 11-08** | ~35k |
 
 **Recorded with every run:** model `openai/gpt-oss-120b`, temperature 0.7 (library default),
 pacing. *Not v12's variable:* moving to the vendor-recommended temperature 1.0, or setting it
 explicitly, is a separate one-variable change for later.
 
-## 7. Sunday's run
+## 7. The full run (Saturday 11-07; was Sunday 11-01)
 
 **Prerequisite:** Saturday's security change touches secrets and DB roles, not retrieval. Confirm no
 change under `backend/core/rag.py`, the prompt, the index or `golden_mappings.json` other than this
@@ -158,3 +160,37 @@ draft's, so v12 stays one variable.
 ## Rollback
 
 `git revert` plus a rebuild. It's data-only.
+
+## 9. Execution record, part 1 (2026-11-01, owner's EXECUTE)
+
+**Red first.** `test_golden_mappings_hygiene.py`: the copy and near-copy tests failed on exactly
+§1's three triggers (#16, #19, #49, overlap 1.00); the other two passed. `test_bench_subset.py`
+failed at import (no `subset_config`).
+
+**Harness (§6).** `GRC_BENCH_ONLY` / `GRC_BENCH_REPEAT` / `GRC_BENCH_LABEL` (label required);
+output `rag_benchmark_repeats_<label>.json`, refused if it exists, marked `subset: true`,
+`valid_full_run: false`, no accuracy figure; records model and temperature (0.7, read from the
+image's `ChatGroq`, langchain-groq 1.1.3). The full run now shares `_ask()` with the subset run;
+a parametrised test pins its scoring and latency accounting to the old behaviour.
+
+**Prerequisite (§7).** Since v11: `rag.py` lost only dead code (`ingest_documents`, d208c0a);
+the 10-31 security change touched start-up, roles and readiness, not retrieval. One variable holds.
+
+**Before-samples** (dev, old image; Groq preflight 999/1,000 requests left):
+
+| | s1 | s2 | s3 | Golden context (audit_logs) |
+| --- | --- | --- | --- | --- |
+| #16 | COMPLETE | COMPLETE | COMPLETE | EU AI Act ×1 |
+| #19 | answered | answered | answered | EU AI Act ×1 |
+| #49 | answered | answered | answered | EU AI Act ×1 |
+| #17 | answered | answered | answered | EU AI Act ×2 |
+| #21 | answered | answered | answered | EU AI Act ×1 |
+
+15/15, 0 errors. Firing matches §2. Archive: `docs/reports/rag_benchmark_repeats_v12_before.json`.
+
+**Change (§4).** Three trigger lines deleted (entries keep 3 / 3 / 2). Guard tests green. Both
+backends rebuilt; container `golden_mappings.json` SHA-256 = repo's (`597b6908…`); dev readiness
+6/6. Full pytest **211 passed, 6 skipped** (186 + the 25 new tests; nothing deselected).
+**Found:** a git rebase rewrote the working copy with CRLF (`core.autocrlf`), which would have
+broken the hash check on the next rebuild; `.gitattributes` now pins `backend/data/*.json` to LF.
+

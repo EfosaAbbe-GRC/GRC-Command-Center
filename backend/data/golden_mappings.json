@@ -3,7 +3,6 @@
     "id": "EU_AI_ACT_RISK_TIERS",
     "framework": "EU AI Act",
     "trigger_phrases": [
-      "What are the four risk categories defined in the EU AI Act?",
       "What are the risk tiers under the EU AI Act?",
       "How does the EU AI Act classify AI systems by risk level?",
       "unacceptable risk high risk limited risk minimal risk EU AI Act"
@@ -21,7 +20,6 @@
     "id": "EU_AI_ACT_GPAI_GENERATIVE",
     "framework": "EU AI Act",
     "trigger_phrases": [
-      "How does the EU AI Act handle generative AI like ChatGPT?",
       "What obligations apply to general-purpose AI models under the EU AI Act?",
       "How does the EU AI Act regulate foundation models?",
       "EU AI Act ChatGPT GPT-4 generative AI regulation"
@@ -37,7 +35,6 @@
     "id": "EU_AI_ACT_OPEN_SOURCE",
     "framework": "EU AI Act",
     "trigger_phrases": [
-      "How does the EU AI Act impact open-source AI development?",
       "Are open-source AI models exempt from the EU AI Act?",
       "EU AI Act open source licence exemption"
     ],

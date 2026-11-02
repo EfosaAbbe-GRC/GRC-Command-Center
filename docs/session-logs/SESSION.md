@@ -15,6 +15,13 @@ Guided step by step; the owner did each step, the AI verified each one.
 - Open: a password-manager copy of the secrets file (owner has none set up; low stakes, every value
   can be reset from this machine); revoke the unused `GOOGLE_API_KEY`.
 - Docs: HANDOFF's baseline table had still shown the 10-27 numbers; corrected to the 10-31 run.
+- **v12 part 1 EXECUTED (owner's go, evening):** guard tests red on exactly the 3 copied triggers,
+  subset harness (`GRC_BENCH_ONLY/REPEAT/LABEL`) test-first, before-samples 15/15 on the old image
+  (#16 complete 3/3; mappings fired as §2 measured), then the data change; both backends rebuilt,
+  container hash = repo's, readiness 6/6, pytest 211/6. The schedule moved one weekend: full run
+  Sat 11-07, after-samples Sun 11-08. Found: `core.autocrlf` rewrote the mapping file to CRLF on a
+  rebase (would break the hash check); `.gitattributes` pins `backend/data/*.json` to LF.
+  Details: the draft's §9.
 
 ---
 

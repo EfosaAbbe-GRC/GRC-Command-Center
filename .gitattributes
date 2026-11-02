@@ -5,3 +5,5 @@
 
 # Shell scripts run inside Linux containers (docker/db-init/): CRLF would break them.
 *.sh text eol=lf
+# Baked into the image and hash-checked against the container (v10, v12): keep bytes stable on Windows.
+backend/data/*.json text eol=lf
