@@ -55,17 +55,22 @@ The owner's other Groq-backed project uses the shared organisation budget on wee
 - **Mon–Fri (no Groq):** draft only. Write the v12 draft (below) and the DevSecOps pipeline draft.
 - **✅ Done Saturday 2026-10-31 (afternoon, not morning):** the security change (`Secrets_DB_Privilege_refactor.md`,
   now public) and the Groq verification pass. **Last Groq call ≈ 16:50 EDT.** v12's before-samples still need
-  their own EXECUTE.
+  their own EXECUTE (done 11-01).
 - ~~**Saturday 2026-10-31:** EXECUTE a further security change the owner holds privately (drafted
   2026-10-25; it rebuilds the stack, so it goes first). Then run **one** Groq verification pass
   covering it and §0 below. **Do it in the morning:** Groq exposes no daily-token header, so if
   the window is rolling, an early start gives Sunday the fullest budget.
   After verification, still Saturday morning: v12's **before** samples (5 target questions × 3,
   ~50k tokens), then apply the v12 data change (no Groq).~~
-- **Sunday 2026-11-01:** the full v12 benchmark, **≥ 24 h after Saturday's last Groq call**. Its
+- **✅ Done Sunday 2026-11-01 (evening, owner's EXECUTE):** v12 part 1. Harness + guard tests
+  (red on the 3 copies → green), **before** samples 15/15 (`docs/reports/rag_benchmark_repeats_v12_before.json`),
+  then the data change; both backends rebuilt, container mapping hash = repo's. **Last Groq call
+  ≈ 21:30 EST 11-01** (end of the full pytest run). The schedule moved one weekend (the before-samples slipped from Saturday):
+- **Saturday 2026-11-07:** the full v12 benchmark (dev, `:8001`; preflight per §7 of the draft). Its
   report is provisional.
-- **Saturday 2026-11-07:** v12's **after** samples (5 × 2, ~35k) → the 3-v-3 verdict. Why repeats
-  and not temperature 0: `Golden_Mapping_Leakage_v12_refactor.md` §6 (vendor guidance).
+- **Sunday 2026-11-08:** v12's **after** samples (5 × 2, ~35k, `GRC_BENCH_LABEL=v12_after`) → the
+  3-v-3 verdict. Why repeats and not temperature 0: `Golden_Mapping_Leakage_v12_refactor.md` §6.
+  **No retrieval, prompt, index or mapping change until then.**
 
 ## ▶ DevSecOps pipeline: Phase 0 DONE 2026-10-27; Phases 1–2 next (weekday work, no Groq)
 

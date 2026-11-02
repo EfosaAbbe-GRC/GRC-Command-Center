@@ -56,7 +56,7 @@
   active). Owner: `gh auth logout -u <owner>` to finish D1a. **Done 2026-11-01:** only the bot remains.
 - [ ] Renew the bot token before **2027-01-31** (regenerated 2026-11-01; was 2027-01-26).
 - [ ] EXECUTE Phase 1 (CI workflow), then Phase 2 (repo guardrails).
-- [ ] Later: CPU-only `torch` (after the v12 verdict, 11-07); pip 24.0 in the image.
+- [ ] Later: CPU-only `torch` (after the v12 verdict, 11-08); pip 24.0 in the image.
 
 ## ✅ DONE 2026-10-25 — v11 benchmark: personal files removed (criterion not met, by design)
 
@@ -75,7 +75,8 @@
 - [x] **Clarity cleanup EXECUTED** (`Clarity_Cleanup_refactor.md`): skills retired, dead code and
   scripts removed, stale strings fixed, launcher repaired.
 - [ ] Follow-up: point `create_snapshot.py` at the `grc-faiss` volume instead of a local folder.
-- [ ] **v12 drafted 2026-10-26** (`Golden_Mapping_Leakage_v12_refactor.md`): awaiting EXECUTE, run Sun 11-01.
+- [x] **v12 part 1 EXECUTED 2026-11-01** (`Golden_Mapping_Leakage_v12_refactor.md` §9): guard + harness tests, before-samples 15/15, data change, both backends rebuilt (hash = repo).
+- [ ] v12 full benchmark **Sat 11-07**; after-samples **Sun 11-08** → 3-v-3 verdict.
 - [x] **Answered 2026-10-26:** `rag.py` downloads the model from Hugging Face, unpinned, on the
   **first question after each container start** (lazy load in `query()`). There are no model files
   on disk after a rebuild, and the container reaches huggingface.co. Fix in
