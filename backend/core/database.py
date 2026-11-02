@@ -1,7 +1,7 @@
 """
 GRC Command Center — PostgreSQL 16 Database Core
 Async-first architecture using SQLAlchemy 2.0 + asyncpg.
-Enforces SECURITY DEFINER immutability on audit_logs and evidence_chain.
+Connects as grc_app; the immutability triggers and audit chain are installed by core/migrate.py.
 """
 import os
 import datetime
@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.pool import NullPool
 from core.logger import logger
 from core.config import settings
-from core.models import Base, AuditLog, EvidenceChain, User, RefreshToken, SecurityEvent, Policy, AgentRun
+from core.models import AuditLog, EvidenceChain, User, RefreshToken, SecurityEvent, Policy, AgentRun
 
 # ─── Engine Setup ────────────────────────────────────────────────────────────
 DATABASE_URL = settings.DATABASE_URL
@@ -100,121 +100,9 @@ class AuditLogger:
     sync wrappers (for middleware, background tasks, and lifespan seeding).
     """
 
-    # ─── Schema Initialization ────────────────────────────────────────────────
-
-    async def init_db(self):
-        """Creates all tables and installs PL/pgSQL immutability triggers."""
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-
-                logger.info("Database: Installing SECURITY DEFINER immutability triggers...")
-
-                # 1. Shared protection function
-                await conn.execute(text("""
-                    CREATE OR REPLACE FUNCTION fn_prevent_immutability_violation()
-                    RETURNS TRIGGER AS $$
-                    BEGIN
-                        RAISE EXCEPTION 'SECURITY: Audit record is immutable. Operation denied.';
-                    END;
-                    $$ LANGUAGE plpgsql SECURITY DEFINER;
-                """))
-
-                # 2. Audit logs — block UPDATE and DELETE
-                await conn.execute(text("""
-                    DO $$ BEGIN
-                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_audit_no_update') THEN
-                            CREATE TRIGGER trg_audit_no_update BEFORE UPDATE ON audit_logs
-                            FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
-                        END IF;
-                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_audit_no_delete') THEN
-                            CREATE TRIGGER trg_audit_no_delete BEFORE DELETE ON audit_logs
-                            FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
-                        END IF;
-                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_audit_no_truncate') THEN
-                            CREATE TRIGGER trg_audit_no_truncate BEFORE TRUNCATE ON audit_logs
-                            FOR EACH STATEMENT EXECUTE FUNCTION fn_prevent_immutability_violation();
-                        END IF;
-                    END $$;
-                """))
-
-                # 3. Evidence chain — block UPDATE and DELETE
-                await conn.execute(text("""
-                    DO $$ BEGIN
-                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_evidence_no_update') THEN
-                            CREATE TRIGGER trg_evidence_no_update BEFORE UPDATE ON evidence_chain
-                            FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
-                        END IF;
-                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_evidence_no_delete') THEN
-                            CREATE TRIGGER trg_evidence_no_delete BEFORE DELETE ON evidence_chain
-                            FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
-                        END IF;
-                        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_evidence_no_truncate') THEN
-                            CREATE TRIGGER trg_evidence_no_truncate BEFORE TRUNCATE ON evidence_chain
-                            FOR EACH STATEMENT EXECUTE FUNCTION fn_prevent_immutability_violation();
-                        END IF;
-                    END $$;
-                """))
-
-                # 4. Risk acceptances (TPRM) — block UPDATE and DELETE.
-                # Reuses fn_prevent_immutability_violation(); guarded so it is a
-                # no-op until the TPRM models have been registered/created.
-                await conn.execute(text("""
-                    DO $$ BEGIN
-                        IF EXISTS (SELECT 1 FROM information_schema.tables
-                                   WHERE table_name = 'risk_acceptances') THEN
-                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_risk_acc_no_update') THEN
-                                CREATE TRIGGER trg_risk_acc_no_update BEFORE UPDATE ON risk_acceptances
-                                FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
-                            END IF;
-                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_risk_acc_no_delete') THEN
-                                CREATE TRIGGER trg_risk_acc_no_delete BEFORE DELETE ON risk_acceptances
-                                FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
-                            END IF;
-                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_risk_acc_no_truncate') THEN
-                                CREATE TRIGGER trg_risk_acc_no_truncate BEFORE TRUNCATE ON risk_acceptances
-                                FOR EACH STATEMENT EXECUTE FUNCTION fn_prevent_immutability_violation();
-                            END IF;
-                        END IF;
-                    END $$;
-                """))
-
-                # 5. Stage evidence links (TPRM) — block UPDATE and DELETE/TRUNCATE.
-                # Reuses fn_prevent_immutability_violation(); guarded so it is a
-                # no-op until the TPRM models have been registered/created.
-                await conn.execute(text("""
-                    DO $$ BEGIN
-                        IF EXISTS (SELECT 1 FROM information_schema.tables
-                                   WHERE table_name = 'stage_evidence_links') THEN
-                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_stage_evidence_no_update') THEN
-                                CREATE TRIGGER trg_stage_evidence_no_update BEFORE UPDATE ON stage_evidence_links
-                                FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
-                            END IF;
-                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_stage_evidence_no_delete') THEN
-                                CREATE TRIGGER trg_stage_evidence_no_delete BEFORE DELETE ON stage_evidence_links
-                                FOR EACH ROW EXECUTE FUNCTION fn_prevent_immutability_violation();
-                            END IF;
-                            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_stage_evidence_no_truncate') THEN
-                                CREATE TRIGGER trg_stage_evidence_no_truncate BEFORE TRUNCATE ON stage_evidence_links
-                                FOR EACH STATEMENT EXECUTE FUNCTION fn_prevent_immutability_violation();
-                            END IF;
-                        END IF;
-                    END $$;
-                """))
-
-                # 6. Widen the stagestatus enum for values added after this type was
-                # first created (TPRM 2.4: NOT_APPLICABLE). create_all() only creates
-                # missing enum types, it never ALTERs an existing one to add a new
-                # label -- and ALTER TYPE ... ADD VALUE cannot run inside a DO block
-                # or function body, so this must stay a plain top-level statement.
-                await conn.execute(text(
-                    "ALTER TYPE stagestatus ADD VALUE IF NOT EXISTS 'NOT_APPLICABLE';"
-                ))
-
-            logger.info("Database: PostgreSQL initialization and hardening complete.")
-        except Exception as e:
-            logger.error("Database: Initialization failed", error=str(e))
-            raise
+    # Schema setup moved to core/migrate.py (2026-10-31): it runs once per deploy as grc_owner,
+    # in the db-migrate service, and fails closed. The backend connects as grc_app and only
+    # checks its posture at startup (core.security_config.assert_db_posture).
 
     # ─── Audit Logging ────────────────────────────────────────────────────────
 

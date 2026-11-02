@@ -59,3 +59,57 @@ def test_error_names_the_setting_but_never_the_value():
     msg = str(exc.value)
     assert "ADMIN_PASSWORD" in msg and "VIEWER_PASSWORD" in msg
     assert "grc-admin-2026" not in msg and "tiny" not in msg
+
+
+# ── Database posture guard (Secrets_DB_Privilege_refactor.md §5.4) ──────────────────────
+from core.security_config import PROTECTED_TABLES, assert_db_posture_facts, db_posture_problems  # noqa: E402
+
+
+def facts(**overrides):
+    base = {
+        "flags": {"rolsuper": False, "rolcreaterole": False, "rolcreatedb": False, "rolbypassrls": False},
+        "owned_objects": 0,
+        "tables": {t: {"update": True, "delete": True, "truncate": True, "chain": True}
+                   for t in PROTECTED_TABLES},
+    }
+    base.update(overrides)
+    return base
+
+
+def test_least_privilege_posture_passes():
+    assert db_posture_problems(facts()) == []
+    assert_db_posture_facts(facts())  # does not raise
+
+
+@pytest.mark.parametrize("flag", ["rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"])
+def test_privileged_role_is_refused(flag):
+    f = facts()
+    f["flags"][flag] = True
+    with pytest.raises(RuntimeError, match=flag):
+        assert_db_posture_facts(f)
+
+
+def test_role_that_owns_objects_is_refused():
+    with pytest.raises(RuntimeError, match="owns"):
+        assert_db_posture_facts(facts(owned_objects=3))
+
+
+@pytest.mark.parametrize("table", PROTECTED_TABLES)
+@pytest.mark.parametrize("check", ["update", "delete", "truncate", "chain"])
+def test_missing_or_disabled_trigger_is_refused(table, check):
+    f = facts()
+    f["tables"][table][check] = False
+    with pytest.raises(RuntimeError, match=table):
+        assert_db_posture_facts(f)
+
+
+def test_missing_table_is_refused():
+    f = facts()
+    del f["tables"]["security_events"]
+    with pytest.raises(RuntimeError, match="security_events"):
+        assert_db_posture_facts(f)
+
+
+def test_five_protected_tables():
+    assert set(PROTECTED_TABLES) == {"audit_logs", "evidence_chain", "security_events",
+                                     "risk_acceptances", "stage_evidence_links"}

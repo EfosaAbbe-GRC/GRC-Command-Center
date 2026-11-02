@@ -52,21 +52,28 @@ The production stack is fully containerized and hardened. This is the recommende
 ### Quick Start
 
 1. **Configure Environment:**
-   Create a `.env` in the **repository root** (gitignored; Docker Compose reads it) with:
+   Create a secrets file **outside the repository and outside any cloud-synced folder** (OneDrive,
+   Dropbox, iCloud: they upload it and keep its version history), readable only by you, and point
+   Docker Compose at it with the `COMPOSE_ENV_FILES` environment variable:
 
    ```bash
+   # e.g. ~/.secrets/grc-command-center.env
    GROQ_API_KEY=...
-   JWT_SECRET_KEY=...        # 32+ chars, e.g. python -c "import secrets; print(secrets.token_hex(32))"
-   POSTGRES_PASSWORD=...
-   ADMIN_PASSWORD=...        # 12+ chars each
+   JWT_SECRET_KEY=...           # 32+ chars, e.g. python -c "import secrets; print(secrets.token_hex(32))"
+   GRC_ADMIN_PG_PASSWORD=...    # Postgres bootstrap superuser: break-glass only
+   GRC_OWNER_DB_PASSWORD=...    # owns the schema; used only by the one-shot db-migrate service
+   GRC_APP_DB_PASSWORD=...      # the backend's role: add and read evidence, never alter it
+   GRC_BACKUP_DB_PASSWORD=...   # read-only role for backups
+   ADMIN_PASSWORD=...           # 12+ chars each
    ANALYST_PASSWORD=...
    VIEWER_PASSWORD=...
    DOCUMENTS_PATH=/absolute/path/to/your/PDF/corpus
    ```
 
    Every secret is required: Compose refuses to start if one is missing, and the backend refuses to
-   start on a placeholder, short, or publicly known value. The tests read the same file
-   (`backend/tests/_creds.py`). The stack listens on `127.0.0.1` only.
+   start on a placeholder, short, or publicly known value, or if its database role could alter
+   evidence. The tests read the same file (`backend/tests/_creds.py`), and refuse one inside
+   OneDrive. The stack listens on `127.0.0.1` only.
 
 2. **Launch the Hardened Stack:**
 
@@ -76,6 +83,12 @@ The production stack is fully containerized and hardened. This is the recommende
 
 3. **Access the Terminal:**
    Open: <http://localhost:3006>
+
+**Database roles and the audit chain.** A fresh volume gets four roles from
+`docker/db-init/10-roles.sh`; on an existing volume, run it once by hand (its header shows how).
+The `db-migrate` service then sets up the schema as `grc_owner` and exits; the backend starts
+only if it succeeded, and connects as `grc_app`. The five evidence tables are append-only and
+hash-chained: `python scripts/verify_audit_chain.py` checks them and prints each table's head hash.
 
 ## Development Setup
 

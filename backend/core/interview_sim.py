@@ -7,7 +7,7 @@ in this platform's own real assessment content, not synthesized content.
 Integration notes (same conventions as core/tprm.py):
   - RBAC via the capability policy engine: authorize("INTERVIEW_RUN").
     Capability is seeded in main.py lifespan.
-  - Tables auto-create via Base.metadata.create_all in init_db().
+  - Tables auto-create via Base.metadata.create_all in core/migrate.py (db-migrate service).
     Import this router in main.py BEFORE lifespan runs so the models
     are registered on Base.metadata (same reason core.tprm is imported there).
   - Question content is drawn from the real seeded TPRM stages

@@ -22,17 +22,47 @@ services:
     shm_size: 128mb
     environment:
       POSTGRES_DB: grc_audit_test
-      POSTGRES_USER: ${POSTGRES_USER:-grc_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Bootstrap superuser: break-glass only, nothing running connects as it.
+      POSTGRES_USER: grc_admin
+      POSTGRES_PASSWORD: ${GRC_ADMIN_PG_PASSWORD:?set GRC_ADMIN_PG_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}
+      # Read by docker/db-init/10-roles.sh, which creates the least-privilege roles.
+      GRC_OWNER_DB_PASSWORD: ${GRC_OWNER_DB_PASSWORD:?set GRC_OWNER_DB_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}
+      GRC_APP_DB_PASSWORD: ${GRC_APP_DB_PASSWORD:?set GRC_APP_DB_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}
+      GRC_BACKUP_DB_PASSWORD: ${GRC_BACKUP_DB_PASSWORD:?set GRC_BACKUP_DB_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}
     volumes:
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
       - grc-db-data-test:/var/lib/postgresql/data
     networks:
       - grc-net-test
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grc_admin} -d grc_audit_test"]
+      test: ["CMD-SHELL", "pg_isready -U grc_admin -d grc_audit_test"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ── Schema migration (one-shot, as grc_owner) ─────────────────────────────────
+  # The only thing that changes the schema. The backend waits for it to exit 0.
+  db-migrate-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    command: ["python", "-m", "core.migrate"]
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    init: true
+    healthcheck:
+      disable: true
+    depends_on:
+      db-test:
+        condition: service_healthy
+    environment:
+      - MIGRATE_DATABASE_URL=postgresql+asyncpg://grc_owner:${GRC_OWNER_DB_PASSWORD:?set GRC_OWNER_DB_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}@db-test:5432/grc_audit_test
+      - DOCUMENTS_PATH=/app/GRC_Analyst
+    networks:
+      - grc-net-test
 
   backend-test:
     build:
@@ -50,15 +80,19 @@ services:
     depends_on:
       db-test:
         condition: service_healthy
+      # Fail closed: no backend on a failed or skipped migration.
+      db-migrate-test:
+        condition: service_completed_successfully
     ports:
       - "127.0.0.1:8002:8001"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-grc_admin}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db-test:5432/grc_audit_test
-      - GROQ_API_KEY=${GROQ_API_KEY:?set GROQ_API_KEY in .env}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?set JWT_SECRET_KEY in .env}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
-      - ANALYST_PASSWORD=${ANALYST_PASSWORD:?set ANALYST_PASSWORD in .env}
-      - VIEWER_PASSWORD=${VIEWER_PASSWORD:?set VIEWER_PASSWORD in .env}
+      # grc_app: can add and read evidence, never alter or un-protect it (startup checks this).
+      - DATABASE_URL=postgresql+asyncpg://grc_app:${GRC_APP_DB_PASSWORD:?set GRC_APP_DB_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}@db-test:5432/grc_audit_test
+      - GROQ_API_KEY=${GROQ_API_KEY:?set GROQ_API_KEY in the secrets file (COMPOSE_ENV_FILES)}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?set JWT_SECRET_KEY in the secrets file (COMPOSE_ENV_FILES)}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?set ADMIN_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}
+      - ANALYST_PASSWORD=${ANALYST_PASSWORD:?set ANALYST_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}
+      - VIEWER_PASSWORD=${VIEWER_PASSWORD:?set VIEWER_PASSWORD in the secrets file (COMPOSE_ENV_FILES)}
       - DOCUMENTS_PATH=/app/GRC_Analyst
       - AUTH_ENABLED=true
     volumes:

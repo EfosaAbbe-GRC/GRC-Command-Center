@@ -40,7 +40,9 @@ from core.auth import (
     log_security_event
 )
 from core.ws import manager
-from core.security_config import assert_secure_config, password_problem, KNOWN_PUBLIC_PASSWORDS
+from core.security_config import (
+    assert_secure_config, assert_db_posture, password_problem, KNOWN_PUBLIC_PASSWORDS, PROTECTED_TABLES,
+)
 from core.login_throttle import login_throttle
 from core.tprm import router as tprm_router   # also registers TPRM models on Base.metadata
 from core.interview_sim import router as interview_sim_router   # also registers Interview Simulator models on Base.metadata
@@ -59,8 +61,11 @@ async def lifespan(app):
     # Fail closed: never boot with a placeholder or publicly known secret.
     assert_secure_config()
 
-    # Initialize PostgreSQL schema + SECURITY DEFINER triggers
-    await audit_logger.init_db()
+    # Fail closed on the database too. The schema, triggers and audit chain are set up by the
+    # one-shot db-migrate service (core/migrate.py, as grc_owner) before this process starts; the
+    # backend only checks that its own role can't alter or un-protect evidence.
+    from core.database import engine as db_engine_for_posture
+    await assert_db_posture(db_engine_for_posture)
     
     # Seed user registry (Phase 2 Hardening) — use async methods directly
     from core.database import AsyncSessionLocal
@@ -470,7 +475,28 @@ def readiness_check():
         "detail": "JWT enforcement active" if settings.AUTH_ENABLED else "AUTH_ENABLED=False — not enforced"
     }
 
-    # 5. PII redaction (fail-closed: if it's down, no question reaches the LLM)
+    # 5. Audit chain (Secrets_DB_Privilege_refactor.md §6). This endpoint is unauthenticated, so
+    # it says intact/broken per table and nothing else: no sequence numbers, hashes or rows.
+    # Details: scripts/verify_audit_chain.py (admin, on the host).
+    try:
+        from core.database import _run_async, AsyncSessionLocal
+        from sqlalchemy import text as sa_text
+        async def _verify_chain():
+            async with AsyncSessionLocal() as session:
+                return {t: (await session.execute(
+                            sa_text("SELECT intact FROM fn_verify_chain(:t)"), {"t": t})).scalar_one()
+                        for t in PROTECTED_TABLES}
+        results = _run_async(_verify_chain())
+        broken = [t for t, ok in results.items() if not ok]
+        checks["audit_chain"] = {
+            "status": "error" if broken else "ready",
+            "detail": f"BROKEN: {', '.join(broken)}" if broken
+                      else f"{len(results)}/{len(results)} tables intact",
+        }
+    except Exception as e:
+        checks["audit_chain"] = {"status": "error", "detail": f"verification failed ({type(e).__name__})"}
+
+    # 6. PII redaction (fail-closed: if it's down, no question reaches the LLM)
     pii_state = pii.status()
     checks["pii_redaction"] = {
         "status": {"loading": "not_ready"}.get(pii_state["status"], pii_state["status"]),

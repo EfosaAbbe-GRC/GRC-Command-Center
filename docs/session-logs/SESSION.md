@@ -1,3 +1,26 @@
+# Session Log — 2026-10-31 ("Who could have changed the numbers?" — answered)
+
+**Outcome:** `Secrets_DB_Privilege_refactor.md` executed on the owner's EXECUTE, then the Groq
+verification pass that HANDOFF §0 had been waiting for. All green. Done on a branch as the bot and
+opened as a PR; the owner merges in the browser.
+
+- **Before:** the backend logged in as a Postgres superuser that owned every table, so a bug in the
+  app could switch off the "immutable" triggers and rewrite evidence; schema setup ran inside the
+  app and only logged failures; `security_events` had no protection; secrets sat in a OneDrive-synced
+  `.env`. **After:** the backend is `grc_app` (append + read only on the 5 evidence tables, owns
+  nothing) and refuses to start otherwise; a one-shot `db-migrate` (as `grc_owner`) gates it; the 5
+  tables carry a SHA-256 hash chain; secrets live outside OneDrive; everything rotated but the Groq key.
+- **Tests first:** 30 posture checks red before any fix, 39/39 green after. Plus negative boots
+  (refused as `grc_admin` and as `grc_owner`), a fresh-volume drill (failed migration → backend never
+  started), and a backup restore drill (chain intact in the restored copy).
+- **Groq pass:** pytest **186 passed / 6 skipped** with nothing deselected; smoke 44/44 test and dev;
+  `test_pii` 23/23 dev. Last Groq call ≈ 16:50 EDT.
+- **Found:** the old `.env` had a stray credential line with no `=`, so `docker compose` couldn't
+  parse it since 10-28 (the stacks had been started before). Not carried over; owner revokes it.
+  `gh` still lists the owner's account (D1a said removed): owner logs it out.
+- **Deviations from the draft** (shell bootstrap instead of Python, ownership via `ALTER DATABASE`,
+  grants re-applied instead of default privileges): §11 of the refactor.
+
 # Session Log — 2026-10-28 ("Check the plan against the vendor before the owner clicks")
 
 **Outcome:** D1a done, guided step by step with the owner at the keyboard. The AI now works on
