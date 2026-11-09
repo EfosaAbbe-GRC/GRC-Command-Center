@@ -78,6 +78,13 @@ The owner's other Groq-backed project uses the shared organisation budget on wee
 - **Then (sequential, own draft + EXECUTE):** correct the two EU AI Act golden entries against the
   Regulation (report's table), and audit every other golden entry against its tier-1 text.
 
+## ▶ Linked data model (drafted 2026-11-08, awaiting the owner)
+
+`docs/refactors/Linked_Data_Model_refactor.md` (blueprint: every terminal becomes a view over one
+shared record set) and `Risk_Register_refactor.md` (Phase 1: entities, risks, hash-chained
+`risk_events`; no Groq, no TPRM code). Owner: review the blueprint, answer Phase 1's §9 decisions,
+then EXECUTE. Independent of the v12 after-samples. Phase 1b waits for the Vendor Risk walkthrough.
+
 ## ▶ DevSecOps pipeline: Phase 0 DONE 2026-10-27; Phases 1–2 next (weekday work, no Groq)
 
 `docs/refactors/DevSecOps_Pipeline_refactor.md`. Phase 0 (owner's go, 2026-10-26): hash-locked

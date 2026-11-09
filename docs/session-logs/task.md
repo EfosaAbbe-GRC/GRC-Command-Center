@@ -4,6 +4,12 @@
 
 ---
 
+## 📝 2026-11-08 — DRAFTED: linked data model blueprint + Phase 1 risk register (awaiting owner review / EXECUTE)
+
+- [ ] Owner reviews `docs/refactors/Linked_Data_Model_refactor.md` (spine, design rules, phases 1–5, §5 decisions).
+- [ ] Owner decides `Risk_Register_refactor.md` §9 (matrix, owner field, acceptance criteria, approver ≠ proposer), then EXECUTE Phase 1 (weekday OK: no Groq; no TPRM code touched).
+- [ ] Phase 1b (gap → risk link) waits for the owner's Vendor Risk walkthrough.
+
 ## ⏳ 2026-11-08 — v12 full run done (provisional); after samples Sat 11-14
 
 - [x] Full run (after-sample 1): 48/50, identical to v11; #16/#19/#49 outcome C (fire via paraphrase).
