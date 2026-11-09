@@ -71,6 +71,8 @@ GRC_Command_Center/
 │   │   ├── rag.py                 # RAGEngine: Vector Indexing & LLM Orchestration
 │   │   ├── tprm.py                # TPRM: 13-stage vendor egress/ingress assessment, risk acceptances
 │   │   ├── interview_sim.py       # TPRM Interview Simulator: mock-interview sessions grounded in real TPRM stage content, live-graded
+│   │   ├── risk_register.py       # Risk register (linked data model phase 1): entities, risks, hash-chained risk_events
+│   │   ├── risk_scoring.py        # Risk criteria: 5x5 bands, review cadence, acceptance limits, CSV-safe export (pure)
 │   │   ├── pii.py                 # PII redaction (Presidio + spaCy), fails closed
 │   │   ├── security_config.py     # Fail-closed startup: refuses placeholder/short/public secrets and an unsafe DB role
 │   │   ├── migrate.py             # One-shot schema setup as grc_owner (db-migrate service): triggers, audit chain, grants
@@ -102,7 +104,8 @@ GRC_Command_Center/
 │       ├── OpsTerminal.jsx        # Job oversight (WebSocket synced)
 │       ├── KnowledgeTerminal.jsx  # Vector store and document metadata
 │       ├── VendorRiskTerminal.jsx # TPRM: vendor risk register, stage review, sign-off (minRole analyst)
-│       └── InterviewSimTerminal.jsx # TPRM Interview Simulator: mock-interview practice, live grading (minRole analyst)
+│       ├── InterviewSimTerminal.jsx # TPRM Interview Simulator: mock-interview practice, live grading (minRole analyst)
+│       └── RiskRegisterTerminal.jsx # Risk register: register, heat map, history, owner acceptance (minRole viewer)
 │
 ├── Dockerfile.backend             # Production backend build
 ├── Dockerfile.frontend            # Production frontend build (Nginx)
@@ -142,7 +145,7 @@ GRC_Command_Center/
 
 - **Subprocess Eradication**: Eliminated all `subprocess.run()` calls. Agents are now hardcoded Python functions in the `AGENT_REGISTRY`.
 - **Hardened Triggers**: Implemented native PL/pgSQL `SECURITY DEFINER` triggers, all bound to a single shared function (`fn_prevent_immutability_violation`), that block all `UPDATE` and `DELETE` operations on `audit_logs`, `evidence_chain`, and `risk_acceptances` at the database layer.
-- **Least privilege + tamper evidence (2026-10-31, `Secrets_DB_Privilege_refactor.md`)**: the triggers used to be the only barrier, and the backend's own superuser login could switch them off. Now the backend's role can't (it owns nothing and has no UPDATE/DELETE/TRUNCATE on the five evidence tables: those three plus `stage_evidence_links` and `security_events`), it refuses to start if that changes, and each of the five tables carries a SHA-256 hash chain (`fn_verify_chain`) so an edit by anyone who gets past the triggers is detectable.
+- **Least privilege + tamper evidence (2026-10-31, `Secrets_DB_Privilege_refactor.md`)**: the triggers used to be the only barrier, and the backend's own superuser login could switch them off. Now the backend's role can't (it owns nothing and has no UPDATE/DELETE/TRUNCATE on the six evidence tables: those three plus `stage_evidence_links`, `security_events` and, since 2026-11-08, `risk_events`; and no DELETE on `risks`/`entities`), it refuses to start if that changes, and each of those tables carries a SHA-256 hash chain (`fn_verify_chain`) so an edit by anyone who gets past the triggers is detectable.
 - **Independent Seeding**: Refactored the `lifespan` startup to check for `admin`, `analyst`, and `viewer` accounts independently, ensuring 100% RBAC test coverage on every boot.
 
 ### 3. Real-Time Telemetry
@@ -154,6 +157,7 @@ GRC_Command_Center/
 
 ## Audit History
 
+- **Nov 2026**: v12 benchmark (Nov 8, provisional; golden reference texts found wrong vs the EU AI Act); **risk register** (Nov 8, linked data model phase 1: entities, risks, hash-chained `risk_events`, owner acceptance; `Risk_Register_refactor.md`).
 - **Aug–Oct 2026**: Groq migration (Aug 13); benchmark v8–v11 with an honest grader (citable
   figure **42% → 92%**, v8); PII redaction live (Oct 4); security hardening (Oct 25: loopback-only
   ports, fail-closed secrets, login throttle, full rotation; `Security_Hardening_refactor.md`);

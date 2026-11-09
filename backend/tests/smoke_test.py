@@ -526,6 +526,16 @@ def run_smoke_tests():
                         "compensating_control": "x"},
              expected_status=403, headers=analyst_headers)
 
+    # Risk register: read-only on purpose. Risks can't be deleted, so a smoke run must never
+    # create one (Risk_Register_refactor.md R1); creation is covered by pytest on the test stack.
+    print("\n── RISK REGISTER — READ-ONLY (nothing is written) ──")
+    test("Risk register — no token blocked (expect 401)", "GET",
+         f"{V1}/risks", expected_status=401, headers={})
+    if viewer_headers:
+        test("Viewer can read the risk register", "GET", f"{V1}/risks", headers=viewer_headers)
+        test("Viewer blocked from creating a risk (expect 403)", "POST", f"{V1}/risks",
+             json_body={}, expected_status=403, headers=viewer_headers)
+
     print("\n── TPRM — LIFECYCLE & DENY-BY-DEFAULT ──")
     vendor = test("Create vendor (admin)", "POST", f"{V1}/tprm/vendors",
                   json_body={"name": f"SmokeTest Vendor {int(time.time())}",

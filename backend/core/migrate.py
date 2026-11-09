@@ -24,6 +24,7 @@ from sqlalchemy.pool import NullPool
 from core.models import Base
 import core.tprm            # noqa: F401  registers the TPRM models on Base.metadata
 import core.interview_sim   # noqa: F401  registers the Interview Simulator models
+import core.risk_register   # noqa: F401  registers the risk register models
 from core.security_config import PROTECTED_TABLES
 
 APP_ROLE = "grc_app"
@@ -38,6 +39,7 @@ BLOCKER_PREFIX = {
     "stage_evidence_links": "trg_stage_evidence",
     "security_events": "trg_security_events",    # new: F3, it had no protection at all
     "chain_genesis": "trg_chain_genesis",        # new: the seals are evidence too
+    "risk_events": "trg_risk_events",            # risk register history (2026-11-08)
 }
 
 # Hashing must not depend on the session that happens to run it: timestamptz renders in the
@@ -255,6 +257,8 @@ async def migrate(url: str) -> None:
                 f"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO {APP_ROLE}",
                 f"REVOKE UPDATE, DELETE ON {protected} FROM {APP_ROLE}",
                 f"REVOKE INSERT, UPDATE, DELETE ON chain_genesis FROM {APP_ROLE}",
+                # Registers are edited, never emptied: history is in risk_events (T2).
+                f"REVOKE DELETE ON risks, entities FROM {APP_ROLE}",
                 f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {APP_ROLE}",
             ):
                 await conn.execute(text(stmt))

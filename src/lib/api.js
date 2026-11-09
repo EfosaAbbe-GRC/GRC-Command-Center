@@ -139,6 +139,17 @@ export const api = {
             signal
         }),
 
+    patch: (endpoint, data = {}, signal = null) =>
+        fetchWithRetry(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data),
+            signal
+        }),
+
     put: (endpoint, data = {}, signal = null) =>
         fetchWithRetry(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
             method: 'PUT',

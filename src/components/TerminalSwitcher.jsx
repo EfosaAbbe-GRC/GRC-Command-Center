@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Terminal, Activity, FileText, Monitor, Globe, Clock, UserCheck, Network, GraduationCap } from 'lucide-react';
+import { Shield, Terminal, Activity, FileText, Monitor, Globe, Clock, UserCheck, Network, GraduationCap, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../contexts/useAuth';
 
 export const TerminalSwitcher = ({ activeTerminal, setActiveTerminal }) => {
@@ -26,6 +26,7 @@ export const TerminalSwitcher = ({ activeTerminal, setActiveTerminal }) => {
         { id: 'EXEC', label: 'EXECUTIVE', icon: Activity, color: '#bc8cff', minRole: 'admin' },
         { id: 'KNOWLEDGE', label: 'KNOWLEDGE', icon: FileText, color: 'var(--warning)', minRole: 'analyst' },
         { id: 'TPRM', label: 'VENDOR RISK', icon: Network, color: '#2dd4bf', minRole: 'analyst' },
+        { id: 'RISK', label: 'RISK REGISTER', icon: ShieldAlert, color: '#f87171', minRole: 'viewer' },
         { id: 'INTERVIEW_SIM', label: 'INTERVIEW SIM', icon: GraduationCap, color: '#fb923c', minRole: 'analyst' },
     ];
 

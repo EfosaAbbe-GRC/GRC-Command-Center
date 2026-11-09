@@ -6,6 +6,7 @@ import { ExecutiveTerminal } from './terminals/ExecutiveTerminal'
 import { KnowledgeTerminal } from './terminals/KnowledgeTerminal'
 import VendorRiskTerminal from './terminals/VendorRiskTerminal'
 import InterviewSimTerminal from './terminals/InterviewSimTerminal'
+import RiskRegisterTerminal from './terminals/RiskRegisterTerminal'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -76,6 +77,7 @@ function AppContent() {
       case 'EXEC': return <ErrorBoundary><ExecutiveTerminal /></ErrorBoundary>;
       case 'KNOWLEDGE': return <ErrorBoundary><KnowledgeTerminal /></ErrorBoundary>;
       case 'TPRM': return <ErrorBoundary><VendorRiskTerminal /></ErrorBoundary>;
+      case 'RISK': return <ErrorBoundary><RiskRegisterTerminal /></ErrorBoundary>;
       case 'INTERVIEW_SIM': return <ErrorBoundary><InterviewSimTerminal /></ErrorBoundary>;
       default: return <ErrorBoundary><ComplianceTerminal /></ErrorBoundary>;
     }

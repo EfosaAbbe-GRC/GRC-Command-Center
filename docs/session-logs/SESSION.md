@@ -1,3 +1,17 @@
+# Session Log — 2026-11-08, later ("Every terminal a view": risk register, Phase 1)
+
+The owner asked whether the terminals could read the same records. Drafted the blueprint
+(`Linked_Data_Model_refactor.md`: one shared spine, 10 rules, 5 phases) and Phase 1. On the owner's
+EXECUTE ("after you fully re-assessed your work"), re-assessed first: 9 corrections (§0), the
+weightiest being R1 (smoke must never create a risk on dev, since risks can't be deleted), R2 (CSV
+formula injection; the same gap found in the TPRM export, not fixed), R4 (a change voids an
+acceptance the current owner never gave) and ISO 6.1.3 f (the risk **owner** accepts residual risk;
+an admin records it and can't be the proposer). Tests first: 36 red. Built `risk_register.py`,
+`risk_scoring.py` and the terminal; `risk_events` became the 6th protected, hash-chained table. Two
+test failures were my own test data (a too-short reason), which also exposed a test passing for the
+wrong reason; fixed. Full suite 290/1; dev deployed: readiness 6/6, chain 6/6, smoke 47/47; browser
+flows verified on the test stack; the dev register is left empty for the owner.
+
 # Session Log — 2026-11-08 ("The copies were redundant; the reference text wasn't verified")
 
 Owner's EXECUTE: the v12 full run. Saturday 11-07's slot was missed, so it ran Sunday; the after

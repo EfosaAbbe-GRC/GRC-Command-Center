@@ -46,6 +46,7 @@ from core.security_config import (
 from core.login_throttle import login_throttle
 from core.tprm import router as tprm_router   # also registers TPRM models on Base.metadata
 from core.interview_sim import router as interview_sim_router   # also registers Interview Simulator models on Base.metadata
+from core.risk_register import router as risk_register_router   # also registers risk register models on Base.metadata
 from schemas import (
     StatusResponse, GRCQuery, ChatResponse, PolicyItem, 
     JobItem, ExecutiveStats, NotebookItem, AgentResult, HealthResponse,
@@ -115,6 +116,9 @@ async def lifespan(app):
             ("TPRM_ASSESS",     "Create/score integrations and submit stages",       "analyst"),
             ("TPRM_SIGNOFF",    "Sign risk acceptances and approve integrations",    "admin"),
             ("INTERVIEW_RUN",   "Run TPRM interview-simulator practice sessions",    "analyst"),
+            ("RISK_VIEW",       "View the risk register",                            "viewer"),
+            ("RISK_EDIT",       "Create, assess, treat, propose and close risks",    "analyst"),
+            ("RISK_APPROVE",    "Record a risk owner's acceptance of residual risk", "admin"),
         ]
         for name, desc, role in policies:
             result = await session.execute(select(PolicyModel).where(PolicyModel.name == name))
@@ -176,6 +180,9 @@ app.include_router(tprm_router, prefix="/api/v1/tprm", tags=["tprm"])
 
 # --- TPRM INTERVIEW SIMULATOR ROUTER ---
 app.include_router(interview_sim_router, prefix="/api/v1/interview-sim", tags=["interview-sim"])
+
+# --- RISK REGISTER (linked data model, phase 1) ---
+app.include_router(risk_register_router, prefix="/api/v1", tags=["risk-register"])
 
 # --- WEBSOCKET STREAM ---
 
