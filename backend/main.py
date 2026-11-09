@@ -46,6 +46,7 @@ from core.security_config import (
 from core.login_throttle import login_throttle
 from core.tprm import router as tprm_router   # also registers TPRM models on Base.metadata
 from core.interview_sim import router as interview_sim_router   # also registers Interview Simulator models on Base.metadata
+from core.export_safety import safe_row   # CSV injection guard for every export
 from core.risk_register import router as risk_register_router   # also registers risk register models on Base.metadata
 from schemas import (
     StatusResponse, GRCQuery, ChatResponse, PolicyItem, 
@@ -617,7 +618,7 @@ def export_compliance_csv():
     
     # Data rows
     for p in policies:
-        writer.writerow([p["id"], p["name"], p["type"], p["status"], p["compliance"], p["last_scan"]])
+        writer.writerow(safe_row([p["id"], p["name"], p["type"], p["status"], p["compliance"], p["last_scan"]]))
     
     # Add framework mappings
     writer.writerow([])
@@ -627,7 +628,7 @@ def export_compliance_csv():
     all_mappings = data_service.get_framework_mappings()
     for policy_id, mapping in all_mappings.items():
         for fw in mapping.get("frameworks", []):
-            writer.writerow([policy_id, fw["name"], fw["id"], fw["control"], fw["status"]])
+            writer.writerow(safe_row([policy_id, fw["name"], fw["id"], fw["control"], fw["status"]]))
     
     output.seek(0)
     return StreamingResponse(

@@ -175,10 +175,11 @@ dev deployed.
 | Browser, test stack (local Vite → :8002) | analyst: entity, risk, assess/treat with reason, propose; admin: records the owner's acceptance; viewer: reads, no write controls; the analyst never sees the record button |
 | Browser, dev | Risk Register tab, empty state, no console errors |
 
-**Found, not fixed (outside this change):** (1) the TPRM CSV export has the same formula-injection
+**Found, not fixed here (outside this change):** (1) the TPRM CSV export has the same formula-injection
 gap (R2); (2) a **viewer's default tab is Compliance**, whose `/compliance/policies` needs analyst,
 so a viewer lands on a 403 (pre-existing); (3) `fetchWithRetry` retries 4xx responses with backoff,
-so a refused action takes seconds to show its error (pre-existing UX). Owner to decide.
+so a refused action takes seconds to show its error (pre-existing UX). **All three fixed the same
+night: `Client_Export_Hardening_refactor.md`.**
 
 **Next:** the owner's acceptance test (§6, last row) with practice-scenario risks; then Phase 1b
 after the Vendor Risk walkthrough.

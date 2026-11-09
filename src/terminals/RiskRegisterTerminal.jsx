@@ -217,7 +217,7 @@ export default function RiskRegisterTerminal() {
           </div>
           <div className="flex items-center gap-1.5">
             {canApprove && (
-              <button onClick={() => api.downloadFile('/risks/export', 'risk_register.csv')} title="Export the risk register (CSV)"
+              <button onClick={() => api.downloadFile('/risks/export', 'risk_register.csv').catch((err) => setError(err.message || 'Export failed'))} title="Export the risk register (CSV)"
                 className="p-1.5 bg-[var(--layer-2)] hover:bg-[var(--layer-3)] border border-[var(--border-default)] rounded"><Download size={14} /></button>
             )}
             {canEdit && (<>

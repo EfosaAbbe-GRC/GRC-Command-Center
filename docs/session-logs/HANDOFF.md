@@ -25,7 +25,7 @@ reports `pii_redaction`.
 | `smoke_test.py` (test stack, `:8002`) | **44/44** (not re-run 11-08: one smoke per benchmark day; 47 expected) | 2026-10-31 |
 | `smoke_test.py` (dev, `:8001`) | **47/47** (3 read-only risk-register checks added) | 2026-11-08 |
 | `test_pii.py` (in the container) | **23/23** on dev | 2026-10-31 |
-| `pytest` (from `backend/`) | **290 passed, 1 skipped**, 17 deselected (Interview Simulator + image tests); includes the 76 risk-register tests | 2026-11-08 |
+| `pytest` (from `backend/`) | **293 passed, 1 skipped**, 17 deselected (Interview Simulator + image tests) | 2026-11-08 |
 | `test_image_hygiene.py` (`GRC_IMAGE=…`, `-m image`) | **5/5** on the Phase 0 image | 2026-10-27 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
 | RAG, latest run | v12: legacy 96% (48/50), graded 96% (48/50), identical to v11 — **not citable as accuracy; provisional** | 2026-11-08 |
@@ -84,8 +84,10 @@ The owner's other Groq-backed project uses the shared organisation budget on wee
 risks (5×5, bands, derived status, review dates), hash-chained `risk_events` (6th protected table),
 owner acceptance recorded by an admin who didn't propose it. The dev register is **empty** (smoke is
 read-only on it by design). **Owner next:** enter practice-scenario risks as the acceptance test.
-Then Phase 1b (gap → risk) after the Vendor Risk walkthrough. Three pre-existing issues to decide
-(§10): TPRM CSV formula injection, viewer's default tab 403, 4xx retries.
+Then Phase 1b (gap → risk) after the Vendor Risk walkthrough. The three pre-existing issues found
+there were **fixed the same night** (`Client_Export_Hardening_refactor.md`): export formula guard on
+every CSV (TPRM export touched, export function only), viewer lands on the Risk Register, safe
+retries (writes never resent), readable errors, and uploads/exports now survive a 15-minute idle.
 
 ## ▶ DevSecOps pipeline: Phase 0 DONE 2026-10-27; Phases 1–2 next (weekday work, no Groq)
 

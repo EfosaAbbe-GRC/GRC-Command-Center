@@ -10,6 +10,8 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Optional
 
+from core.export_safety import csv_safe  # noqa: F401  re-exported: one implementation for every export
+
 RATING_MIN, RATING_MAX = 1, 5
 
 # Highest score in each band (5 x 5 products: 1..25).
@@ -66,11 +68,3 @@ def derive_status(*, closed: bool, accepted_until: Optional[datetime], treatment
     if treatment in ("mitigate", "transfer", "avoid"):
         return "treatment_in_progress"
     return "assessed" if residual_rated else "identified"
-
-
-def csv_safe(value) -> str:
-    """Neutralise spreadsheet formulas in exported cells (T9, CSV injection)."""
-    if value is None:
-        return ""
-    text = str(value)
-    return "'" + text if text.startswith(_FORMULA_PREFIXES) else text
