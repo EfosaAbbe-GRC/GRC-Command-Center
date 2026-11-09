@@ -14,8 +14,9 @@ import argparse
 import subprocess
 import sys
 
+# Must equal backend/core/security_config.PROTECTED_TABLES (guarded by tests/test_risk_scoring.py).
 TABLES = ["audit_logs", "evidence_chain", "security_events", "risk_acceptances",
-          "stage_evidence_links"]
+          "stage_evidence_links", "risk_events"]
 
 SQL = """
 SELECT v.intact, coalesce(v.first_bad_seq::text, '-'), v.rows_checked,

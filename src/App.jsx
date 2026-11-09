@@ -6,6 +6,8 @@ import { ExecutiveTerminal } from './terminals/ExecutiveTerminal'
 import { KnowledgeTerminal } from './terminals/KnowledgeTerminal'
 import VendorRiskTerminal from './terminals/VendorRiskTerminal'
 import InterviewSimTerminal from './terminals/InterviewSimTerminal'
+import RiskRegisterTerminal from './terminals/RiskRegisterTerminal'
+import { terminalsFor } from './lib/terminals'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -65,9 +67,14 @@ const Login = () => {
 
 function AppContent() {
   const { user, logout, needsReset, clearResetState } = useAuth();
-  const [activeTerminal, setActiveTerminal] = useState('COMPLIANCE');
+  const [chosenTerminal, setActiveTerminal] = useState(null);
 
   if (!user) return <Login />;
+
+  // Open on the first terminal this role can use, and never render one it can't (e.g. a viewer
+  // used to land on Compliance, whose data needs analyst, and saw a 403).
+  const allowed = terminalsFor(user.role);
+  const activeTerminal = allowed.some(t => t.id === chosenTerminal) ? chosenTerminal : allowed[0]?.id;
 
   const renderTerminal = () => {
     switch (activeTerminal) {
@@ -76,8 +83,9 @@ function AppContent() {
       case 'EXEC': return <ErrorBoundary><ExecutiveTerminal /></ErrorBoundary>;
       case 'KNOWLEDGE': return <ErrorBoundary><KnowledgeTerminal /></ErrorBoundary>;
       case 'TPRM': return <ErrorBoundary><VendorRiskTerminal /></ErrorBoundary>;
+      case 'RISK': return <ErrorBoundary><RiskRegisterTerminal /></ErrorBoundary>;
       case 'INTERVIEW_SIM': return <ErrorBoundary><InterviewSimTerminal /></ErrorBoundary>;
-      default: return <ErrorBoundary><ComplianceTerminal /></ErrorBoundary>;
+      default: return null;
     }
   };
 

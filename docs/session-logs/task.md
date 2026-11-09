@@ -4,6 +4,14 @@
 
 ---
 
+## ✅ 2026-11-08 — Linked data model Phase 1: risk register EXECUTED
+
+- [x] Blueprint drafted (`Linked_Data_Model_refactor.md`); Phase 1 drafted, re-assessed (9 corrections), executed red → green.
+- [x] Dev deployed: readiness 6/6, chain 6/6, smoke 47/47, register empty. Record: `Risk_Register_refactor.md` §10.
+- [ ] Owner's acceptance test: enter practice-scenario risks (one mitigated, one accepted, one closed); log worked / friction / couldn't.
+- [x] 3 pre-existing issues (§10) **fixed the same night** after a re-assessment that found 4 more (upload/export token refresh after 15 idle min, unbounded refresh recursion, unreadable validation errors, unhandled export errors): `Client_Export_Hardening_refactor.md`. Pytest 293/1; dev ready, chain 6/6.
+- [ ] Phase 1b (gap → risk) after the Vendor Risk walkthrough; Phase 2 (issues + corrective actions) after that.
+
 ## ⏳ 2026-11-08 — v12 full run done (provisional); after samples Sat 11-14
 
 - [x] Full run (after-sample 1): 48/50, identical to v11; #16/#19/#49 outcome C (fire via paraphrase).

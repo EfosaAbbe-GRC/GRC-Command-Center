@@ -27,11 +27,37 @@ BACKEND_CONTAINER = os.environ.get(
 SUPERUSER = "grc_admin"
 
 PROTECTED = ["audit_logs", "evidence_chain", "security_events", "risk_acceptances",
-             "stage_evidence_links"]
+             "stage_evidence_links", "risk_events"]
+# Editable registers whose history lives elsewhere: the app may change rows, never remove them.
+NO_DELETE = ["risks", "entities"]
 CHAIN_COLUMNS = ("chain_seq", "prev_hash", "row_hash")
 
 writes_only_on_test_stack = pytest.mark.skipif(
     not IS_TEST_STACK, reason="writes (even rolled back) run only on the test stack, never dev")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _one_risk_event_on_test_stack():
+    """The append check copies an existing row; a fresh test DB has no risk_events yet
+    (Risk_Register_refactor.md R7). Create one risk through the API, test stack only."""
+    if not IS_TEST_STACK:
+        return
+    import uuid
+    import requests
+    from tests._creds import ANALYST_PASS
+    v1 = f"{BASE}/api/v1"
+    try:
+        tok = requests.post(f"{v1}/auth/login", json={"username": "analyst", "password": ANALYST_PASS},
+                            timeout=30).json()["access_token"]
+        h = {"Authorization": f"Bearer {tok}"}
+        ent = requests.post(f"{v1}/entities", headers=h, timeout=30, json={
+            "name": f"posture-seed-{uuid.uuid4().hex[:8]}", "entity_type": "process"}).json()
+        requests.post(f"{v1}/risks", headers=h, timeout=30, json={
+            "title": "posture seed", "statement": "Seed row for the append check.",
+            "category": "operational", "entity_id": ent["id"], "owner": "pytest",
+            "inherent_likelihood": 1, "inherent_impact": 1})
+    except Exception:
+        pass  # the append check below then fails loudly with "no row to copy"
 
 
 def _psql(role, sql):
@@ -117,6 +143,21 @@ def test_backend_role_cannot_rewrite_evidence(app_role, table, statement):
     ok, out = _psql(app_role, f"BEGIN; {statement.format(t=table)}; ROLLBACK;")
     assert not ok and "permission denied" in out, \
         f"{app_role}: `{statement.format(t=table)}` was not refused by privilege: {out}"
+
+
+@writes_only_on_test_stack
+@pytest.mark.parametrize("table", NO_DELETE)
+def test_backend_role_cannot_delete_register_rows(app_role, table):
+    # Risk_Register_refactor.md T2: a risk is closed with a reason, never removed.
+    ok, out = _psql(app_role, f"BEGIN; DELETE FROM {table} WHERE false; ROLLBACK;")
+    assert not ok and "permission denied" in out, f"{app_role} may DELETE from {table}: {out}"
+
+
+@writes_only_on_test_stack
+@pytest.mark.parametrize("table", NO_DELETE)
+def test_backend_role_can_still_edit_register_rows(app_role, table):
+    ok, out = _psql(app_role, f"BEGIN; UPDATE {table} SET id = id WHERE false; ROLLBACK;")
+    assert ok, f"{app_role} lost UPDATE on {table}: {out}"
 
 
 @writes_only_on_test_stack

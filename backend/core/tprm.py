@@ -40,6 +40,7 @@ from core.models import Base, EvidenceChain      # Base lives in core.models
 from core.database import get_db, audit_logger
 from core.auth import authorize, get_current_user, log_security_event
 from core.ws import manager
+from core.export_safety import safe_row
 
 
 MAX_EVIDENCE_UPLOAD_BYTES = 25 * 1024 * 1024  # 25MB
@@ -757,13 +758,13 @@ async def export_tprm_csv(db: AsyncSession = Depends(get_db)):
         .order_by(Vendor.name, Integration.name)
     )
     for integration, vendor_name in result.all():
-        writer.writerow([
+        writer.writerow(safe_row([
             vendor_name, integration.name, integration.direction.value,
             integration.transfer_method.value, integration.computed_risk_tier.value,
             integration.status.value,
             integration.reassessment_due.isoformat() if integration.reassessment_due else "",
             integration.created_by, integration.created_at.isoformat(),
-        ])
+        ]))
 
     writer.writerow([])
     writer.writerow(["--- STAGE ASSESSMENTS ---"])
@@ -780,10 +781,10 @@ async def export_tprm_csv(db: AsyncSession = Depends(get_db)):
         .order_by(Vendor.name, Integration.name, AssessmentStage.stage_number)
     )
     for vendor_name, integ_name, stage_num, title, status, notes, reviewer, reviewed_at in result.all():
-        writer.writerow([
+        writer.writerow(safe_row([
             vendor_name, integ_name, stage_num, title, status.value, notes or "",
             reviewer or "", reviewed_at.isoformat() if reviewed_at else "",
-        ])
+        ]))
 
     writer.writerow([])
     writer.writerow(["--- RISK ACCEPTANCES ---"])
@@ -800,10 +801,10 @@ async def export_tprm_csv(db: AsyncSession = Depends(get_db)):
         .order_by(Vendor.name, Integration.name, RiskAcceptance.accepted_at)
     )
     for vendor_name, integ_name, stage_num, title, gap, control, accepted_by, accepted_at, expires_at in result.all():
-        writer.writerow([
+        writer.writerow(safe_row([
             vendor_name, integ_name, stage_num, title, gap, control, accepted_by,
             accepted_at.isoformat(), expires_at.isoformat(),
-        ])
+        ]))
 
     output.seek(0)
     return StreamingResponse(

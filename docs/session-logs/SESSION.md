@@ -1,3 +1,30 @@
+# Session Log — 2026-11-08, night ("Fix the three, and look again first")
+
+The owner asked to fix the three pre-existing issues, re-assessing first; he preferred Vendor Risk
+frozen but left the call to Claude. Fixed it anyway, confined to the export function (security
+issue; no screen, stage or rule touched; `test_tprm.py` unchanged and green). The re-assessment
+found more than the three: section markers that a blanket guard would mangle; writes being
+**resent** after network/server errors (duplicates in an append-only history); validation errors
+shown as `[object Object]`; an unbounded refresh recursion; and **uploads/exports skipping the token
+refresh**, proven on dev with a 16-minute idle test (Export → 401, nothing on screen), which would
+have hit the owner's Vendor Risk evidence uploads after a break. Tests first (TPRM export red);
+browser: viewer lands on Risk Register with no 4xx, refusals show in 0.1–0.2 s and are sent once.
+Pytest 293/1; dev deployed. `Client_Export_Hardening_refactor.md`.
+
+# Session Log — 2026-11-08, later ("Every terminal a view": risk register, Phase 1)
+
+The owner asked whether the terminals could read the same records. Drafted the blueprint
+(`Linked_Data_Model_refactor.md`: one shared spine, 10 rules, 5 phases) and Phase 1. On the owner's
+EXECUTE ("after you fully re-assessed your work"), re-assessed first: 9 corrections (§0), the
+weightiest being R1 (smoke must never create a risk on dev, since risks can't be deleted), R2 (CSV
+formula injection; the same gap found in the TPRM export, not fixed), R4 (a change voids an
+acceptance the current owner never gave) and ISO 6.1.3 f (the risk **owner** accepts residual risk;
+an admin records it and can't be the proposer). Tests first: 36 red. Built `risk_register.py`,
+`risk_scoring.py` and the terminal; `risk_events` became the 6th protected, hash-chained table. Two
+test failures were my own test data (a too-short reason), which also exposed a test passing for the
+wrong reason; fixed. Full suite 290/1; dev deployed: readiness 6/6, chain 6/6, smoke 47/47; browser
+flows verified on the test stack; the dev register is left empty for the owner.
+
 # Session Log — 2026-11-08 ("The copies were redundant; the reference text wasn't verified")
 
 Owner's EXECUTE: the v12 full run. Saturday 11-07's slot was missed, so it ran Sunday; the after

@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-11-08 (v12 full run done, provisional; after samples Sat 11-14; golden-text errors found). 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-11-08 (v12 full run done, provisional; after samples Sat 11-14; golden-text errors found; risk register Phase 1 executed). 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -22,10 +22,10 @@ reports `pii_redaction`.
 
 | | Status | Last verified |
 | --- | --- | --- |
-| `smoke_test.py` (test stack, `:8002`) | **44/44** | 2026-10-31 |
-| `smoke_test.py` (dev, `:8001`) | **44/44** (chat check waits out the auditor's Groq minute) | 2026-10-31 |
+| `smoke_test.py` (test stack, `:8002`) | **44/44** (not re-run 11-08: one smoke per benchmark day; 47 expected) | 2026-10-31 |
+| `smoke_test.py` (dev, `:8001`) | **47/47** (3 read-only risk-register checks added) | 2026-11-08 |
 | `test_pii.py` (in the container) | **23/23** on dev | 2026-10-31 |
-| `pytest` (from `backend/`) | **186 passed, 6 skipped**, nothing deselected (includes the security change's posture, repo-policy and creds tests) | 2026-10-31 |
+| `pytest` (from `backend/`) | **293 passed, 1 skipped**, 17 deselected (Interview Simulator + image tests) | 2026-11-08 |
 | `test_image_hygiene.py` (`GRC_IMAGE=…`, `-m image`) | **5/5** on the Phase 0 image | 2026-10-27 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
 | RAG, latest run | v12: legacy 96% (48/50), graded 96% (48/50), identical to v11 — **not citable as accuracy; provisional** | 2026-11-08 |
@@ -77,6 +77,17 @@ The owner's other Groq-backed project uses the shared organisation budget on wee
   **No retrieval, prompt, index or mapping change until then.**
 - **Then (sequential, own draft + EXECUTE):** correct the two EU AI Act golden entries against the
   Regulation (report's table), and audit every other golden entry against its tier-1 text.
+
+## ▶ Linked data model: Phase 1 (risk register) EXECUTED 2026-11-08
+
+`docs/refactors/Risk_Register_refactor.md` §10. New **Risk Register** terminal (viewer+): entities,
+risks (5×5, bands, derived status, review dates), hash-chained `risk_events` (6th protected table),
+owner acceptance recorded by an admin who didn't propose it. The dev register is **empty** (smoke is
+read-only on it by design). **Owner next:** enter practice-scenario risks as the acceptance test.
+Then Phase 1b (gap → risk) after the Vendor Risk walkthrough. The three pre-existing issues found
+there were **fixed the same night** (`Client_Export_Hardening_refactor.md`): export formula guard on
+every CSV (TPRM export touched, export function only), viewer lands on the Risk Register, safe
+retries (writes never resent), readable errors, and uploads/exports now survive a 15-minute idle.
 
 ## ▶ DevSecOps pipeline: Phase 0 DONE 2026-10-27; Phases 1–2 next (weekday work, no Groq)
 

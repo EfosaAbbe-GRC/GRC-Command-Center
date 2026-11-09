@@ -57,7 +57,8 @@ def assert_secure_config(cfg=settings) -> None:
 # (F2). The backend now refuses to start unless its role is unprivileged, owns nothing, and
 # every protected table still has its blockers and its chain trigger.
 PROTECTED_TABLES = ("audit_logs", "evidence_chain", "security_events",
-                    "risk_acceptances", "stage_evidence_links")
+                    "risk_acceptances", "stage_evidence_links",
+                    "risk_events")   # risk register history (Risk_Register_refactor.md T1)
 ROLE_FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls")
 TRIGGER_CHECKS = ("update", "delete", "truncate", "chain")
 

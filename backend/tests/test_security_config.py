@@ -110,6 +110,8 @@ def test_missing_table_is_refused():
         assert_db_posture_facts(f)
 
 
-def test_five_protected_tables():
+def test_six_protected_tables():
+    # risk_events added 2026-11-08 (Risk_Register_refactor.md T1). Changing this set is a
+    # reviewed decision, which is why it's pinned here.
     assert set(PROTECTED_TABLES) == {"audit_logs", "evidence_chain", "security_events",
-                                     "risk_acceptances", "stage_evidence_links"}
+                                     "risk_acceptances", "stage_evidence_links", "risk_events"}

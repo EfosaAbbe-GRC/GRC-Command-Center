@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Terminal, Activity, FileText, Monitor, Globe, Clock, UserCheck, Network, GraduationCap } from 'lucide-react';
+import { Shield, Clock, UserCheck } from 'lucide-react';
+import { terminalsFor } from '../lib/terminals';
 import { useAuth } from '../contexts/useAuth';
 
 export const TerminalSwitcher = ({ activeTerminal, setActiveTerminal }) => {
@@ -18,22 +19,9 @@ export const TerminalSwitcher = ({ activeTerminal, setActiveTerminal }) => {
         second: '2-digit' 
     });
 
-    // Strategy: IA-02 Role-Based Access Control
-    // Define terminals and their required roles for rendering.
-    const allTerminals = [
-        { id: 'COMPLIANCE', label: 'COMPLIANCE', icon: Shield, color: 'var(--success)', minRole: 'viewer' },
-        { id: 'OPS', label: 'OPERATIONS', icon: Terminal, color: 'var(--accent)', minRole: 'analyst' },
-        { id: 'EXEC', label: 'EXECUTIVE', icon: Activity, color: '#bc8cff', minRole: 'admin' },
-        { id: 'KNOWLEDGE', label: 'KNOWLEDGE', icon: FileText, color: 'var(--warning)', minRole: 'analyst' },
-        { id: 'TPRM', label: 'VENDOR RISK', icon: Network, color: '#2dd4bf', minRole: 'analyst' },
-        { id: 'INTERVIEW_SIM', label: 'INTERVIEW SIM', icon: GraduationCap, color: '#fb923c', minRole: 'analyst' },
-    ];
-
-    const roleLevels = { 'viewer': 1, 'analyst': 2, 'admin': 3 };
-    const userLevel = roleLevels[user?.role || 'viewer'] || 0;
-    
-    // Filter terminals based on hierarchical permission level
-    const terminals = allTerminals.filter(t => userLevel >= roleLevels[t.minRole]);
+    // Strategy: IA-02 Role-Based Access Control. One shared list (src/lib/terminals.js), so the
+    // menu and App always agree on what a role can open.
+    const terminals = terminalsFor(user?.role);
 
     // Stable session seed initialized once
     const [sessionSeed] = useState(() => Math.floor(Math.random() * 9000) + 1000);
