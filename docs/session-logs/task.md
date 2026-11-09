@@ -4,6 +4,14 @@
 
 ---
 
+## ⏳ 2026-11-08 — v12 full run done (provisional); after samples Sat 11-14
+
+- [x] Full run (after-sample 1): 48/50, identical to v11; #16/#19/#49 outcome C (fire via paraphrase).
+- [ ] **Sat 11-14:** after samples, `GRC_BENCH_ONLY=16,19,49,17,21 GRC_BENCH_REPEAT=2 GRC_BENCH_LABEL=v12_after` → 3-v-3 verdict; finalise the report.
+- [ ] **Then (own draft + EXECUTE):** correct `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` against the Regulation; audit every other golden entry against tier-1 text; consider a checkable grade for #49.
+
+---
+
 ## ✅ DONE 2026-10-31 — Secrets out of OneDrive, least-privilege DB roles, tamper-evident audit chain
 
 `docs/refactors/Secrets_DB_Privilege_refactor.md` (owner's EXECUTE 2026-10-31; §11 = execution record).

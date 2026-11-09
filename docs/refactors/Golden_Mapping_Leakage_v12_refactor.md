@@ -194,3 +194,16 @@ backends rebuilt; container `golden_mappings.json` SHA-256 = repo's (`597b6908�
 **Found:** a git rebase rewrote the working copy with CRLF (`core.autocrlf`), which would have
 broken the hash check on the next rebuild; `.gitattributes` now pins `backend/data/*.json` to LF.
 
+
+## 10. Execution record, part 2: the full run (2026-11-08, owner's EXECUTE)
+
+Moved a day: Saturday 11-07 didn't happen, so the full run ran **Sunday 11-08** and the after
+samples move to **Saturday 11-14** (a full run and the samples together would exceed the 200k/day
+budget). Pre-flight per §7: RPD 999/1000, readiness 6/6, container mapping SHA-256 = repo's,
+checkout = `origin/main`. **48/50 legacy, 48/50 graded, 0 errors; no query changed outcome or
+grade vs v11.** `audit_logs`: the same 9 questions received golden context; #16/#19/#49 match
+through paraphrases at 0.891 / 0.792 / 0.836 → **outcome C** for all three (provisional until the
+3-v-3). **New finding from reading the answers (§7 step 4):** the `canonical_context` of
+`EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` contradicts the Regulation (Art. 2(12),
+53(1)(b), 53(2), 55(1)(c), 50(2)), and the answers reproduce it. Not fixed (no mapping change until
+11-14); separate change afterwards. Report: `docs/reports/RAG_Benchmark_Report_v12.md`.

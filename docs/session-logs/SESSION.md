@@ -1,3 +1,27 @@
+# Session Log — 2026-11-08 ("The copies were redundant; the reference text wasn't verified")
+
+Owner's EXECUTE: the v12 full run. Saturday 11-07's slot was missed, so it ran Sunday; the after
+samples move to **Sat 11-14** (both in one day would exceed the 200k/day Groq budget).
+- **Pre-flight:** RPD 999/1000; readiness 6/6 (audit chain 5/5, PII active); only `grc-backend`
+  holds a Groq variable among 13 running containers; container mapping hash = repo's; checkout =
+  `origin/main` (PR #4 merged).
+- **Run:** 17:29–17:52 EST, detached, 0 errors, two re-logins. **48/50 legacy and graded, identical
+  to v11 on every query.** Archived `rag_benchmark_results.v12_no_benchmark_triggers.json`;
+  re-grade of all archives unchanged (`benchmark_regrade_2026-11-08.json`).
+- **Outcome C for #16/#19/#49 (provisional):** `audit_logs` show the same 9 questions got golden
+  context; offline similarity in the container puts the three targets at 0.891 / 0.792 / 0.836
+  through paraphrased triggers. The copies were redundant.
+- **New finding (from reading the answers against `EU AI ACT 2024_Doc.pdf`):** the "verified
+  reference" text of `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` is wrong in places
+  (Art. 2(12)'s exceptions, Art. 53(2)'s scope, the missing 53(1)(b), "the Commission" vs the AI
+  Office, Art. 50(2) absent), and #19/#49 reproduce it. Not fixed: no mapping change before 11-14.
+  Report: `docs/reports/RAG_Benchmark_Report_v12.md`.
+- **Owner's direction for using the tool:** run the owner's practice scenarios through every screen
+  as a user-acceptance pass. Checked in code today: Vendor Risk, chat, Interview Simulator, Ops and
+  the Executive "open findings" count (unaccepted TPRM gaps) are real; the Compliance policy grid,
+  its framework mappings and export, and the Executive KPI cards and trend read the fixed
+  `fixtures.json` with no way to enter data. Those are logged as gaps to build, not faults.
+
 # Session Log — 2026-11-01 (owner's credential clean-up; PR #2 merged)
 
 Guided step by step; the owner did each step, the AI verified each one.
