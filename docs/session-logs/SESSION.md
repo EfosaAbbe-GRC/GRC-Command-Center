@@ -20,7 +20,10 @@ errors; the open-source card fused Art. 2(12), 53(2)/54(6) and 25(4) into one ru
 accurate but abridged, NIST AI RMF, OWASP and ISO 27001 verified with no change. Which entries
 fire on #17/#21 was measured offline (#17: risk tiers + GPAI; #21: GPAI). Proposed: corrected texts,
 a `verified` record on every entry, red-first tests, and a pre-registered 5 × 3 subset run on
-Sat 11-21. **Next:** owner reviews D1–D4, then EXECUTE.
+Sat 11-21. **Then EXECUTED** (owner: "Sounds good. Execute"; D1–D4 as recommended, so this is
+v13): tests first (11 red), JSON changed by script (triggers and the other four entries
+untouched, texts equal the draft word for word), green, pytest 305/1/17, both backends rebuilt,
+hash `eb4c6411…`, readiness 6/6. **Next:** the Groq run Sat 11-21 (draft §10).
 
 # Session Log — 2026-11-08, night ("Fix the three, and look again first")
 

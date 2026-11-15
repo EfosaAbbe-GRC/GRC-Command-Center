@@ -1,8 +1,9 @@
 # Golden reference correction: fix the EU AI Act entries and audit every entry against tier-1 text
 
-**Status: DRAFT, awaiting the owner's review and EXECUTE** (GOVERNANCE.md §A). Drafted Sunday
-2026-11-15, right after v12 closed (`RAG_Benchmark_Report_v12.md` "Final verdict"). Writing it used
-no Groq. **Proposed run: Saturday 2026-11-21** (subset only, ~50k tokens; §6).
+**Status: EXECUTED 2026-11-15 (weekday half done early, on a Sunday; owner: "Sounds good. Execute").**
+Decisions taken as recommended: D1 approved, D2 (a) GDPR left with a note, D3 not in this change,
+D4 this is **v13**. Record: §10. **Remaining: the Groq run, Saturday 2026-11-21** (§7 steps 5–7).
+Drafted the same day, right after v12 closed (`RAG_Benchmark_Report_v12.md` "Final verdict").
 
 ## 0. In plain English
 
@@ -312,3 +313,24 @@ can't see (#19 and #49 are ungraded), so it won't move any percentage, and the r
 ## 9. Rollback
 
 `git revert` and a backend rebuild. Data only; no schema, no state.
+
+## 10. Execution record, part 1 (2026-11-15, owner's EXECUTE; no Groq)
+
+1. **Red first.** `test_golden_reference_accuracy.py` (12 tests): **11 red** on today's file, exactly
+   the errors in §3 plus the missing verification records; `test_cited_pages_exist` green, as
+   expected.
+2. **Data change** (`backend/data/golden_mappings.json`), applied by script so only the three EU AI
+   Act entries' `canonical_context`/`citations` changed and every entry gained `verified`. Checked by
+   the script: same 7 IDs in the same order, every `trigger_phrases` list identical, the four other
+   entries' text and citations byte-identical. The three new texts equal §4.1 word for word
+   (compared programmatically). LF line endings kept. Two citation titles checked again against the
+   text during execution: Art. 25 "Responsibilities along the AI value chain", Art. 2 "Scope".
+3. **Green.** The 12 new tests and v12's 4 hygiene tests pass. Full suite without the Groq and image
+   tests: **305 passed, 1 skipped, 17 deselected** (11-08's 293/1/17 plus the 12 new).
+4. **Deployed.** Both backends rebuilt; container `golden_mappings.json` SHA-256 = repo's
+   (**`eb4c6411…`**) on dev and test; readiness 6/6 on both, audit chain 6/6 intact.
+
+**Saturday 2026-11-21 (§7 steps 5–7):** pre-flight (probe, readiness, hash `eb4c6411…`, checkout =
+`origin/main`), then `GRC_BENCH_ONLY=16,19,49,17,21`, `GRC_BENCH_REPEAT=3`,
+`GRC_BENCH_LABEL=v13_after`, then §6's checklist against the answer text →
+`RAG_Benchmark_Report_v13.md`. **No retrieval, prompt, index or mapping change before then.**
