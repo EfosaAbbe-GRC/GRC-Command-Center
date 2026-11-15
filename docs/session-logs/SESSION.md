@@ -13,7 +13,14 @@ both sides (so they're the mapping's, not noise), and #49's after samples pin th
 exemption on "Article 51", a citation the model moved from the systemic-risk clause. Docs: report
 "Final verdict", draft §11, HANDOFF schedule rewritten. Maintenance: the test stack was a build
 behind `main` (built before the export hardening), rebuilt → smoke 47/47; full pytest 305 passed / 6 skipped with nothing deselected.
-**Next:** draft the golden-entry correction + tier-1 audit (weekday), verify on a weekend.
+**Later the same day (owner: "yes proceed"), no Groq:** drafted `Golden_Reference_Correction_refactor.md`.
+Audited all seven golden entries claim by claim against the tier-1 PDFs the system ingests (local
+`pypdf` extraction, PDF page numbers): the three EU AI Act entries need correcting (3 + 7 + 5
+errors; the open-source card fused Art. 2(12), 53(2)/54(6) and 25(4) into one rule), GDPR is
+accurate but abridged, NIST AI RMF, OWASP and ISO 27001 verified with no change. Which entries
+fire on #17/#21 was measured offline (#17: risk tiers + GPAI; #21: GPAI). Proposed: corrected texts,
+a `verified` record on every entry, red-first tests, and a pre-registered 5 × 3 subset run on
+Sat 11-21. **Next:** owner reviews D1–D4, then EXECUTE.
 
 # Session Log — 2026-11-08, night ("Fix the three, and look again first")
 

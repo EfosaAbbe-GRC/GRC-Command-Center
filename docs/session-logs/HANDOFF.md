@@ -59,7 +59,7 @@ weekdays. Weekdays are for drafting.
   sample, so the errors come from the mapping. `docs/reports/RAG_Benchmark_Report_v12.md` "Final
   verdict"; the history of v12's slipped dates is in the draft's §9–§11. **Last Groq call ≈ 09:00
   EST 11-15.**
-- **▶ Next (sequential, own draft + EXECUTE; draft on a weekday, verify on a weekend):** correct
+- **▶ Next: DRAFTED 2026-11-15, awaiting the owner's review + EXECUTE:** `docs/refactors/Golden_Reference_Correction_refactor.md`. Audit of all 7 golden entries vs tier-1 text: 3 EU AI Act entries need correcting (15 errors), GDPR accurate but abridged, NIST/OWASP/ISO verified. Owner decisions D1–D4 in §8. Code/tests on a weekday after EXECUTE; **subset run Sat 11-21** (~50k). Original scope:
   `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` against Regulation (EU) 2024/1689 (the
   report's table, plus #49's misplaced "Article 51"), then audit every other golden entry against
   its tier-1 text. Consider a checkable grade for #49 (Art. 2(12)'s exceptions).
