@@ -1,3 +1,20 @@
+# Session Log — 2026-11-15, morning ("The copies were redundant: final")
+
+The owner's go: "time to run the benchmark". Saturday
+11-14's slot was missed, so v12's after samples ran Sunday. The dev stack had been stopped since
+11-09; started it, then pre-flight per the draft's §7: readiness 6/6, container
+`golden_mappings.json` SHA-256 = repo's, checkout = `origin/main`, Groq probe 999/1000.
+`mufasa_backend` was up (it shares the Groq org), but the probe showed the budget untouched.
+**10/10 calls, 0 errors, ~5 min.** `audit_logs` rows 519–528: golden context fired exactly as
+before. #16 COMPLETE 4/4 twice; the rest answered. With the 11-08 full run as after-sample 1, every
+target holds 3 of 3 on both sides → **outcome C, final**: the copied triggers were redundant, no
+score correction. Re-reading the #19/#49 answers: the golden-text errors appear in every sample on
+both sides (so they're the mapping's, not noise), and #49's after samples pin the open-source
+exemption on "Article 51", a citation the model moved from the systemic-risk clause. Docs: report
+"Final verdict", draft §11, HANDOFF schedule rewritten. Maintenance: the test stack was a build
+behind `main` (built before the export hardening), rebuilt → smoke 47/47; full pytest 305 passed / 6 skipped with nothing deselected.
+**Next:** draft the golden-entry correction + tier-1 audit (weekday), verify on a weekend.
+
 # Session Log — 2026-11-08, night ("Fix the three, and look again first")
 
 The owner asked to fix the three pre-existing issues, re-assessing first; he preferred Vendor Risk

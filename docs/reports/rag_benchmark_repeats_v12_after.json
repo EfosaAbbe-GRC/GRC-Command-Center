@@ -1,0 +1,135 @@
+{
+    "summary": {
+        "subset": true,
+        "valid_full_run": false,
+        "label": "v12_after",
+        "ids": [
+            16,
+            19,
+            49,
+            17,
+            21
+        ],
+        "repeat": 2,
+        "planned": 10,
+        "completed": 10,
+        "complete": true,
+        "errors": 0,
+        "model": "openai/gpt-oss-120b",
+        "temperature": 0.7,
+        "pacing_seconds": 22.0,
+        "note": "Repeated samples of chosen questions. Not a benchmark score; never cite as accuracy."
+    },
+    "results": [
+        {
+            "id": 16,
+            "sample": 1,
+            "query": "What are the four risk categories defined in the EU AI Act?",
+            "outcome": "ANSWERED",
+            "grade": "COMPLETE",
+            "grade_detail": "4/4",
+            "latency": 7.23,
+            "sources_count": 5,
+            "answer": "The EU AI Act defines four risk categories:\n\n1. **Unacceptable risk** \u2013 \u201cProhibited AI practices\u201d (Article\u202f5, Title\u202fII). These AI systems are banned outright (e.g., subliminal manipulation, social\u2011scoring systems).  \n2. **High risk** \u2013 (Article\u202f6, \u201cClassification rules for high\u2011risk AI systems\u201d plus the triggers listed in Annex\u202fIII). High\u2011risk AI systems must undergo conformity assessment, implement risk\u2011management measures, and ensure human oversight.  \n3. **Limited risk** \u2013 (Article\u202f50). AI systems that pose only limited risk (e.g., chatbots, deep\u2011fakes, and other narrowly scoped tasks) are subject to specific transparency obligations.  \n4. **Minimal or no risk** \u2013 (Article\u202f95). This residual tier includes AI systems with minimal or no risk; compliance is voluntary, typically through Codes of Conduct."
+        },
+        {
+            "id": 19,
+            "sample": 1,
+            "query": "How does the EU AI Act handle generative AI like ChatGPT?",
+            "outcome": "ANSWERED",
+            "grade": "UNGRADED_ANSWER",
+            "grade_detail": "",
+            "latency": 4.8,
+            "sources_count": 8,
+            "answer": "The EU AI Act does not refer to \u201cChatGPT\u201d or \u201cgenerative AI\u201d by name.\u202fInstead, it regulates such systems as **general\u2011purpose AI models (GPAI)** under Chapter\u202fV (Articles\u202f51\u201156).\n\n**Baseline obligations for all GPAI models** (including the models that power consumer chatbots such as ChatGPT) are:\n- Preparation of technical documentation;\n- Adoption of a copyright\u2011compliance policy; and\n- Provision of training\u2011content summaries.\n\n**Additional obligations apply when a GPAI model is classified as carrying \u201csystemic risk\u201d** under Article\u202f51 (e.g., when it meets defined thresholds such as cumulative compute used for training). In that case, the provider must also:\n- Conduct a formal model evaluation;\n- Perform adversarial testing;\n- Report incidents to the European Commission; and\n- Implement cybersecurity safeguards.\n\nThus, the EU AI Act handles generative AI like ChatGPT by treating it as a general\u2011purpose AI model subject to the baseline GPAI requirements, and, if deemed a systemic\u2011risk GPAI, imposes the extra risk\u2011mitigation duties listed above."
+        },
+        {
+            "id": 49,
+            "sample": 1,
+            "query": "How does the EU AI Act impact open-source AI development?",
+            "outcome": "ANSWERED",
+            "grade": "UNGRADED_ANSWER",
+            "grade_detail": "",
+            "latency": 4.29,
+            "sources_count": 5,
+            "answer": "The EU AI Act grants a **conditional exemption** to free and open\u2011source AI components.\u202fAccording to Article\u202f51, tools, services, processes, or components that are made available under a free\u2011and\u2011open\u2011source licence **are excluded from several of the Act\u2019s obligations**\u202fprovided they are **not**:\n\n1. **Placed on the market or put into service as a high\u2011risk AI system**, or  \n2. **Deemed a general\u2011purpose AI model that presents systemic risk**.\n\nBoth of these categories remain **fully in scope** of the Act **regardless of the licensing model**.  \n\nFor open\u2011source AI that falls **outside** the high\u2011risk or systemic\u2011risk categories, the Act **does not mandate** compliance measures such as conformity assessments or mandatory documentation. However, developers are **encouraged**\u2014but not required\u2014to adopt best\u2011practice documentation (e.g., model cards, datasheets) to facilitate transparency and accountability."
+        },
+        {
+            "id": 17,
+            "sample": 1,
+            "query": "What constitutes a 'High-Risk' AI system under the EU AI Act?",
+            "outcome": "ANSWERED",
+            "grade": "UNGRADED_ANSWER",
+            "grade_detail": "",
+            "latency": 4.56,
+            "sources_count": 4,
+            "answer": "**High\u2011Risk AI systems under the EU AI Act**\n\nA \u201chigh\u2011risk\u201d AI system is defined by the Act in **Article\u202f6** through its \u201cclassification rules for high\u2011risk AI systems,\u201d complemented by the specific triggers set out in **Annex\u202fIII**.  \n\nKey points from the Act (as reflected in the provided context):\n\n- **Article\u202f6** establishes the criteria and classification rules that determine whether an AI system falls into the high\u2011risk tier.  \n- **Annex\u202fIII** lists the concrete triggers (e.g., particular application areas or functions) that, when met, cause a system to be classified as high\u2011risk.  \n- High\u2011risk AI systems are **subject to**:\n  - A **conformity assessment** before being placed on the market or put into service.  \n  - Ongoing **risk\u2011management obligations** (including documentation, monitoring, and mitigation of identified risks).  \n  - **Human\u2011oversight requirements** to ensure that humans can understand, supervise, and, where necessary, intervene in the system\u2019s operation.\n\nThus, any AI system that satisfies the classification rules of Article\u202f6 and any of the triggers identified in Annex\u202fIII is deemed a high\u2011risk AI system under the EU AI Act."
+        },
+        {
+            "id": 21,
+            "sample": 1,
+            "query": "What are the penalties for non-compliance with the EU AI Act?",
+            "outcome": "ANSWERED",
+            "grade": "UNGRADED_ANSWER",
+            "grade_detail": "",
+            "latency": 5.39,
+            "sources_count": 3,
+            "answer": "**Penalties for non\u2011compliance with the EU AI Act (as set out in the provided context)**  \n\n| Category of non\u2011compliance | Maximum administrative fine* |\n|-----------------------------|------------------------------|\n| **Violation of the prohibitions in Article\u202f5** (e.g., use of AI for mass surveillance, predictive policing, or other prohibited practices) | \u2022 Up to **EUR\u202f35\u202f000\u202f000** **or** up to **7\u202f% of the provider\u2019s total worldwide annual turnover** for the preceding financial year, whichever is higher. |\n| **Other violations by operators, notified bodies, authorised representatives, importers, etc. (excluding Article\u202f5)** | \u2022 Up to **EUR\u202f15\u202f000\u202f000** **or** up to **3\u202f% of the provider\u2019s total worldwide annual turnover** for the preceding financial year, whichever is higher. |\n| **Specific fines for particular provisions** (as listed in the excerpt) | \u2022 **EUR\u202f1\u202f500\u202f000** for certain non\u2011compliance with the prohibition of AI practices (Article\u202f5). <br>\u2022 **EUR\u202f750\u202f000** for non\u2011compliance with any other requirement or obligation under the Regulation (outside Article\u202f5). |\n| **Fines for providers of general\u2011purpose AI models (GPAI) that breach the Regulation** (Article\u202f101) | \u2022 Up to **3\u202f% of the provider\u2019s annual total worldwide turnover** in the preceding financial year **or** **EUR\u202f15\u202f000\u202f000**, whichever is higher, when the Commission finds intentional or negligent infringement, failure to comply with document requests, or failure to comply with a measure requested under Article\u202f93. |\n| **Additional enforcement notes** | \u2022 Penalties are to be applied in accordance with the proportionality principle and may be enforced by the Commission or national authorities. <br>\u2022 The penalty regime becomes effective on **2\u202fAugust\u202f2025** (the date from which Member States must have their penalty rules in place). |\n\n\\*All fines are **administrative** and are calculated as the higher of the monetary ceiling (EUR amount) or the percentage of worldwide turnover, as specified for each category.  \n\n**Summary**  \nThe EU AI Act imposes a tiered penalty structure: the most severe fines (up to EUR\u202f35\u202fmillion or 7\u202f% turnover) apply to breaches of the core prohibitions in Article\u202f5; other violations attract up to EUR\u202f15\u202fmillion or 3\u202f% turnover; specific provisions set lower caps (EUR\u202f1.5\u202fmillion or EUR\u202f750\u202f000). Providers of general\u2011purpose AI models face the same 3\u202f%/EUR\u202f15\u202fmillion ceiling for intentional or negligent breaches. These fines are enforceable from 2\u202fAugust\u202f2025.  "
+        },
+        {
+            "id": 16,
+            "sample": 2,
+            "query": "What are the four risk categories defined in the EU AI Act?",
+            "outcome": "ANSWERED",
+            "grade": "COMPLETE",
+            "grade_detail": "4/4",
+            "latency": 3.59,
+            "sources_count": 5,
+            "answer": "The EU AI Act defines four risk categories:\n\n1. **Unacceptable risk** \u2013 prohibited AI practices (Article\u202f5).  \n2. **High risk** \u2013 AI systems subject to conformity assessment, risk\u2011management and human\u2011oversight obligations (Article\u202f6 and Annex\u202fIII).  \n3. **Limited risk** \u2013 AI systems with transparency obligations (e.g., chatbots, deepfakes) (Article\u202f50).  \n4. **Minimal/\u200bno risk** \u2013 residual tier where compliance is voluntary, typically addressed through codes of conduct (Article\u202f95)."
+        },
+        {
+            "id": 19,
+            "sample": 2,
+            "query": "How does the EU AI Act handle generative AI like ChatGPT?",
+            "outcome": "ANSWERED",
+            "grade": "UNGRADED_ANSWER",
+            "grade_detail": "",
+            "latency": 4.86,
+            "sources_count": 8,
+            "answer": "**EU AI Act treatment of generative AI (e.g., ChatGPT)**  \n\n1. **Classification** \u2013 The Act does not name \u201cChatGPT\u201d or \u201cgenerative AI\u201d explicitly. Instead, it places such systems under the category of **general\u2011purpose AI models (GPAI)**, as defined in Chapter\u202fV, Articles\u202f51\u201156.  \n\n2. **Baseline obligations for all GPAI** \u2013 Every provider of a GPAI model must comply with the core requirements that apply to the entire class, namely:  \n   - Preparation of **technical documentation** describing the system\u2019s design, intended purpose, and performance.  \n   - Adoption of a **copyright\u2011compliance policy** covering the use of training data.  \n   - Provision of **training\u2011content summaries** that give an overview of the data sources and preprocessing methods used.  \n\n3. **Systemic\u2011risk classification** \u2013 Article\u202f51 specifies criteria (e.g., the cumulative compute power used for training) that, when met, label a GPAI model as carrying **\u201csystemic risk.\u201d**  \n\n4. **Additional obligations for systemic\u2011risk GPAI** \u2013 Providers whose models meet the systemic\u2011risk threshold must implement the following extra measures:  \n   - **Model evaluation** procedures to assess safety, reliability, and conformity with the Act.  \n   - **Adversarial testing** to identify vulnerabilities and potential misuse scenarios.  \n   - **Incident reporting** to the European Commission for any significant adverse events.  \n   - **Cybersecurity safeguards** to protect the model and its data against unauthorized access or manipulation.  \n\n5. **Applicability to ChatGPT** \u2013 Because ChatGPT is a consumer\u2011facing chatbot built on a general\u2011purpose large language model, it falls under the GPAI regime. It must therefore satisfy the baseline GPAI requirements, and, if it meets the systemic\u2011risk criteria of Article\u202f51, it must also fulfill the additional obligations listed above."
+        },
+        {
+            "id": 49,
+            "sample": 2,
+            "query": "How does the EU AI Act impact open-source AI development?",
+            "outcome": "ANSWERED",
+            "grade": "UNGRADED_ANSWER",
+            "grade_detail": "",
+            "latency": 4.41,
+            "sources_count": 5,
+            "answer": "The EU AI Act grants a **conditional exemption** to free\u2011and\u2011open\u2011source AI components.\u202fAccording to Article\u202f51, tools, services, processes, or components that are made available under a free and open\u2011source licence are **outside most of the Act\u2019s obligations**\u2014provided they are **not**:\n\n1. **Placed on the market or put into service as a high\u2011risk AI system**, or  \n2. **Deemed a general\u2011purpose AI model that poses a systemic risk**.\n\nBoth of those categories remain **fully in scope** regardless of the licensing model, meaning that open\u2011source projects that fall into either category must comply with all applicable high\u2011risk requirements (e.g., conformity assessment, post\u2011market monitoring, transparency obligations, etc.).\n\nFor open\u2011source AI that does **not** meet the high\u2011risk or systemic\u2011risk thresholds, compliance is **not mandatory**; however, developers are **encouraged**\u2014but not required\u2014to adopt best\u2011practice documentation such as **model cards** and **datasheets** to improve transparency and facilitate downstream risk assessments.\n\nIn summary, the EU AI Act:\n\n- **Exempts** most free/open\u2011source AI from its obligations, **unless** the software is classified as high\u2011risk or a systemic\u2011risk general\u2011purpose model.  \n- **Mandates** full compliance for those high\u2011risk or systemic\u2011risk open\u2011source AI systems, irrespective of licence.  \n- **Encourages** voluntary documentation (model cards, datasheets) for open\u2011source AI to support responsible use and downstream compliance."
+        },
+        {
+            "id": 17,
+            "sample": 2,
+            "query": "What constitutes a 'High-Risk' AI system under the EU AI Act?",
+            "outcome": "ANSWERED",
+            "grade": "UNGRADED_ANSWER",
+            "grade_detail": "",
+            "latency": 4.5,
+            "sources_count": 4,
+            "answer": "**High\u2011Risk AI systems under the EU AI Act**\n\nA \u201chigh\u2011risk\u201d AI system is defined by the Act through **Article\u202f6** (\u201cClassification rules for high\u2011risk AI systems\u201d) together with the specific triggers set out in **Annex\u202fIII**. Any AI system that meets the Article\u202f6 classification criteria **or** falls under one of the Annex\u202fIII trigger categories is deemed high\u2011risk.  \n\nKey characteristics (as stated in the provided context) include:\n\n- **Subject to a conformity assessment** before being placed on the market or put into service.  \n- **Obligated to implement a risk\u2011management system**, covering the entire lifecycle of the AI system.  \n- **Required to provide human\u2011oversight mechanisms** to ensure that the system can be supervised and, where necessary, overridden by a human operator.  \n\nThus, a high\u2011risk AI system is any AI system that the EU AI Act classifies as such under Article\u202f6 and the Annex\u202fIII triggers, and it must comply with the associated conformity\u2011assessment, risk\u2011management, and human\u2011oversight obligations."
+        },
+        {
+            "id": 21,
+            "sample": 2,
+            "query": "What are the penalties for non-compliance with the EU AI Act?",
+            "outcome": "ANSWERED",
+            "grade": "UNGRADED_ANSWER",
+            "grade_detail": "",
+            "latency": 5.16,
+            "sources_count": 3,
+            "answer": "**Penalties for non\u2011compliance with the EU AI Act (as set out in the provided excerpts)**  \n\n| Type of breach | Maximum administrative fine* |\n|----------------|------------------------------|\n| **Violation of the prohibitions in Article\u202f5** (e.g., use of AI for mass\u2011surveillance, predictive policing, or other banned high\u2011risk purposes) | \u2022 Up to **EUR\u202f35\u202f000\u202f000** **or** up to **7\u202f% of the provider\u2019s total worldwide annual turnover** for the preceding financial year, whichever is higher. |\n| **Other non\u2011compliance by operators, notified bodies, authorised representatives or importers** (i.e., obligations in Articles\u202f16,\u202f22,\u202f23, etc.) | \u2022 Up to **EUR\u202f15\u202f000\u202f000** **or** up to **3\u202f% of worldwide annual turnover**, whichever is higher. |\n| **General\u2011purpose AI model (GPAI) providers** who intentionally or negligently: <br>\u202f\u202fa) infringe the Regulation, <br>\u202f\u202fb) fail to comply with a request for documents/information, or <br>\u202f\u202fc) ignore a measure requested under Article\u202f93 | \u2022 Up to **3\u202f% of the provider\u2019s annual total worldwide turnover** in the preceding financial year **or** **EUR\u202f15\u202f000\u202f000**, whichever is higher. |\n| **Other specific provisions (non\u2011Article\u202f5) cited in a separate penalty list** | \u2022 Up to **EUR\u202f1\u202f500\u202f000** for certain Article\u202f5\u2011related violations (as listed in the second penalty block). <br>\u2022 Up to **EUR\u202f750\u202f000** for any other requirement or obligation breach not covered by Article\u202f5. |\n| **General enforcement note** | \u2022 Penalties become enforceable from **2\u202fAugust\u202f2025** (the date Member States must have their penalty rules in force). |\n\n\\*All fines are subject to the proportionality principle and may be adjusted based on factors such as the nature, gravity, and duration of the infringement, any previous infringements, cooperation with authorities, and the offender\u2019s financial situation (as indicated in the surrounding text)."
+        }
+    ]
+}

@@ -12,10 +12,11 @@
 - [x] 3 pre-existing issues (§10) **fixed the same night** after a re-assessment that found 4 more (upload/export token refresh after 15 idle min, unbounded refresh recursion, unreadable validation errors, unhandled export errors): `Client_Export_Hardening_refactor.md`. Pytest 293/1; dev ready, chain 6/6.
 - [ ] Phase 1b (gap → risk) after the Vendor Risk walkthrough; Phase 2 (issues + corrective actions) after that.
 
-## ⏳ 2026-11-08 — v12 full run done (provisional); after samples Sat 11-14
+## ✅ 2026-11-15 — v12 COMPLETE: outcome C final (3 of 3 on both sides)
 
 - [x] Full run (after-sample 1): 48/50, identical to v11; #16/#19/#49 outcome C (fire via paraphrase).
-- [ ] **Sat 11-14:** after samples, `GRC_BENCH_ONLY=16,19,49,17,21 GRC_BENCH_REPEAT=2 GRC_BENCH_LABEL=v12_after` → 3-v-3 verdict; finalise the report.
+- [x] **After samples done Sun 11-15** (Sat slot missed): 10/10, 0 errors, firing unchanged → 3-v-3 rule met, outcome C final; golden-text errors repeated in every #19/#49 sample. Report "Final verdict"; archive `rag_benchmark_repeats_v12_after.json`.
+- [x] Maintenance, same morning: test stack rebuilt to `main` → smoke **47/47** (first 47 on the test stack); full pytest **305 passed, 6 skipped**, nothing deselected.
 - [ ] **Then (own draft + EXECUTE):** correct `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` against the Regulation; audit every other golden entry against tier-1 text; consider a checkable grade for #49.
 
 ---
@@ -72,7 +73,7 @@
   active). Owner: `gh auth logout -u <owner>` to finish D1a. **Done 2026-11-01:** only the bot remains.
 - [ ] Renew the bot token before **2027-01-31** (regenerated 2026-11-01; was 2027-01-26).
 - [ ] EXECUTE Phase 1 (CI workflow), then Phase 2 (repo guardrails).
-- [ ] Later: CPU-only `torch` (after the v12 verdict, 11-08); pip 24.0 in the image.
+- [ ] Later: CPU-only `torch` (unblocked: the v12 verdict landed 11-15); pip 24.0 in the image.
 
 ## ✅ DONE 2026-10-25 — v11 benchmark: personal files removed (criterion not met, by design)
 
@@ -92,7 +93,7 @@
   scripts removed, stale strings fixed, launcher repaired.
 - [ ] Follow-up: point `create_snapshot.py` at the `grc-faiss` volume instead of a local folder.
 - [x] **v12 part 1 EXECUTED 2026-11-01** (`Golden_Mapping_Leakage_v12_refactor.md` §9): guard + harness tests, before-samples 15/15, data change, both backends rebuilt (hash = repo).
-- [ ] v12 full benchmark **Sat 11-07**; after-samples **Sun 11-08** → 3-v-3 verdict.
+- [x] v12 full benchmark (ran 11-08); after-samples (ran 11-15) → 3-v-3 verdict: outcome C, final.
 - [x] **Answered 2026-10-26:** `rag.py` downloads the model from Hugging Face, unpinned, on the
   **first question after each container start** (lazy load in `query()`). There are no model files
   on disk after a rebuild, and the container reaches huggingface.co. Fix in

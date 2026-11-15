@@ -1,8 +1,9 @@
 # v12: remove benchmark questions copied into golden-mapping triggers
 
-**Status:** **Part 1 EXECUTED 2026-11-01** (owner's EXECUTE; §9): guard and harness tests, before-samples,
-data change. Full run **Sat 2026-11-07**, after-samples **Sun 11-08** (moved one weekend: the
-before-samples slipped from 10-31). Drafted 2026-10-26 (GOVERNANCE.md §A). Decided 2026-10-12 (owner: "go
+**Status: COMPLETE 2026-11-15.** Part 1 executed 2026-11-01 (§9), full run 2026-11-08 (§10),
+after-samples 2026-11-15 (§11): **outcome C for #16/#19/#49, 3 of 3 on both sides, final.**
+(Dates slipped twice from the original plan below: before-samples 10-31 → 11-01, full run 11-07 →
+11-08, after-samples 11-08 → 11-14 → 11-15.) Drafted 2026-10-26 (GOVERNANCE.md §A). Decided 2026-10-12 (owner: "go
 with the recommendation"); first proposed in `Golden_Mapping_Enumerations_refactor.md` Decision 2
 (2026-09-27). **Benchmark: Sunday 2026-11-01** (weekend-only Groq budget). Built shift-left (owner's
 standing rule): the risk first, a failing guard test before the change, and a pre-registered
@@ -207,3 +208,18 @@ through paraphrases at 0.891 / 0.792 / 0.836 → **outcome C** for all three (pr
 `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` contradicts the Regulation (Art. 2(12),
 53(1)(b), 53(2), 55(1)(c), 50(2)), and the answers reproduce it. Not fixed (no mapping change until
 11-14); separate change afterwards. Report: `docs/reports/RAG_Benchmark_Report_v12.md`.
+
+
+## 11. Execution record, part 3: the after samples (2026-11-15, owner's go: "time to run the benchmark")
+
+Saturday 11-14 was missed, so the samples ran **Sunday 11-15**. No retrieval, prompt, index or
+mapping change since the full run (checkout = `origin/main` `5a1a15d`; the commits since 11-08 are
+the risk register and export hardening, which don't touch `rag.py`, the prompt, the index or
+`golden_mappings.json`). Pre-flight: readiness 6/6, container mapping SHA-256 = repo's
+(`597b6908…`), Groq probe 999/1000. **10/10 calls, 0 errors.** Golden context fired exactly as in
+§2/§10 (`audit_logs` rows 519–528). #16 COMPLETE 4/4 both times; #19/#49/#17/#21 answered both
+times. With the full run as after-sample 1, every target holds **3 of 3 on both sides** → §6's rule
+is met and **outcome C is final**. The answer text of #19 and #49 repeats the golden-text errors in
+every sample (6/6 each), so those errors come from the mapping, not sampling. Archive:
+`docs/reports/rag_benchmark_repeats_v12_after.json`. Report: `RAG_Benchmark_Report_v12.md` "Final
+verdict". **Next:** the golden-entry correction and tier-1 audit, as its own draft.
