@@ -1,8 +1,10 @@
 # RAG Benchmark v12 — Benchmark questions removed from golden-mapping triggers
 
-**Status: PROVISIONAL.** This is "after, sample 1" of v12's pre-registered 3-v-3 design
-(`docs/refactors/Golden_Mapping_Leakage_v12_refactor.md` §6). The final verdict needs the after
-samples (#16, #19, #49, #17, #21 × 2), now scheduled for **Saturday 2026-11-14**.
+**Status: FINAL (2026-11-15).** The after samples ran on Sunday 2026-11-15 (Saturday's slot was
+missed) and completed v12's pre-registered 3-v-3 design
+(`docs/refactors/Golden_Mapping_Leakage_v12_refactor.md` §6). **Verdict: outcome C for #16, #19
+and #49 in 3 of 3 samples on each side, so it counts as real.** See "Final verdict" below. The
+full-run sections that follow were written on 11-08 as provisional and are kept as written.
 
 **Run date:** 2026-11-08 · **Legacy: 96.0% (48/50) · Graded: 96.0% (48/50, checkable 8/10)** ·
 avg latency **5.5s** · 0 system errors
@@ -96,9 +98,48 @@ this can't pass silently again.
 Re-grading every archive with the current grader (`benchmark_regrade_2026-11-08.json`) leaves
 v1–v11 unchanged.
 
+## Final verdict: the after samples (2026-11-15)
+
+**Run:** `GRC_BENCH_ONLY=16,19,49,17,21`, `GRC_BENCH_REPEAT=2`, `GRC_BENCH_LABEL=v12_after`, dev
+stack. **Pre-flight:** stack started cold (it had been stopped since 11-09), readiness 6/6 (audit
+chain 6/6 intact, PII redaction active), container mapping SHA-256 = repo's (`597b6908…`),
+checkout = `origin/main` (`5a1a15d`), Groq probe **999/1000** requests left (≈ 7 days after the last
+Groq call). Launched detached 08:55 EST, done ≈ 09:00. **10/10 calls, 0 errors**, model
+`openai/gpt-oss-120b`, temperature 0.7, 22 s pacing. Archive:
+`rag_benchmark_repeats_v12_after.json` (subset, `valid_full_run: false`, no accuracy figure).
+
+**Golden context, from this run's `audit_logs` (rows 519–528):** identical to the full run and to
+the before samples. #16, #19, #49 get one EU AI Act entry each; #17 gets two; #21 gets one.
+
+| | Before (triggers present): s1 · s2 · s3 | After (triggers removed): full run · s2 · s3 | Rule (≥ 2 of 3 each side) |
+| --- | --- | --- | --- |
+| #16 | COMPLETE · COMPLETE · COMPLETE | COMPLETE · COMPLETE · COMPLETE (4/4 each) | holds 3/3 → **C, real** |
+| #19 | answered ×3, fires ×3 | answered ×3, fires ×3 | holds 3/3 → **C, real** |
+| #49 | answered ×3, fires ×3 | answered ×3, fires ×3 | holds 3/3 → **C, real** |
+| #17, #21 | answered ×3 | answered ×3 | unchanged (observed, not v12's variable) |
+
+**What it means:** the three copied triggers were redundant. The passes on #16, #19 and #49 never
+depended on the benchmark wording being in the lookup table: each question still reaches its entry
+through a reworded trigger, which is what the table is for. No score correction is needed, and the
+leak is closed, so later runs measure the system and not the table.
+
+**The answer text, re-read for every sample (§7 step 4):** the golden-text errors found on 11-08
+are reproduced in **every** #19 and #49 answer on both sides (6 of 6 samples each, plus the full
+run): "incident reporting to the European Commission" (should be the AI Office, Art. 55(1)(c));
+three baseline GPAI duties (Art. 53(1) has four); no Art. 50(2) marking duty; the open-source
+exemption lost through "systemic risk" instead of Art. 5 / Art. 50 (Art. 2(12)); copyright policy
+and training summary not kept for open-source GPAI models (Art. 53(2)). **So the errors are not
+sampling noise; they come from the mapping text.** One extra symptom in both after samples of #49:
+the answer pins the open-source exemption itself on "Article 51" (the systemic-risk classification
+article). The mapping cites Art. 51 only next to "systemic risk"; the model moved the citation. A
+wrong article number is the kind of error a reader trusts most, which is one more reason the fix
+below is next.
+
 ## Next
 
-1. **Sat 2026-11-14:** after samples (5 × 2, `GRC_BENCH_LABEL=v12_after`) → final 3-v-3 verdict.
-2. **Then:** the golden-mapping content correction above, as its own draft and EXECUTE.
+1. ~~**Sat 2026-11-14:** after samples~~ **Done 2026-11-15**: outcome C, final (above).
+2. **Next (own draft + EXECUTE, no Groq to write it):** the golden-mapping content correction
+   above, then the tier-1 audit of every other golden entry. Its verification run needs Groq, so a
+   weekend.
 3. v13 (GDPR PDF re-extract) and v14 (list-only instruction) as decided 2026-10-12; #39's wording
    question waits behind them.
