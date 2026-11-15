@@ -7,14 +7,17 @@
       "How does the EU AI Act classify AI systems by risk level?",
       "unacceptable risk high risk limited risk minimal risk EU AI Act"
     ],
-    "canonical_context": "The EU AI Act (Regulation (EU) 2024/1689) does not state a single enumerated 'four risk categories' list in one place; it is a risk-based framework assembled across four separate provisions: (1) Unacceptable risk — Article 5, 'Prohibited AI practices' (Title II): AI practices banned outright, e.g. subliminal manipulation, social scoring. (2) High risk — Article 6, 'Classification rules for high-risk AI systems' (plus Annex III triggers): subject to conformity assessment, risk management, and human oversight obligations. (3) Limited risk — Article 50, transparency obligations for systems like chatbots and deepfakes, and tasks of a 'narrow and limited nature' posing only limited risk. (4) Minimal/no risk — Article 95, voluntary Codes of Conduct: the residual tier, encouraged rather than mandated compliance.",
+    "canonical_context": "The EU AI Act (Regulation (EU) 2024/1689) has no single list of four risk categories. \"Unacceptable, high, limited and minimal risk\" is a common summary of four separate parts of the Regulation; of those labels, only \"high-risk\" is the Regulation's own term. (1) Unacceptable risk: Article 5, \"Prohibited AI practices\" (Chapter II), practices banned outright, for example subliminal, manipulative or deceptive techniques (Article 5(1)(a)) and social scoring (Article 5(1)(c)). (2) High risk: Article 6, \"Classification rules for high-risk AI systems\": AI that is a safety component of, or itself, a product under the legislation in Annex I that needs third-party conformity assessment (Article 6(1)), or AI used in the areas listed in Annex III (Article 6(2)). High-risk systems must meet the requirements of Chapter III, Section 2 (risk management, data governance, technical documentation, record-keeping, transparency to deployers, human oversight, accuracy, robustness and cybersecurity) and undergo conformity assessment (Article 43). Under Article 6(3), an Annex III system is not high-risk if it poses no significant risk of harm, for example because it performs a narrow procedural task. (3) Limited risk: Article 50, \"Transparency obligations for providers and deployers of certain AI systems\": people must be told they are interacting with an AI system (Article 50(1)), synthetic audio, image, video or text must be marked as artificially generated (Article 50(2)), and deep fakes must be disclosed (Article 50(4)). (4) Minimal risk: all other AI systems, with no obligations tied to a risk class; Article 95 encourages voluntary codes of conduct, and the AI literacy duty in Article 4 applies to all providers and deployers.",
     "citations": [
-      {"article": "Article 5", "title": "Prohibited AI practices", "tier": "Unacceptable risk"},
-      {"article": "Article 6 / Annex III", "title": "Classification rules for high-risk AI systems", "tier": "High risk"},
-      {"article": "Article 50", "title": "Transparency obligations for certain AI systems", "tier": "Limited risk"},
-      {"article": "Article 95", "title": "Codes of conduct", "tier": "Minimal risk"}
+      {"article": "Article 5", "title": "Prohibited AI practices (Chapter II)", "tier": "Unacceptable risk", "pdf_pages": "51"},
+      {"article": "Article 6 / Annex I / Annex III", "title": "Classification rules for high-risk AI systems", "tier": "High risk", "pdf_pages": "53–54"},
+      {"article": "Article 43", "title": "Conformity assessment", "tier": "High risk", "pdf_pages": "78"},
+      {"article": "Article 50", "title": "Transparency obligations for providers and deployers of certain AI systems", "tier": "Limited risk", "pdf_pages": "82"},
+      {"article": "Article 95", "title": "Codes of conduct for voluntary application of specific requirements", "tier": "Minimal risk", "pdf_pages": "113"},
+      {"article": "Article 4", "title": "AI literacy", "tier": "All providers and deployers", "pdf_pages": "51"}
     ],
-    "source_file": "EU AI ACT 2024_Doc.pdf"
+    "source_file": "EU AI ACT 2024_Doc.pdf",
+    "verified": {"against": "EU AI ACT 2024_Doc.pdf", "on": "2026-11-15", "method": "tier-1 text, claim by claim; pdf page numbers", "draft": "docs/refactors/Golden_Reference_Correction_refactor.md"}
   },
   {
     "id": "EU_AI_ACT_GPAI_GENERATIVE",
@@ -24,12 +27,17 @@
       "How does the EU AI Act regulate foundation models?",
       "EU AI Act ChatGPT GPT-4 generative AI regulation"
     ],
-    "canonical_context": "The EU AI Act does not name 'ChatGPT' or 'generative AI' directly; it regulates this category as 'general-purpose AI models' (GPAI) under Chapter V, Articles 51-56. Article 51 classifies a GPAI model as carrying 'systemic risk' if it meets defined conditions (e.g. cumulative compute used for training). Providers of GPAI models with systemic risk face additional obligations: model evaluation, adversarial testing, incident reporting to the Commission, and cybersecurity safeguards, on top of the baseline GPAI obligations (technical documentation, copyright-compliance policy, training-content summaries) that apply to all general-purpose models, including those underlying consumer chatbots like ChatGPT.",
+    "canonical_context": "The EU AI Act's articles don't use the term \"generative AI\", but its recitals do: recital 99 calls large generative AI models a typical example of a general-purpose AI model (see also recital 105). The model behind a chatbot like ChatGPT is a \"general-purpose AI model\" (Article 3(63)), regulated in Chapter V (Articles 51 to 56); the chatbot built on it is an AI system, a \"general-purpose AI system\" (Article 3(66)). Every provider of a general-purpose AI model must (Article 53(1)): (a) draw up and keep up to date technical documentation of the model, to provide on request to the AI Office and national competent authorities; (b) draw up, keep up to date and make available information and documentation to providers of AI systems who intend to integrate the model; (c) put in place a policy to comply with Union copyright law, including identifying and complying with rights reservations under Article 4(3) of Directive (EU) 2019/790; (d) draw up and make publicly available a sufficiently detailed summary of the content used for training, using the AI Office's template. A model is a general-purpose AI model with systemic risk if it has high-impact capabilities or the Commission designates it (Article 51(1)); high-impact capabilities are presumed when the cumulative training compute exceeds 10^25 floating-point operations (Article 51(2)). Providers of those models must also (Article 55(1)): (a) perform model evaluation, including conducting and documenting adversarial testing; (b) assess and mitigate possible systemic risks at Union level; (c) keep track of, document and report serious incidents and possible corrective measures without undue delay to the AI Office and, as appropriate, national competent authorities; (d) ensure adequate cybersecurity protection for the model and its physical infrastructure. The AI system itself also carries transparency duties under Article 50: providers must make sure people are told they are interacting with an AI system (Article 50(1)), and providers of AI systems, including general-purpose AI systems, that generate synthetic audio, image, video or text must mark the outputs in a machine-readable format as artificially generated or manipulated (Article 50(2)).",
     "citations": [
-      {"article": "Article 51", "title": "Classification of general-purpose AI models with systemic risk", "tier": "GPAI / systemic risk"},
-      {"article": "Articles 52-56", "title": "GPAI provider obligations", "tier": "GPAI"}
+      {"article": "Recitals 99, 105", "title": "Large generative AI models as general-purpose AI models", "tier": "GPAI", "pdf_pages": "26–27"},
+      {"article": "Article 3(63), 3(66)", "title": "Definitions: general-purpose AI model / system", "tier": "GPAI", "pdf_pages": "50"},
+      {"article": "Article 50(1)–(2)", "title": "Transparency obligations for providers and deployers of certain AI systems", "tier": "AI system", "pdf_pages": "82"},
+      {"article": "Article 51", "title": "Classification of general-purpose AI models as general-purpose AI models with systemic risk", "tier": "GPAI / systemic risk", "pdf_pages": "83"},
+      {"article": "Article 53(1)", "title": "Obligations for providers of general-purpose AI models", "tier": "GPAI", "pdf_pages": "84"},
+      {"article": "Article 55(1)", "title": "Obligations of providers of general-purpose AI models with systemic risk", "tier": "GPAI / systemic risk", "pdf_pages": "86"}
     ],
-    "source_file": "EU AI ACT 2024_Doc.pdf"
+    "source_file": "EU AI ACT 2024_Doc.pdf",
+    "verified": {"against": "EU AI ACT 2024_Doc.pdf", "on": "2026-11-15", "method": "tier-1 text, claim by claim; pdf page numbers", "draft": "docs/refactors/Golden_Reference_Correction_refactor.md"}
   },
   {
     "id": "EU_AI_ACT_OPEN_SOURCE",
@@ -38,12 +46,16 @@
       "Are open-source AI models exempt from the EU AI Act?",
       "EU AI Act open source licence exemption"
     ],
-    "canonical_context": "The EU AI Act provides a conditional exemption for free and open-source AI: tools, services, processes, or components made accessible under a free and open-source licence fall outside several of the Act's obligations, unless they are placed on the market or put into service as a high-risk AI system, or as a general-purpose AI model with systemic risk (Article 51) -- both of those categories remain fully in scope regardless of licensing model. Developers of free and open-source components outside those categories are encouraged, not mandated, to adopt documentation practices like model cards and datasheets.",
+    "canonical_context": "The EU AI Act has three separate open-source rules, not one exemption. (1) AI systems, Article 2(12): the Regulation does not apply to AI systems released under free and open-source licences, unless they are placed on the market or put into service as high-risk AI systems or as an AI system that falls under Article 5 (prohibited practices) or Article 50 (transparency obligations). (2) General-purpose AI models, Articles 53(2) and 54(6): a provider whose model is released under a free and open-source licence that allows access, usage, modification and distribution, and whose parameters, including the weights, the model architecture information and the model usage information are publicly available, is exempt from the technical-documentation duty (Article 53(1)(a)), the duty to inform downstream providers (Article 53(1)(b)) and the duty to appoint an authorised representative (Article 54). The provider must still put in place a copyright policy (Article 53(1)(c)) and publish the training-content summary (Article 53(1)(d)). These exceptions do not apply to general-purpose AI models with systemic risk. (3) The AI value chain, Article 25(4): third parties that make tools, services, processes or components other than general-purpose AI models available to the public under a free and open-source licence don't have to sign the written agreement that suppliers to high-risk AI providers otherwise need; recital 89 encourages them to use documentation practices such as model cards and data sheets. Recital 103 adds that AI components provided against a price or otherwise monetised don't benefit from the open-source exceptions.",
     "citations": [
-      {"article": "Recital (whitepaper preamble)", "title": "Free and open-source AI components", "tier": "Conditional exemption"},
-      {"article": "Article 51", "title": "GPAI systemic-risk carve-out from the exemption", "tier": "GPAI / systemic risk"}
+      {"article": "Article 2(12)", "title": "Scope: AI systems under free and open-source licences", "tier": "AI system exemption", "pdf_pages": "46"},
+      {"article": "Article 25(4)", "title": "Responsibilities along the AI value chain", "tier": "Open-source tools and components", "pdf_pages": "67"},
+      {"article": "Article 53(2)", "title": "Obligations for providers of general-purpose AI models", "tier": "Open GPAI models", "pdf_pages": "85"},
+      {"article": "Article 54(6)", "title": "Authorised representatives of providers of general-purpose AI models", "tier": "Open GPAI models", "pdf_pages": "86"},
+      {"article": "Recitals 89, 103, 104", "title": "Free and open-source AI components", "tier": "Interpretation", "pdf_pages": "24, 27"}
     ],
-    "source_file": "EU AI ACT 2024_Doc.pdf"
+    "source_file": "EU AI ACT 2024_Doc.pdf",
+    "verified": {"against": "EU AI ACT 2024_Doc.pdf", "on": "2026-11-15", "method": "tier-1 text, claim by claim; pdf page numbers", "draft": "docs/refactors/Golden_Reference_Correction_refactor.md"}
   },
   {
     "id": "NIST_AI_RMF_GOVERN",
@@ -68,7 +80,8 @@
         "pdf_pages": "29"
       }
     ],
-    "source_file": "AI RMF 1.0.pdf"
+    "source_file": "AI RMF 1.0.pdf",
+    "verified": {"against": "AI RMF 1.0.pdf", "on": "2026-11-15", "method": "tier-1 text, claim by claim; pdf page numbers", "draft": "docs/refactors/Golden_Reference_Correction_refactor.md"}
   },
   {
     "id": "OWASP_LLM_TOP10_2025",
@@ -94,7 +107,8 @@
         "pdf_pages": "7, 11, 15, 20, 23, 26, 30, 33, 36, 39"
       }
     ],
-    "source_file": "OWASP Top 10 for LLM Applications 2025.pdf"
+    "source_file": "OWASP Top 10 for LLM Applications 2025.pdf",
+    "verified": {"against": "OWASP Top 10 for LLM Applications 2025.pdf", "on": "2026-11-15", "method": "tier-1 text, claim by claim; pdf page numbers", "draft": "docs/refactors/Golden_Reference_Correction_refactor.md"}
   },
   {
     "id": "GDPR_ART5_PRINCIPLES",
@@ -115,7 +129,8 @@
         "pdf_pages": "36"
       }
     ],
-    "source_file": "GDPR_Regulation_Text.pdf"
+    "source_file": "GDPR_Regulation_Text.pdf",
+    "verified": {"against": "GDPR_Regulation_Text.pdf", "on": "2026-11-15", "method": "tier-1 text, claim by claim; pdf page numbers", "draft": "docs/refactors/Golden_Reference_Correction_refactor.md", "note": "abridged: Art. 5(1)(b), (d), (e) qualifiers omitted; see draft §3.4"}
   },
   {
     "id": "ISO27001_DOCUMENTED_INFO",
@@ -148,6 +163,7 @@
         "pdf_pages": "15–16"
       }
     ],
-    "source_file": "ISO 27001-2022 BookLet.pdf"
+    "source_file": "ISO 27001-2022 BookLet.pdf",
+    "verified": {"against": "ISO 27001-2022 BookLet.pdf", "on": "2026-11-15", "method": "tier-1 text, claim by claim; pdf page numbers", "draft": "docs/refactors/Golden_Reference_Correction_refactor.md"}
   }
 ]

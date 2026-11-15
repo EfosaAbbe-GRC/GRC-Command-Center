@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-11-15 (v12 after samples done: outcome C final; next = golden-text fix). 2026-11-08 (v12 full run done, provisional; after samples Sat 11-14; golden-text errors found; risk register Phase 1 executed). 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-11-15 (v12 after samples done: outcome C final; v13 golden-text fix executed, Groq run Sat 11-21). 2026-11-08 (v12 full run done, provisional; after samples Sat 11-14; golden-text errors found; risk register Phase 1 executed). 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -48,7 +48,7 @@ fails loudly instead of silently snapshotting the wrong index.
 > "(corrected)" integration, then the second vendor. **Don't change TPRM code until it finishes.**
 > The agreed fix list and order are in `SESSION.md` 2026-10-12.
 
-## ▶ Benchmark: v12 is COMPLETE (2026-11-15); the next Groq work is the golden-text fix
+## ▶ Benchmark: v12 COMPLETE; v13 (golden-text fix) executed 2026-11-15, its run is Sat 11-21
 
 Groq is **weekend-only**: the owner's other project spends the shared organisation budget on
 weekdays. Weekdays are for drafting.
@@ -59,10 +59,16 @@ weekdays. Weekdays are for drafting.
   sample, so the errors come from the mapping. `docs/reports/RAG_Benchmark_Report_v12.md` "Final
   verdict"; the history of v12's slipped dates is in the draft's §9–§11. **Last Groq call ≈ 09:00
   EST 11-15.**
-- **▶ Next (sequential, own draft + EXECUTE; draft on a weekday, verify on a weekend):** correct
-  `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` against Regulation (EU) 2024/1689 (the
-  report's table, plus #49's misplaced "Article 51"), then audit every other golden entry against
-  its tier-1 text. Consider a checkable grade for #49 (Art. 2(12)'s exceptions).
+- **✅ v13 change EXECUTED 2026-11-15 (no Groq):** `docs/refactors/Golden_Reference_Correction_refactor.md`
+  §10. The three EU AI Act golden entries corrected against the Regulation; every entry carries a
+  `verified` record; 12 new tests (11 red first); pytest 305/1/17; both backends rebuilt, mapping
+  SHA-256 **`eb4c6411…`** = repo's, readiness 6/6. Decisions as recommended: GDPR left with a note
+  (fix with the GDPR work), no grader change, this is **v13** (GDPR re-extract → v14, list-only
+  instruction → v15).
+- **▶ Saturday 2026-11-21 (Groq):** pre-flight, then `GRC_BENCH_ONLY=16,19,49,17,21`,
+  `GRC_BENCH_REPEAT=3`, `GRC_BENCH_LABEL=v13_after` (~50k), then read every answer against the
+  draft's §6 checklist → `RAG_Benchmark_Report_v13.md`. **No retrieval, prompt, index or mapping
+  change before then.**
 
 ## ▶ Linked data model: Phase 1 (risk register) EXECUTED 2026-11-08
 

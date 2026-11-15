@@ -17,7 +17,10 @@
 - [x] Full run (after-sample 1): 48/50, identical to v11; #16/#19/#49 outcome C (fire via paraphrase).
 - [x] **After samples done Sun 11-15** (Sat slot missed): 10/10, 0 errors, firing unchanged → 3-v-3 rule met, outcome C final; golden-text errors repeated in every #19/#49 sample. Report "Final verdict"; archive `rag_benchmark_repeats_v12_after.json`.
 - [x] Maintenance, same morning: test stack rebuilt to `main` → smoke **47/47** (first 47 on the test stack); full pytest **305 passed, 6 skipped**, nothing deselected.
-- [ ] **Then (own draft + EXECUTE):** correct `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` against the Regulation; audit every other golden entry against tier-1 text; consider a checkable grade for #49.
+- [x] **Drafted 2026-11-15:** `Golden_Reference_Correction_refactor.md` (all 7 entries audited; 3 EU AI Act entries to correct; D1–D4 for the owner).
+- [x] **EXECUTED 2026-11-15 as v13** (§10): 3 EU entries corrected, `verified` on all 7, 12 new tests, pytest 305/1/17, both backends rebuilt (hash `eb4c6411…`).
+- [ ] **Sat 11-21:** `GRC_BENCH_ONLY=16,19,49,17,21 GRC_BENCH_REPEAT=3 GRC_BENCH_LABEL=v13_after` → §6 checklist → `RAG_Benchmark_Report_v13.md`.
+- [ ] Queued: GDPR qualifiers (with v14 GDPR re-extract); #49 checkable grade (own change). Original scope: correct `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` against the Regulation; audit every other golden entry against tier-1 text; consider a checkable grade for #49.
 
 ---
 
