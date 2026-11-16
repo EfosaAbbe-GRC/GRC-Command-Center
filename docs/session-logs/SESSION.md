@@ -1,3 +1,13 @@
+# Session Log — 2026-11-16, evening (Monday; no Groq)
+
+Planning only. The owner asked for "control, evidence, design" to go on the build plan. Added
+`Linked_Data_Model_refactor.md` **§2a**: each risk links to the controls behind its residual rating,
+with a design and an operating assessment; "operating: effective" needs evidence (fail closed);
+issues get a `deficiency_type` (design / operating); Phase 4 gets an operational/strategic reporting
+tier. ISO 27001:2022 6.1.3 b and 9.1 checked in the official text. New **decision 4** for the owner
+(approve §2a; no interim free-text controls field). No code, no rebuild. Branch
+`drafts/risk-control-assessment-2026-11-16`, PR to `main`.
+
 # Session Log — 2026-11-15, morning ("The copies were redundant: final")
 
 The owner's go: "time to run the benchmark". Saturday
