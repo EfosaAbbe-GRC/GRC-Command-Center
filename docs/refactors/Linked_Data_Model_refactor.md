@@ -69,6 +69,41 @@ only, never as the authority on what a standard says.
 | Ops / agents | agents read the spine (e.g. controls with no test, risks past review) instead of fixtures |
 | Interview Sim | can draw scenarios from real risks and issues, not only vendor stages |
 
+### 2a. Control assessment on every risk (added 2026-11-16, planning only)
+
+**Why.** The register records a risk's inherent and residual ratings, but not *why* the residual is
+lower: which control is in place, what evidence shows it works, and, where it doesn't, whether the
+control was never designed properly or is designed but not operating. ISO/IEC 27001:2022 asks the
+organisation to "determine all controls that are necessary" for the chosen treatment (6.1.3 b), to
+monitor and measure "information security processes and controls" (9.1 a) with "documented
+information ... available as evidence of the results" (9.1). Official text, checked 2026-11-16.
+Without the link, a residual rating is an unsupported claim. Raised by the owner's practice work.
+
+**What it adds (no new phase; it rides on Phases 2, 3 and 5):**
+
+| Where | Adds | Phase |
+| --- | --- | --- |
+| `risk_control_links` | `role` (existing / planned); `design_assessment` (effective / deficient / not_assessed); `operating_assessment` (effective / deficient / not_tested / not_assessed); `assessed_by`, `assessed_at`; changes written to `risk_events` | 3 |
+| `issues` | `deficiency_type`: **design** (the control is missing or can't meet its objective as designed) or **operating** (designed well, not working in practice); required when an issue comes from a control assessment | 2 |
+| `evidence_links` | the evidence behind an `operating_assessment` (a report, export or console record) | 5 |
+
+**Threats first (what could make it lie):**
+
+| # | Threat | Guard (fail closed) |
+| --- | --- | --- |
+| C1 | A control is marked "operating: effective" on someone's word | `effective` needs at least one evidence link; otherwise 422. Inquiry alone isn't evidence |
+| C2 | A control marked deficient in design is also marked operating-effective | Design `deficient` forces operating `not_tested` (nothing sound to test) |
+| C3 | Residual is rated below inherent with no control behind it | Not blocked (a treatment can also be avoid or transfer), but the register flags "residual lower than inherent, no effective control linked" for review |
+| C4 | A deficiency's type is lost when the issue is closed or edited | `deficiency_type` is required and every change is in the hash-chained event history |
+
+**Reporting (Phase 4):** a `reporting_tier` on issues and risks, **operational** (process owner,
+monthly) or **strategic** (leadership, quarterly until closed, usually needing budget or a management
+decision), so the Executive view reports the strategic list and the owner dashboards the operational one.
+
+**Until Phase 3 exists:** no interim free-text "existing controls" field on `risks`. It would become a
+second home for control data that Phase 3 would have to migrate or orphan (rule 1). The owner's
+acceptance test logs the gap as friction instead. Decision 4 below.
+
 ## 3. Design rules (apply to every phase)
 
 1. **One record, one home.** Business data never lives in `fixtures.json`. Sample data, if kept for
@@ -113,3 +148,6 @@ screen, whether it worked as designed, worked with friction, or couldn't be done
    Recommended.
 3. **Scope boundary kept:** no asset-database sync, IT-incident feeds, SSO or multi-tenancy. These
    stay out of scope (decided 2026-08-06).
+4. **(Added 2026-11-16) Control assessment, §2a:** approve adding it to Phases 2, 3 and 5 as
+   described (recommended), and confirm **no interim free-text controls field** on `risks` before
+   Phase 3 (recommended; the alternative is quicker to use but leaves data to migrate later).

@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-11-16 — Linked data model §2a: control assessment (planning only)
+
+- [x] §2a drafted: risk → control links with design/operating assessment, evidence required for "effective", `deficiency_type` on issues, reporting tier in Phase 4.
+- [ ] Owner: decision 4 (approve §2a; no interim free-text controls field).
+
 ## ✅ 2026-11-08 — Linked data model Phase 1: risk register EXECUTED
 
 - [x] Blueprint drafted (`Linked_Data_Model_refactor.md`); Phase 1 drafted, re-assessed (9 corrections), executed red → green.

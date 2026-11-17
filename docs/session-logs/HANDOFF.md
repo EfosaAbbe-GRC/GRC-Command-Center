@@ -76,6 +76,8 @@ weekdays. Weekdays are for drafting.
 risks (5×5, bands, derived status, review dates), hash-chained `risk_events` (6th protected table),
 owner acceptance recorded by an admin who didn't propose it. The dev register is **empty** (smoke is
 read-only on it by design). **Owner next:** enter practice-scenario risks as the acceptance test.
+**Added 2026-11-16 (planning only):** blueprint §2a, control assessment on every risk (control → design/operating
+assessment → evidence; deficiency type on issues); owner's decision 4 pending. Rides on Phases 2, 3 and 5.
 Then Phase 1b (gap → risk) after the Vendor Risk walkthrough. The three pre-existing issues found
 there were **fixed the same night** (`Client_Export_Hardening_refactor.md`): export formula guard on
 every CSV (TPRM export touched, export function only), viewer lands on the Risk Register, safe
