@@ -157,7 +157,7 @@ GRC_Command_Center/
 
 ## Audit History
 
-- **Nov 2026**: v12 benchmark (Nov 8, provisional; golden reference texts found wrong vs the EU AI Act); **risk register** (Nov 8, linked data model phase 1: entities, risks, hash-chained `risk_events`, owner acceptance; `Risk_Register_refactor.md`).
+- **Nov 2026**: v12 benchmark (Nov 8, provisional; golden reference texts found wrong vs the EU AI Act); **risk register** (Nov 8, linked data model phase 1: entities, risks, hash-chained `risk_events`, owner acceptance; `Risk_Register_refactor.md`); v12 final (Nov 15, outcome C); **v13** (Nov 15 data change, Nov 21 run): the three EU AI Act golden entries corrected against the Regulation, every pre-registered error gone in 3 of 3 samples (`RAG_Benchmark_Report_v13.md`).
 - **Aug–Oct 2026**: Groq migration (Aug 13); benchmark v8–v11 with an honest grader (citable
   figure **42% → 92%**, v8); PII redaction live (Oct 4); security hardening (Oct 25: loopback-only
   ports, fail-closed secrets, login throttle, full rotation; `Security_Hardening_refactor.md`);

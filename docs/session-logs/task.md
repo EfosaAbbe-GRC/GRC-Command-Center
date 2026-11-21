@@ -17,6 +17,10 @@
 - [x] 3 pre-existing issues (§10) **fixed the same night** after a re-assessment that found 4 more (upload/export token refresh after 15 idle min, unbounded refresh recursion, unreadable validation errors, unhandled export errors): `Client_Export_Hardening_refactor.md`. Pytest 293/1; dev ready, chain 6/6.
 - [ ] Phase 1b (gap → risk) after the Vendor Risk walkthrough; Phase 2 (issues + corrective actions) after that.
 
+## ✅ 2026-11-21 — v13 run: golden-text fix confirmed (outcome A on the checklist; D5 open)
+
+See the v13 items at the end of the v12 entry below (same draft).
+
 ## ✅ 2026-11-15 — v12 COMPLETE: outcome C final (3 of 3 on both sides)
 
 - [x] Full run (after-sample 1): 48/50, identical to v11; #16/#19/#49 outcome C (fire via paraphrase).
@@ -24,7 +28,9 @@
 - [x] Maintenance, same morning: test stack rebuilt to `main` → smoke **47/47** (first 47 on the test stack); full pytest **305 passed, 6 skipped**, nothing deselected.
 - [x] **Drafted 2026-11-15:** `Golden_Reference_Correction_refactor.md` (all 7 entries audited; 3 EU AI Act entries to correct; D1–D4 for the owner).
 - [x] **EXECUTED 2026-11-15 as v13** (§10): 3 EU entries corrected, `verified` on all 7, 12 new tests, pytest 305/1/17, both backends rebuilt (hash `eb4c6411…`).
-- [ ] **Sat 11-21:** `GRC_BENCH_ONLY=16,19,49,17,21 GRC_BENCH_REPEAT=3 GRC_BENCH_LABEL=v13_after` → §6 checklist → `RAG_Benchmark_Report_v13.md`.
+- [x] **Ran Sat 11-21** (5 × 3, 15/15, 0 errors): checklist **outcome A**, every pre-registered error gone 3/3, #16 COMPLETE 3/3. `RAG_Benchmark_Report_v13.md`; archive `rag_benchmark_repeats_v13_after.json`.
+- [ ] **Owner: D5** — new 1-of-3 elaboration in #17 ("notified body"; Art. 43(2) says none for Annex III 2–8). (a) keep v13, precision edit to the risk-tiers card as its own change (recommended) or (b) revert per §6 C.
+- [ ] Found 11-21, pre-existing: #21 presents Art. 100 EDPS fines (€1.5M/€750k, Union institutions) as general fines, 9/9 samples since v12; Art. 99(5) €7.5M/1% missing. Proposed: penalties entry or retrieval look, after v14.
 - [ ] Queued: GDPR qualifiers (with v14 GDPR re-extract); #49 checkable grade (own change). Original scope: correct `EU_AI_ACT_OPEN_SOURCE` and `EU_AI_ACT_GPAI_GENERATIVE` against the Regulation; audit every other golden entry against tier-1 text; consider a checkable grade for #49.
 
 ---
