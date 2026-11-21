@@ -1,3 +1,21 @@
+# Session Log — 2026-11-21, afternoon (Saturday; Groq): v13 run
+
+The owner: "we have a benchmark to take care of"; his own walkthrough work isn't finished, which doesn't
+block this. Cold start from the doc chain, then pre-flight per draft §7 step 5: checkout =
+`origin/main` (`ef50974`), mapping SHA-256 `eb4c6411…` in repo and container, readiness 6/6, Groq
+probe 999/1000. A new container, `gravity_backend`, holds no Groq variable (names only checked).
+**Subset run 5 × 3: 15/15, 0 errors**, ~7 min. `audit_logs` 529–543: golden blocks unchanged per
+question, now carrying the corrected texts. Read all 15 answers against §6: **every pre-registered
+card error gone in 3 of 3; #16 COMPLETE 3/3 → outcome A.** Read further and checked against the
+Regulation (local `pypdf`): the model still elaborates beyond a correct card in 1 of 3 samples per
+question (#17 s1 "conformity assessment by a notified body", wrong for most Annex III systems per
+Art. 43(2); #19 s2 Art. 3(66) reasoning; #49 s3 copyright-policy scope). §6's outcome C had no
+threshold, so whether #17's 1-of-3 item triggers the revert is **owner decision D5** (recommended:
+keep v13; precision edit to the risk-tiers card as its own change). Also found, pre-existing: #21
+presents Art. 100 EDPS fines on Union institutions as general fines in 9 of 9 samples since v12 and
+omits Art. 99(5). No code changed. Report `RAG_Benchmark_Report_v13.md`; draft §11; HANDOFF's
+quick-status lines corrected (44/44 → 47/47, 108 → 305 tests, "straight to main" → bot PRs).
+
 # Session Log — 2026-11-16, evening (Monday; no Groq)
 
 Planning only. The owner asked for "control, evidence, design" to go on the build plan. Added
