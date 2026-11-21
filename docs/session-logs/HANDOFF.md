@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-11-21 (v13 run done: golden-text fix confirmed, checklist outcome A; owner decision D5 open). 2026-11-15 (v12 after samples done: outcome C final; v13 golden-text fix executed). 2026-11-08 (v12 full run done, provisional; after samples Sat 11-14; golden-text errors found; risk register Phase 1 executed). 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-11-21 (v13 run done: golden-text fix confirmed, checklist outcome A; D5 decided (a); v13.1 risk-tiers precision edit drafted, waiting for EXECUTE). 2026-11-15 (v12 after samples done: outcome C final; v13 golden-text fix executed). 2026-11-08 (v12 full run done, provisional; after samples Sat 11-14; golden-text errors found; risk register Phase 1 executed). 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -49,7 +49,7 @@ fails loudly instead of silently snapshotting the wrong index.
 > "(corrected)" integration, then the second vendor. **Don't change TPRM code until it finishes.**
 > The agreed fix list and order are in `SESSION.md` 2026-10-12.
 
-## ▶ Benchmark: v13 run DONE 2026-11-21 (outcome A); owner decision D5 next
+## ▶ Benchmark: v13 DONE 2026-11-21 (outcome A, kept); v13.1 drafted, waiting for EXECUTE
 
 Groq is **weekend-only**: the owner's other project spends the shared organisation budget on
 weekdays. Weekdays are for drafting.
@@ -60,15 +60,18 @@ weekdays. Weekdays are for drafting.
   question unchanged and carrying the corrected text. **Every pre-registered card error gone in 3
   of 3; #16 COMPLETE 3/3 → checklist outcome A.** No percentage moves (ungraded questions).
   **Last Groq call ≈ 14:20 EST 11-21.**
-- **▶ Owner: D5.** #17 gained a 1-of-3 elaboration the card doesn't contain ("conformity
-  assessment by a notified body"; Art. 43(2): none for Annex III points 2–8). The draft's outcome C
-  ("#17/#21 gain an error → revert") had no threshold. **Recommended (a): keep v13**, treat 1-of-3
-  items as leads (≥ 2-of-3 rule), and make a separate precision edit to the risk-tiers card about
-  who performs conformity assessment. (b) = revert per §9.
+- **✅ D5 decided (a), 2026-11-21: keep v13.** #17 s1 and #16 s3 said every high-risk system is
+  assessed by a notified body / third party (Art. 43(2): none for Annex III points 2–8); the card
+  is silent on who does the assessment.
+- **▶ Owner: EXECUTE (or amend) v13.1**, `docs/refactors/Risk_Tiers_Conformity_refactor.md`:
+  four sentences from Art. 43(1)–(3) and 16(f) replace one in `EU_AI_ACT_RISK_TIERS`; decisions
+  E1 (text; check Art. 43(2) p78 yourself), E2 (5 samples, recommended), E3 (name v13.1). Steps
+  1–5 need no Groq; the run (`GRC_BENCH_ONLY=16,17`, `REPEAT=5`, label `v13_1_after`, ≈ 35k
+  tokens) needs the change merged to `main` first, then a weekend day.
 - **Found, pre-existing:** #21 lists Art. 100's EDPS fines on Union institutions (€1.5M / €750k)
   as general fines in 9 of 9 samples since v12, and omits Art. 99(5) (€7.5M / 1 %). Not v13's
   variable; queued after v14.
-- **Then, sequential (one variable per run):** risk-tiers precision edit (if D5 a) → **v14** GDPR
+- **Then, sequential (one variable per run):** **v13.1** risk-tiers precision edit → **v14** GDPR
   PDF re-extract + re-ingest → **v15** list-only instruction (also measures v13's 1-of-3
   elaborations) → #21 penalties / #49 checkable grade (D3).
 

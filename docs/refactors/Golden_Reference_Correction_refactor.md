@@ -1,6 +1,6 @@
 # Golden reference correction: fix the EU AI Act entries and audit every entry against tier-1 text
 
-**Status: EXECUTED 2026-11-15; RUN 2026-11-21 (§11): checklist outcome A, owner decision D5 open.** (Weekday half done early, on a Sunday; owner: "Sounds good. Execute".)
+**Status: EXECUTED 2026-11-15; RUN 2026-11-21 (§11): checklist outcome A; D5 decided (a), keep, 2026-11-21; follow-up drafted as v13.1 (`Risk_Tiers_Conformity_refactor.md`).** (Weekday half done early, on a Sunday; owner: "Sounds good. Execute".)
 Decisions taken as recommended: D1 approved, D2 (a) GDPR left with a note, D3 not in this change,
 D4 this is **v13**. Record: §10 (data change) and §11 (the run, done 2026-11-21).
 Drafted the same day, right after v12 closed (`RAG_Benchmark_Report_v12.md` "Final verdict").
@@ -347,7 +347,8 @@ can't see (#19 and #49 are ungraded), so it won't move any percentage, and the r
    assessment by a notified body" (Art. 43(2): Annex III points 2–8 use internal control, no
    notified body). §6's outcome C has no threshold; under the ≥ 2-of-3 rule used everywhere else it
    isn't met. **Owner decision D5** (recommended: keep, no revert; precision edit to the risk-tiers
-   card as its own change). Also found, pre-existing: #21 cites Art. 100's EDPS fines on Union
+   card as its own change). **Decided (a) the same day** ("I go with A. Draft the card fix"); the
+   precision edit is `Risk_Tiers_Conformity_refactor.md` (v13.1). Also found, pre-existing: #21 cites Art. 100's EDPS fines on Union
    institutions as general fines in 9 of 9 samples since v12, and omits Art. 99(5).
    Report: `docs/reports/RAG_Benchmark_Report_v13.md`; archive
    `docs/reports/rag_benchmark_repeats_v13_after.json`. **Lesson for future drafts:** give every

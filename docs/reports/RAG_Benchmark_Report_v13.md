@@ -1,8 +1,8 @@
 # RAG Benchmark v13 — EU AI Act golden reference texts corrected against the Regulation
 
 **Status: run done 2026-11-21; checklist verdict A (every pre-registered error gone, 3 of 3).
-One owner decision open (D5, below): whether two new 1-of-3 errors trigger the pre-registered
-revert.** Recommended: no revert.
+D5 decided 2026-11-21: (a), keep v13, no revert** (owner: "I go with A. Draft the card fix").
+The precision edit is drafted: `docs/refactors/Risk_Tiers_Conformity_refactor.md` (v13.1).
 
 **Run date:** 2026-11-21 (Saturday) · subset run, **not an accuracy figure** · 15/15 calls, 0 errors
 
@@ -82,7 +82,7 @@ model paraphrasing a correct card more broadly than the source, once per questio
 0.7. That is the same family as #12's invented item, and the queued **list-only / stay-within-source
 instruction (now v15)** is the matching fix, not another card edit.
 
-## D5 — owner decision: does the pre-registered revert apply?
+## D5 — owner decision: does the pre-registered revert apply? **Decided (a), 2026-11-21**
 
 The draft's outcome C reads: *"#16 drops, or #17/#21 gain an error that wasn't there. Revert (§9)
 and rethink."* #16 didn't drop (3/3). #17 gained an error in **1 of 3** samples (notified body).
@@ -124,7 +124,8 @@ own draft, after v14.
 
 ## Next
 
-1. **Owner:** D5 (a) or (b).
-2. If (a): the risk-tiers precision edit (own draft, no Groq to write it; weekend run).
+1. ~~**Owner:** D5 (a) or (b).~~ **(a), 2026-11-21.**
+2. The risk-tiers precision edit: drafted 2026-11-21 as **v13.1**
+   (`Risk_Tiers_Conformity_refactor.md`, waiting for EXECUTE; 10-call run on a weekend).
 3. Then, as queued: **v14** GDPR PDF re-extract + re-ingest; **v15** list-only instruction (also
    measures this report's 1-of-3 elaborations); #21 penalties and #49 grader check (D3) after that.

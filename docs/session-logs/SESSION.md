@@ -16,6 +16,14 @@ presents Art. 100 EDPS fines on Union institutions as general fines in 9 of 9 sa
 omits Art. 99(5). No code changed. Report `RAG_Benchmark_Report_v13.md`; draft §11; HANDOFF's
 quick-status lines corrected (44/44 → 47/47, 108 → 305 tests, "straight to main" → bot PRs).
 
+**Later the same afternoon:** the owner decided **D5 (a)** ("I go with A. Draft the card fix").
+Drafted **v13.1**, `Risk_Tiers_Conformity_refactor.md`: #16 s3 had the same error family as #17 s1
+("third-party" for all high-risk systems), so 2 of the 6 samples that got the risk-tiers card. The
+card is silent on who carries out the assessment; the draft replaces one sentence with four from
+Art. 43(1)–(3) and 16(f), each read in the PDF (p78, p62, p53, Annex III p127; Annex III has 8
+points, so 43(2) covers 7). Pre-registered with a threshold on every row (v13's lesson): 16,17 × 5,
+the error pooled over 10 samples must be 0 to count as fixed. Waiting for EXECUTE. No code changed.
+
 # Session Log — 2026-11-16, evening (Monday; no Groq)
 
 Planning only. The owner asked for "control, evidence, design" to go on the build plan. Added
