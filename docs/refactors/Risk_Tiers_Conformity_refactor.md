@@ -1,6 +1,6 @@
 # Risk-tiers card: say who carries out the conformity assessment (v13.1)
 
-**Status: DRAFT 2026-11-21, waiting for the owner's EXECUTE** (GOVERNANCE.md §A). Comes from
+**Status: EXECUTED 2026-11-22 (owner: "Execute"; E1–E3 as recommended), steps 1–5 done (§9); Groq run waits for the merge.** Drafted 2026-11-21 (GOVERNANCE.md §A). Comes from
 owner decision **D5 (a)** on 2026-11-21 ("I go with A. Draft the card fix"): keep v13, and fix
 the one card gap behind v13's conformity-assessment slips as its own one-variable change.
 Parent: `Golden_Reference_Correction_refactor.md` (v13). Evidence: `RAG_Benchmark_Report_v13.md`,
@@ -191,3 +191,21 @@ pre-flight requires the change to be on `origin/main`.
 
 `git revert` of the data commit and a backend rebuild. Data only; no schema, no state. The v13
 cards remain as they are on `main` today.
+
+## 9. Execution record, part 1 (2026-11-22, owner's EXECUTE; no Groq)
+
+1. **Red first.** §4's test added, plus the `KNOWN_ERRORS` row:
+   `test_risk_tiers_says_who_performs_conformity_assessment` **red** on the old card; the other 17
+   (12 v13 accuracy tests + the new guard row + v12's 4 hygiene tests) green.
+2. **Data change** by script: only `EU_AI_ACT_RISK_TIERS` changed. Checked by the script: same 7
+   IDs in order, every `trigger_phrases` identical, the other six entries identical, the card's text
+   = old text with exactly the one sentence replaced; checked separately that §3.1's new text appears
+   in the card word for word. Citations 6 → 8 (§3.2); `verified.on` 2026-11-22, `draft` → this
+   file. LF line endings kept.
+3. **Green.** All 18 card tests pass. Full pytest without the Groq Interview Simulator file (12
+   tests): **307 passed, 6 skipped, 0 failed** (14 min, against the rebuilt test stack).
+4. **Deployed.** The test stack had been stopped since 11-15; brought back up and rebuilt, dev
+   backend rebuilt. Container `golden_mappings.json` SHA-256 = repo's, **`a45ad960…`**, on dev and
+   test (was `eb4c6411…`); readiness 6/6 on both (audit chain 6/6, PII active).
+5. **PR:** committed by the bot to PR #11's branch (docs + this change in one merge, to avoid a
+   stacked PR). The run (§6 steps 6–8) needs it on `origin/main` first.

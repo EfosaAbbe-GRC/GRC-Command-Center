@@ -66,6 +66,9 @@ KNOWN_ERRORS = [
     ("EU_AI_ACT_GPAI_GENERATIVE", "does not name"),            # G1: recitals 99 and 105 do
     ("EU_AI_ACT_OPEN_SOURCE", "or as a general-purpose ai model with systemic risk (article 51)"),  # O1/O5
     ("EU_AI_ACT_OPEN_SOURCE", "fall outside several of the act's obligations"),  # O2
+    # v13 run, #17 s1: never in the card; pinned so no edit puts it there.
+    # Art. 43(2): Annex III points 2-8 use internal control, no notified body.
+    ("EU_AI_ACT_RISK_TIERS", "conformity assessment by a notified body"),
 ]
 
 
@@ -100,6 +103,16 @@ def test_gpai_lists_all_duties():
 def test_risk_tiers_uses_the_regulations_structure():
     t = _flat(_text("EU_AI_ACT_RISK_TIERS"))
     for needed in ("chapter ii", "article 6(3)", "article 50", "article 95", "article 4"):
+        assert needed in t, f"risk-tiers entry lacks {needed!r}"
+
+
+def test_risk_tiers_says_who_performs_conformity_assessment():
+    """v13.1 (docs/refactors/Risk_Tiers_Conformity_refactor.md): the card said high-risk systems
+    "undergo conformity assessment (Article 43)" without saying who does it, and 2 of 6 v13
+    answers filled the gap with "a notified body" / "third-party" for every high-risk system."""
+    t = _flat(_text("EU_AI_ACT_RISK_TIERS"))
+    for needed in ("article 43(1)", "article 43(2)", "article 43(3)", "internal control",
+                   "annex vi", "annex vii", "notified body", "article 16(f)"):
         assert needed in t, f"risk-tiers entry lacks {needed!r}"
 
 
