@@ -21,7 +21,8 @@
 
 - [x] D5 decided (a) by the owner, 2026-11-21.
 - [x] **Drafted v13.1:** `Risk_Tiers_Conformity_refactor.md` (risk-tiers card says who carries out the conformity assessment, Art. 43(1)–(3), 16(f); tier-1 checked; E1–E3 for the owner).
-- [ ] **Owner: EXECUTE v13.1** (or amend). Then steps 1–5 (tests red → data → green → rebuild → bot PR), merge, then the weekend run `GRC_BENCH_ONLY=16,17` × 5 → `RAG_Benchmark_Report_v13.1.md`.
+- [x] **EXECUTED v13.1 Sun 11-22** (owner "Execute"; E1–E3 as recommended): test red → data → green (pytest 307/6, no Groq tests) → both backends rebuilt (hash `a45ad960…`) → committed to PR #11's branch. Draft §9.
+- [ ] **Owner: merge PR #11.** Then the weekend run `GRC_BENCH_ONLY=16,17` × 5 → `RAG_Benchmark_Report_v13.1.md`.
 
 See the v13 items at the end of the v12 entry below (same draft).
 

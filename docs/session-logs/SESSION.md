@@ -1,3 +1,15 @@
+# Session Log — 2026-11-22 (Sunday; no Groq used): v13.1 executed
+
+The owner: "Execute". E1–E3 taken as recommended (text approved; 5 samples; name v13.1). Per draft
+§6: the new test red on the old card, the data change by a checked script (only the risk-tiers card;
+triggers and the other six entries identical; the draft's §3.1 text present word for word), 18 card
+tests green, full pytest without the Groq interview file **307 passed, 6 skipped**. The test stack
+had been stopped since 11-15 (the first pytest pass hit 13 connection errors because of it); brought
+back up and rebuilt with dev. Both containers hold mapping `a45ad960…`, readiness 6/6. Committed by
+the bot to PR #11's branch so one merge carries v13's results, D5 and v13.1. PR #11 was still open
+after an hour of watching, so the 10-call run waits for the merge (pre-flight requires
+`origin/main`). No Groq call today.
+
 # Session Log — 2026-11-21, afternoon (Saturday; Groq): v13 run
 
 The owner: "we have a benchmark to take care of"; his own walkthrough work isn't finished, which doesn't
