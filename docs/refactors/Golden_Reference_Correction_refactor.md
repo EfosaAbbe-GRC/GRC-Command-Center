@@ -1,8 +1,8 @@
 # Golden reference correction: fix the EU AI Act entries and audit every entry against tier-1 text
 
-**Status: EXECUTED 2026-11-15 (weekday half done early, on a Sunday; owner: "Sounds good. Execute").**
+**Status: EXECUTED 2026-11-15; RUN 2026-11-21 (§11): checklist outcome A; D5 decided (a), keep, 2026-11-21; follow-up drafted as v13.1 (`Risk_Tiers_Conformity_refactor.md`).** (Weekday half done early, on a Sunday; owner: "Sounds good. Execute".)
 Decisions taken as recommended: D1 approved, D2 (a) GDPR left with a note, D3 not in this change,
-D4 this is **v13**. Record: §10. **Remaining: the Groq run, Saturday 2026-11-21** (§7 steps 5–7).
+D4 this is **v13**. Record: §10 (data change) and §11 (the run, done 2026-11-21).
 Drafted the same day, right after v12 closed (`RAG_Benchmark_Report_v12.md` "Final verdict").
 
 ## 0. In plain English
@@ -334,3 +334,22 @@ can't see (#19 and #49 are ungraded), so it won't move any percentage, and the r
 `origin/main`), then `GRC_BENCH_ONLY=16,19,49,17,21`, `GRC_BENCH_REPEAT=3`,
 `GRC_BENCH_LABEL=v13_after`, then §6's checklist against the answer text →
 `RAG_Benchmark_Report_v13.md`. **No retrieval, prompt, index or mapping change before then.**
+
+## 11. Execution record, part 2 (2026-11-21, Saturday; Groq)
+
+5. **Pre-flight:** checkout = `origin/main` (`ef50974`); repo and container mapping SHA-256
+   `eb4c6411…`; readiness 6/6 (chain 6/6, PII active); Groq probe 999/1000 (89 tokens); only
+   `mufasa_backend` holds another Groq variable (new `gravity_backend` holds none).
+6. **Subset run** (14:12–14:20 EST): 15/15 calls, 0 errors. `audit_logs` rows 529–543: same golden
+   blocks per question as §2 (#17 two, the rest one), each carrying the corrected §4.1 text.
+7. **Read against §6:** every checklist row fixed in **3 of 3**; #16 COMPLETE 3/3 → **outcome A**
+   on the checklist. New 1-of-3 elaborations the cards don't contain, including #17 s1 "conformity
+   assessment by a notified body" (Art. 43(2): Annex III points 2–8 use internal control, no
+   notified body). §6's outcome C has no threshold; under the ≥ 2-of-3 rule used everywhere else it
+   isn't met. **Owner decision D5** (recommended: keep, no revert; precision edit to the risk-tiers
+   card as its own change). **Decided (a) the same day** ("I go with A. Draft the card fix"); the
+   precision edit is `Risk_Tiers_Conformity_refactor.md` (v13.1). Also found, pre-existing: #21 cites Art. 100's EDPS fines on Union
+   institutions as general fines in 9 of 9 samples since v12, and omits Art. 99(5).
+   Report: `docs/reports/RAG_Benchmark_Report_v13.md`; archive
+   `docs/reports/rag_benchmark_repeats_v13_after.json`. **Lesson for future drafts:** give every
+   outcome row an explicit threshold.

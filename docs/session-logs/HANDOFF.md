@@ -1,6 +1,6 @@
 # GRC Command Center — Session Handoff (v1.5.0)
 
-**Date:** 2026-11-15 (v12 after samples done: outcome C final; v13 golden-text fix executed, Groq run Sat 11-21). 2026-11-08 (v12 full run done, provisional; after samples Sat 11-14; golden-text errors found; risk register Phase 1 executed). 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
+**Date:** 2026-11-22 (v13.1 EXECUTED: risk-tiers card fix in PR #11 with v13's results; the Groq run waits for the owner's merge). 2026-11-21 (v13 run done: golden-text fix confirmed, checklist outcome A; D5 decided (a)). 2026-11-15 (v12 after samples done: outcome C final; v13 golden-text fix executed). 2026-11-08 (v12 full run done, provisional; after samples Sat 11-14; golden-text errors found; risk register Phase 1 executed). 2026-11-01 (PR #2 merged; owner's credential clean-up done: bot token regenerated, Groq key reissued, old `.env` purged from OneDrive's recycle bin, owner `gh` login removed). 2026-10-31: secrets out of OneDrive, least-privilege DB roles, hash-chained audit tables; §0's Groq checks green. 2026-10-28: D1a done: the AI now works as the bot account `Grcbot2026`. 2026-10-27: DevSecOps Phase 0 executed; PII outage found and fixed; reviewed and re-verified the same morning. Last full rewrite 2026-10-17. **If this file starts accumulating update
 blocks again, rewrite it — do not append another.**
 
 This is the **briefing**: current state and what to do first. The ledger with full history is
@@ -25,10 +25,11 @@ reports `pii_redaction`.
 | `smoke_test.py` (test stack, `:8002`) | **47/47** (stack rebuilt to `main` first) | 2026-11-15 |
 | `smoke_test.py` (dev, `:8001`) | **47/47** (3 read-only risk-register checks added) | 2026-11-08 |
 | `test_pii.py` (in the container) | **23/23** on dev | 2026-10-31 |
-| `pytest` (from `backend/`) | **305 passed, 6 skipped**, nothing deselected (Groq Interview Simulator tests included; 293/1 + 17 deselected on 11-08) | 2026-11-15 |
+| `pytest` (from `backend/`) | **307 passed, 6 skipped** with `--ignore=tests/test_interview_sim.py` (its 12 Groq tests left out; v13.1's 2 new tests in). Last full run incl. Groq: 305/6 on 11-15 | 2026-11-22 |
 | `test_image_hygiene.py` (`GRC_IMAGE=…`, `-m image`) | **5/5** on the Phase 0 image | 2026-10-27 |
 | RAG, citable | **42% → 92%** (v8, 46/50) | 2026-09-27 |
-| RAG, latest run | v12: legacy 96% (48/50), graded 96% (48/50), identical to v11 — **not citable as accuracy**; 3-v-3 verdict final 11-15 | 2026-11-08 / 11-15 |
+| RAG, latest full run | v12: legacy 96% (48/50), graded 96% (48/50), identical to v11 — **not citable as accuracy**; 3-v-3 verdict final 11-15 | 2026-11-08 / 11-15 |
+| RAG, latest subset | v13 (golden-text fix): 15/15, every card error gone 3/3, #16 COMPLETE 3/3; no score | 2026-11-21 |
 | Index | curated, personal files out: **145 files / 16,998 chunks** | re-ingested 2026-10-25 |
 
 **How to quote the RAG figure:** *"42% → 92%"*. v11's 96% leaves 40 of 50 answers ungraded, and
@@ -48,27 +49,38 @@ fails loudly instead of silently snapshotting the wrong index.
 > "(corrected)" integration, then the second vendor. **Don't change TPRM code until it finishes.**
 > The agreed fix list and order are in `SESSION.md` 2026-10-12.
 
-## ▶ Benchmark: v12 COMPLETE; v13 (golden-text fix) executed 2026-11-15, its run is Sat 11-21
+## ▶ Benchmark: v13.1 executed 2026-11-22; owner merges PR #11, then the v13.1 run (weekend)
 
 Groq is **weekend-only**: the owner's other project spends the shared organisation budget on
 weekdays. Weekdays are for drafting.
 
-- **✅ v12 finished Sunday 2026-11-15.** After samples 10/10, 0 errors → with the 11-08 full run,
-  #16/#19/#49 hold outcome C in **3 of 3 samples on both sides: final**. The copied triggers were
-  redundant; no score correction. The #19/#49 answers repeat the golden-text errors in every
-  sample, so the errors come from the mapping. `docs/reports/RAG_Benchmark_Report_v12.md` "Final
-  verdict"; the history of v12's slipped dates is in the draft's §9–§11. **Last Groq call ≈ 09:00
-  EST 11-15.**
-- **✅ v13 change EXECUTED 2026-11-15 (no Groq):** `docs/refactors/Golden_Reference_Correction_refactor.md`
-  §10. The three EU AI Act golden entries corrected against the Regulation; every entry carries a
-  `verified` record; 12 new tests (11 red first); pytest 305/1/17; both backends rebuilt, mapping
-  SHA-256 **`eb4c6411…`** = repo's, readiness 6/6. Decisions as recommended: GDPR left with a note
-  (fix with the GDPR work), no grader change, this is **v13** (GDPR re-extract → v14, list-only
-  instruction → v15).
-- **▶ Saturday 2026-11-21 (Groq):** pre-flight, then `GRC_BENCH_ONLY=16,19,49,17,21`,
-  `GRC_BENCH_REPEAT=3`, `GRC_BENCH_LABEL=v13_after` (~50k), then read every answer against the
-  draft's §6 checklist → `RAG_Benchmark_Report_v13.md`. **No retrieval, prompt, index or mapping
-  change before then.**
+- **✅ v12 final 2026-11-15** (outcome C, 3 of 3 both sides; `RAG_Benchmark_Report_v12.md`).
+- **✅ v13 run Sat 2026-11-21** (`docs/reports/RAG_Benchmark_Report_v13.md`; draft
+  `Golden_Reference_Correction_refactor.md` §11). 5 × 3 subset, 15/15, 0 errors; golden blocks per
+  question unchanged and carrying the corrected text. **Every pre-registered card error gone in 3
+  of 3; #16 COMPLETE 3/3 → checklist outcome A.** No percentage moves (ungraded questions).
+  **Last Groq call ≈ 14:20 EST 11-21.**
+- **✅ D5 decided (a), 2026-11-21: keep v13.** #17 s1 and #16 s3 said every high-risk system is
+  assessed by a notified body / third party (Art. 43(2): none for Annex III points 2–8); the card
+  is silent on who does the assessment.
+- **✅ v13.1 EXECUTED Sun 2026-11-22** (owner "Execute"; E1–E3 as recommended),
+  `docs/refactors/Risk_Tiers_Conformity_refactor.md` §9: four sentences from Art. 43(1)–(3) and
+  16(f) replace one in `EU_AI_ACT_RISK_TIERS`. New test red → green; full pytest (no Groq interview
+  tests) 307 passed / 6 skipped; **both backends rebuilt, mapping hash `a45ad960…`**, readiness 6/6
+  (test stack was stopped since 11-15, now back up). Committed to **PR #11's branch** (one merge
+  for v13 results + D5 + v13.1). No Groq used on 11-22.
+- **▶ 1. Owner: merge PR #11** in the browser. **▶ 2. Then, on a weekend day:** pre-flight
+  (checkout = `origin/main`, repo and container hash `a45ad960…`, readiness, Groq probe), run
+  `GRC_BENCH_ONLY=16,17 GRC_BENCH_REPEAT=5 GRC_BENCH_LABEL=v13_1_after` (10 calls, ≈ 35k tokens),
+  read against draft §5 (error pooled over 10 must be 0) → `RAG_Benchmark_Report_v13.1.md`.
+  Sequential: 2 needs 1. Until the merge, the running containers serve a card that isn't on `main`
+  yet (they were built from the PR branch).
+- **Found, pre-existing:** #21 lists Art. 100's EDPS fines on Union institutions (€1.5M / €750k)
+  as general fines in 9 of 9 samples since v12, and omits Art. 99(5) (€7.5M / 1 %). Not v13's
+  variable; queued after v14.
+- **Then, sequential (one variable per run):** **v13.1** run → **v14** GDPR
+  PDF re-extract + re-ingest → **v15** list-only instruction (also measures v13's 1-of-3
+  elaborations) → #21 penalties / #49 checkable grade (D3).
 
 ## ▶ Linked data model: Phase 1 (risk register) EXECUTED 2026-11-08
 
@@ -246,8 +258,8 @@ The procedure that worked on 2026-09-27, first try:
 ```powershell
 docker compose -f docker-compose-v2.yml ps
 docker compose -f docker-compose.test.yml ps
-$env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 44/44 (hits :8002)
-cd backend; python -m pytest -q; cd ..                   # expect 108 passed, 6 skipped -- MUST run from backend/
+$env:PYTHONUTF8=1; python backend/tests/smoke_test.py   # expect 47/47 (hits :8002)
+cd backend; python -m pytest -q; cd ..                   # expect 305 passed, 6 skipped (Groq tests incl.) -- MUST run from backend/
 python scripts/rescore_benchmarks.py                     # re-grade all archives, zero tokens
 Invoke-RestMethod http://localhost:8001/api/v1/readiness # dev stack health, read-only, safe anytime
 ```
@@ -265,4 +277,6 @@ Invoke-RestMethod http://localhost:8001/api/v1/readiness # dev stack health, rea
   `GRC_TEST_BASE=http://localhost:8001` first.
 - `smoke_test.py` calls `/chat` three times (~9k Groq tokens). Don't run it on a benchmark day.
 - This repo is the one deliberate exception to the workspace's "local-only" rule: public remote
-  `EfosaAbbe-GRC/GRC-Command-Center`, commits go straight to `main`.
+  `EfosaAbbe-GRC/GRC-Command-Center`. Since 2026-10-28 the AI commits as the bot `Grcbot2026`
+  on a branch and opens a PR; the owner merges in the browser (corrected 2026-11-21: this line
+  still said "straight to `main`").

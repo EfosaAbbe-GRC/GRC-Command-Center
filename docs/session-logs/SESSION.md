@@ -1,3 +1,41 @@
+# Session Log — 2026-11-22 (Sunday; no Groq used): v13.1 executed
+
+The owner: "Execute". E1–E3 taken as recommended (text approved; 5 samples; name v13.1). Per draft
+§6: the new test red on the old card, the data change by a checked script (only the risk-tiers card;
+triggers and the other six entries identical; the draft's §3.1 text present word for word), 18 card
+tests green, full pytest without the Groq interview file **307 passed, 6 skipped**. The test stack
+had been stopped since 11-15 (the first pytest pass hit 13 connection errors because of it); brought
+back up and rebuilt with dev. Both containers hold mapping `a45ad960…`, readiness 6/6. Committed by
+the bot to PR #11's branch so one merge carries v13's results, D5 and v13.1. PR #11 was still open
+after an hour of watching, so the 10-call run waits for the merge (pre-flight requires
+`origin/main`). No Groq call today.
+
+# Session Log — 2026-11-21, afternoon (Saturday; Groq): v13 run
+
+The owner: "we have a benchmark to take care of"; his own walkthrough work isn't finished, which doesn't
+block this. Cold start from the doc chain, then pre-flight per draft §7 step 5: checkout =
+`origin/main` (`ef50974`), mapping SHA-256 `eb4c6411…` in repo and container, readiness 6/6, Groq
+probe 999/1000. A new container, `gravity_backend`, holds no Groq variable (names only checked).
+**Subset run 5 × 3: 15/15, 0 errors**, ~7 min. `audit_logs` 529–543: golden blocks unchanged per
+question, now carrying the corrected texts. Read all 15 answers against §6: **every pre-registered
+card error gone in 3 of 3; #16 COMPLETE 3/3 → outcome A.** Read further and checked against the
+Regulation (local `pypdf`): the model still elaborates beyond a correct card in 1 of 3 samples per
+question (#17 s1 "conformity assessment by a notified body", wrong for most Annex III systems per
+Art. 43(2); #19 s2 Art. 3(66) reasoning; #49 s3 copyright-policy scope). §6's outcome C had no
+threshold, so whether #17's 1-of-3 item triggers the revert is **owner decision D5** (recommended:
+keep v13; precision edit to the risk-tiers card as its own change). Also found, pre-existing: #21
+presents Art. 100 EDPS fines on Union institutions as general fines in 9 of 9 samples since v12 and
+omits Art. 99(5). No code changed. Report `RAG_Benchmark_Report_v13.md`; draft §11; HANDOFF's
+quick-status lines corrected (44/44 → 47/47, 108 → 305 tests, "straight to main" → bot PRs).
+
+**Later the same afternoon:** the owner decided **D5 (a)** ("I go with A. Draft the card fix").
+Drafted **v13.1**, `Risk_Tiers_Conformity_refactor.md`: #16 s3 had the same error family as #17 s1
+("third-party" for all high-risk systems), so 2 of the 6 samples that got the risk-tiers card. The
+card is silent on who carries out the assessment; the draft replaces one sentence with four from
+Art. 43(1)–(3) and 16(f), each read in the PDF (p78, p62, p53, Annex III p127; Annex III has 8
+points, so 43(2) covers 7). Pre-registered with a threshold on every row (v13's lesson): 16,17 × 5,
+the error pooled over 10 samples must be 0 to count as fixed. Waiting for EXECUTE. No code changed.
+
 # Session Log — 2026-11-16, evening (Monday; no Groq)
 
 Planning only. The owner asked for "control, evidence, design" to go on the build plan. Added
